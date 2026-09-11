@@ -1,5 +1,7 @@
 package net.dp.rpg.engine.components;
 
+import lombok.Getter;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -11,11 +13,6 @@ public class ComponentStorage<T extends Component>
         this.componentClass = componentClass;
     }
 
-    public Class<T> getComponentClass()
-    {
-        return componentClass;
-    }
-
     public int size()
     {
         return components.size();
@@ -23,7 +20,10 @@ public class ComponentStorage<T extends Component>
 
     public T getByIndex(int index)
     {
-        return components.get(index);
+        if(components.size() > index)
+            return components.get(index);
+        else
+            return null;
     }
 
     public T getByEntity(int entityId)
@@ -73,7 +73,8 @@ public class ComponentStorage<T extends Component>
         entities.remove(last);
     }
 
-    private Class<T> componentClass;
+    @Getter
+    private final Class<T> componentClass;
     private final ArrayList<T> components = new ArrayList<>();
     private final ArrayList<Integer> entities = new ArrayList<>();
     private final Map<Integer, Integer> entityToComponentIndex = new HashMap<>();

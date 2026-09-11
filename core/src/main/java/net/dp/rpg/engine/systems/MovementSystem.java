@@ -1,8 +1,7 @@
 package net.dp.rpg.engine.systems;
 
-import net.dp.rpg.engine.components.ComponentStorage;
-import net.dp.rpg.engine.components.MoveComponent;
-import net.dp.rpg.engine.components.TransformComponent;
+import com.badlogic.gdx.physics.box2d.Body;
+import net.dp.rpg.engine.components.*;
 
 public class MovementSystem
 {
@@ -16,6 +15,22 @@ public class MovementSystem
             {
                 TransformComponent transform = transforms.getByEntity(velocities.getEntity(i));
                 transform.position.mulAdd(move.velocity, delta);
+            }
+        }
+    }
+
+    public void syncBodyAndSpritePositions(ComponentStorage<PhysicalBodyComponent> bodies, ComponentStorage<SpriteComponent> sprites)
+    {
+        int bSize = bodies.size();
+        for(int i = 0; i < bSize; i++)
+        {
+            int entity = bodies.getEntity(i);
+            SpriteComponent sprite = sprites.getByEntity(entity);
+            if(sprite != null)
+            {
+                Body body = bodies.getByIndex(i).body;
+                sprite.sprite.setCenter(body.getPosition().x, body.getPosition().y);
+                sprite.sprite.setRotation(body.getTransform().getRotation() * 180 / (float) Math.PI);
             }
         }
     }
