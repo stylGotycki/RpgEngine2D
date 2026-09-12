@@ -1,0 +1,91 @@
+package net.dp.rpg.game;
+
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.g2d.Sprite;
+import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.physics.box2d.BodyDef;
+import com.badlogic.gdx.physics.box2d.PolygonShape;
+import net.dp.rpg.engine.AbstractGame;
+import net.dp.rpg.engine.Engine;
+import net.dp.rpg.engine.Scene;
+import net.dp.rpg.engine.bodyCreator.BodyParams;
+import net.dp.rpg.engine.bodyCreator.FixtureParams;
+import net.dp.rpg.engine.components.ScriptComponent;
+import net.dp.rpg.engine.components.SpriteComponent;
+
+public class Game extends AbstractGame
+{
+    public Game(Engine engine)
+    {
+        super(engine);
+    }
+
+    @Override
+    public void create()
+    {
+        engine.loadTexture("eti.png");
+
+        Scene scene = new Scene();
+
+        float cameraSize = 40;
+        OrthographicCamera camera = new OrthographicCamera(cameraSize, (float) Gdx.graphics.getHeight()/Gdx.graphics.getWidth() * cameraSize);
+        scene.setCamera(camera);
+
+        //create ETI entity
+        int eti = scene.createEntity();
+        Sprite etiSprite = new Sprite( engine.getTexture("eti.png") );
+        etiSprite.setSize(2,2);
+        etiSprite.setOriginCenter();
+
+        scene.addComponent(eti, new SpriteComponent(etiSprite));
+
+        PolygonShape shape = new PolygonShape();
+        shape.setAsBox(1,1);
+
+        BodyParams bodyParams = BodyParams.builder()
+            .type(BodyDef.BodyType.DynamicBody)
+            .fixedRotation(true)
+            .linearDamping(10f)
+            .angularDamping(10f).build();
+
+        FixtureParams fixtureParams = FixtureParams.builder()
+            .shape(shape)
+            .restitution(0f)
+            .density(1f)
+            .friction(0f).build();
+
+        scene.getBodyCreator().setBodyDefParams(bodyParams);
+        scene.getBodyCreator().setFixtureDefParams(fixtureParams);
+        scene.createBodyComponent(eti);
+        scene.createFixture(eti);
+
+        //create walls
+        int wall = scene.createEntity();
+
+        scene.getBodyCreator().setBodyDefParams(BodyParams.builder().type(BodyDef.BodyType.StaticBody).build());
+
+        scene.createBodyComponent(wall);
+
+        Vector2[] wallPositions =
+            {
+                new Vector2(0,-scene.getCamera().viewportHeight/2),
+                new Vector2(-scene.getCamera().viewportWidth/2, 0),
+                new Vector2(0, scene.getCamera().viewportHeight/2),
+                new Vector2(scene.getCamera().viewportWidth/2, 0)
+            };
+
+        for(int i = 0; i < 4; i++)
+        {
+            shape.setAsBox(i%2 == 1 ? 0 : scene.getCamera().viewportWidth, i%2 == 0 ? 0 : scene.getCamera().viewportHeight, wallPositions[i], 0);
+            scene.getBodyCreator().setFixtureDefParams(FixtureParams.builder().shape(shape).build());
+            scene.createFixture(wall);
+        }
+
+        scene.addComponent(eti, new ScriptComponent(new EtiScript(engine)));
+
+        shape.dispose();
+
+        setActiveScene(scene);
+    }
+}

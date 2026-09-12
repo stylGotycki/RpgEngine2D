@@ -21,11 +21,16 @@ public class Scene
         componentStorages.add(new ComponentStorage<>(TextureComponent.class));
         componentStorages.add(new ComponentStorage<>(PhysicalBodyComponent.class));
         componentStorages.add(new ComponentStorage<>(SpriteComponent.class));
+        componentStorages.add(new ComponentStorage<>(ScriptComponent.class));
     }
 
     public <T extends Component> void addComponent(int entity, T component)
     {
         getComponentStorage((Class<T>) component.getClass()).add(entity, component);
+        if (component instanceof ScriptComponent scriptComp)
+        {
+            scriptComp.script.setOwners(this, entity);
+        }
     }
 
     /**
@@ -64,12 +69,17 @@ public class Scene
 
     public void update(float delta)
     {
+        ComponentStorage<ScriptComponent> scriptsStorage = getComponentStorage(ScriptComponent.class);
+        for(int i = 0; i < scriptsStorage.size(); i++)
+        {
+            scriptsStorage.getByIndex(i).script.update(delta);
+        }
+
         //todo make less physics steps on higher refresh rate (fix to const refresh rate)
         physicalWorld.step(delta, 6, 2);
 
         movementSystem.updatePositions(getComponentStorage(TransformComponent.class), getComponentStorage(MoveComponent.class), delta);
         movementSystem.syncBodyAndSpritePositions(getComponentStorage(PhysicalBodyComponent.class), getComponentStorage(SpriteComponent.class));
-
     }
 
     public void debugRender()
