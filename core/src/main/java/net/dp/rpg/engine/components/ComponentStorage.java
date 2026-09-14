@@ -8,6 +8,12 @@ import java.util.Map;
 
 public class ComponentStorage<T extends Component>
 {
+    @Getter
+    private final Class<T> componentClass;
+    private final ArrayList<T> components = new ArrayList<>();
+    private final ArrayList<Integer> entities = new ArrayList<>();
+    private final Map<Integer, Integer> entityToComponentIndex = new HashMap<>();
+
     public ComponentStorage(Class<T> componentClass)
     {
         this.componentClass = componentClass;
@@ -72,10 +78,4 @@ public class ComponentStorage<T extends Component>
         components.remove(last);
         entities.remove(last);
     }
-
-    @Getter
-    private final Class<T> componentClass;
-    private final ArrayList<T> components = new ArrayList<>();
-    private final ArrayList<Integer> entities = new ArrayList<>();
-    private final Map<Integer, Integer> entityToComponentIndex = new HashMap<>();
 }

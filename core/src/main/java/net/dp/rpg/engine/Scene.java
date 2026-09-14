@@ -14,6 +14,23 @@ import java.util.ArrayList;
 
 public class Scene
 {
+    private int nextEntity = 0;
+    private final World physicalWorld = new World(new Vector2(0,0), true);
+
+    @Setter
+    @Getter
+    private OrthographicCamera camera = new OrthographicCamera(20, (float) Gdx.graphics.getHeight()/Gdx.graphics.getWidth() * 20);
+
+    @Getter
+    private final PhysicalBodyCreator bodyCreator = new PhysicalBodyCreator();
+
+    private final Box2DDebugRenderer debugRenderer = new Box2DDebugRenderer();
+
+    private final ArrayList<Integer> freeEntity = new ArrayList<>();
+    private final ArrayList<ComponentStorage<? extends Component>> componentStorages = new ArrayList<>();
+
+    private final MovementSystem movementSystem = new MovementSystem();
+
     public Scene()
     {
         componentStorages.add(new ComponentStorage<>(MoveComponent.class));
@@ -48,8 +65,8 @@ public class Scene
         Body body = getComponentStorage(PhysicalBodyComponent.class).getByEntity(entity).body;
         return body.createFixture(bodyCreator.getFixtureDef());
     }
-
     //todo delete this func once PhysicalBodyCreator has full functionality
+
     public Body addComponent(int entity, BodyDef bodyDef)
     {
         Body body = physicalWorld.createBody(bodyDef);
@@ -108,21 +125,4 @@ public class Scene
     {
         debugRenderer.dispose();
     }
-
-    private int nextEntity = 0;
-    private final World physicalWorld = new World(new Vector2(0,0), true);
-
-    @Setter
-    @Getter
-    private OrthographicCamera camera = new OrthographicCamera(20, (float) Gdx.graphics.getHeight()/Gdx.graphics.getWidth() * 20);
-
-    @Getter
-    private final PhysicalBodyCreator bodyCreator = new PhysicalBodyCreator();
-
-    private final Box2DDebugRenderer debugRenderer = new Box2DDebugRenderer();
-
-    private final ArrayList<Integer> freeEntity = new ArrayList<>();
-    private final ArrayList<ComponentStorage<? extends Component>> componentStorages = new ArrayList<>();
-
-    private final MovementSystem movementSystem = new MovementSystem();
 }

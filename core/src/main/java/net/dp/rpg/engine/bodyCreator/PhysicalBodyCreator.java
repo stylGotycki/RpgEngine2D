@@ -6,6 +6,11 @@ import lombok.Getter;
 
 public class PhysicalBodyCreator
 {
+    @Getter
+    private FixtureDef fixtureDef = new FixtureDef();
+    @Getter
+    private BodyDef bodyDef = new BodyDef();
+
     public void setBodyDefParams(BodyParams params)
     {
         if(params.type != null) bodyDef.type = params.type;
@@ -33,10 +38,4 @@ public class PhysicalBodyCreator
     {
         fixtureDef = new FixtureDef();
     }
-
-    @Getter
-    private FixtureDef fixtureDef = new FixtureDef();
-
-    @Getter
-    private BodyDef bodyDef = new BodyDef();
 }

@@ -5,10 +5,10 @@ import com.badlogic.gdx.math.Vector2;
 
 public class TextureComponent implements Component
 {
+    public Texture texture;
+
     public TextureComponent(Texture texture)
     {
         this.texture = texture;
     }
-
-    public Texture texture;
 }

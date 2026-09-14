@@ -10,6 +10,8 @@ import net.dp.rpg.engine.components.PhysicalBodyComponent;
 
 public class EtiScript extends Script
 {
+    private final Engine engine;
+
     public EtiScript(Engine engine)
     {
         this.engine = engine;
@@ -46,6 +48,4 @@ public class EtiScript extends Script
         Body etiBody = getScene().getComponentStorage(PhysicalBodyComponent.class).getByIndex(getEntity()).body;
         etiBody.applyLinearImpulse(direction.scl(speed), etiBody.getPosition(), true);
     }
-
-    private final Engine engine;
 }

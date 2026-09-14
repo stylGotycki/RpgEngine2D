@@ -2,6 +2,8 @@ package net.dp.rpg.engine;
 
 public abstract class AbstractGame
 {
+    protected final Engine engine;
+
     protected AbstractGame(Engine engine)
     {
         this.engine = engine;
@@ -13,6 +15,4 @@ public abstract class AbstractGame
     {
         engine.setActiveScene(scene);
     }
-
-    protected final Engine engine;
 }

@@ -11,6 +11,15 @@ import net.dp.rpg.game.Game;
 /** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
 public class Engine extends ApplicationAdapter
 {
+    private boolean running = true;
+
+    private boolean debugMode = false;
+    private final AbstractGame game;
+    private RenderSystem renderSystem;
+    private final AssetManager assetManager = new AssetManager();
+    @Setter
+    private Scene activeScene;
+
     public Engine()
     {
         this.game = new Game(this);
@@ -66,13 +75,4 @@ public class Engine extends ApplicationAdapter
         assetManager.dispose();
         renderSystem.dispose();
     }
-
-    private boolean running = true;
-
-    private boolean debugMode = false;
-    private final AbstractGame game;
-    private RenderSystem renderSystem;
-    private final AssetManager assetManager = new AssetManager();
-    @Setter
-    private Scene activeScene;
 }

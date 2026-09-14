@@ -4,6 +4,12 @@ import lombok.Getter;
 
 public abstract class Script
 {
+    @Getter
+    private Scene scene;
+
+    @Getter
+    private int entity;
+
     final void setOwners(Scene scene, int entity)
     {
         this.scene = scene;
@@ -11,10 +17,4 @@ public abstract class Script
     }
 
     abstract public void update(float delta);
-
-    @Getter
-    private Scene scene;
-
-    @Getter
-    private int entity;
 }
