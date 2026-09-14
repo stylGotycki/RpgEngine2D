@@ -4,30 +4,52 @@ import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.graphics.Texture;
+import lombok.Getter;
 import lombok.Setter;
 import net.dp.rpg.engine.systems.RenderSystem;
 import net.dp.rpg.game.Game;
 
 /** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
-public class Engine extends ApplicationAdapter
+public class Engine extends ApplicationAdapter implements EngineServices
 {
-    private boolean running = true;
-
-    private boolean debugMode = false;
-    private final AbstractGame game;
     private RenderSystem renderSystem;
+
+    @Getter
     private final AssetManager assetManager = new AssetManager();
+
+    private final AbstractGame game;
     @Setter
     private Scene activeScene;
 
+    @Setter
+    private boolean debugMode = false;
+    private boolean running = true;
+
     public Engine()
     {
-        this.game = new Game(this);
+        this.game = new Game();
     }
+
+    // --- Engine services ---
+
+    @Override
+    public Scene createScene()
+    {
+        return new Scene(this);
+    }
+
+    @Override
+    public void exit()
+    {
+        running = false;
+    }
+
+    // --- Engine application ---
 
     @Override
     public void create()
     {
+        game.setEngine(this);
         game.create();
 
         renderSystem = new RenderSystem();
@@ -51,23 +73,6 @@ public class Engine extends ApplicationAdapter
         if(debugMode)
             activeScene.debugRender();
     }
-
-    public void loadTexture(String file)
-    {
-        assetManager.load(file, Texture.class);
-    }
-
-    public Texture getTexture(String file)
-    {
-        assetManager.finishLoading();
-        return assetManager.get(file);
-    }
-
-    public void exit()
-    {
-        running = false;
-    }
-
     @Override
     public void dispose()
     {

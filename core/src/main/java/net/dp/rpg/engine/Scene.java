@@ -14,7 +14,7 @@ import java.util.ArrayList;
 
 public class Scene
 {
-    private int nextEntity = 0;
+    private final EngineServices engine;
     private final World physicalWorld = new World(new Vector2(0,0), true);
 
     @Setter
@@ -26,13 +26,16 @@ public class Scene
 
     private final Box2DDebugRenderer debugRenderer = new Box2DDebugRenderer();
 
+    private int nextEntity = 0;
     private final ArrayList<Integer> freeEntity = new ArrayList<>();
     private final ArrayList<ComponentStorage<? extends Component>> componentStorages = new ArrayList<>();
 
     private final MovementSystem movementSystem = new MovementSystem();
 
-    public Scene()
+    Scene(EngineServices engine)
     {
+        this.engine = engine;
+
         componentStorages.add(new ComponentStorage<>(MoveComponent.class));
         componentStorages.add(new ComponentStorage<>(TransformComponent.class));
         componentStorages.add(new ComponentStorage<>(TextureComponent.class));
@@ -46,7 +49,7 @@ public class Scene
         getComponentStorage((Class<T>) component.getClass()).add(entity, component);
         if (component instanceof ScriptComponent scriptComp)
         {
-            scriptComp.script.setOwners(this, entity);
+            scriptComp.script.setOwners(engine, this, entity);
         }
     }
 

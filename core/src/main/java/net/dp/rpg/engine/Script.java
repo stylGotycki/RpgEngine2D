@@ -10,8 +10,12 @@ public abstract class Script
     @Getter
     private int entity;
 
-    final void setOwners(Scene scene, int entity)
+    @Getter
+    private EngineServices engine;
+
+    final void setOwners(EngineServices engine, Scene scene, int entity)
     {
+        this.engine = engine;
         this.scene = scene;
         this.entity = entity;
     }

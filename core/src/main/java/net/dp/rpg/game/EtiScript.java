@@ -10,13 +10,6 @@ import net.dp.rpg.engine.components.PhysicalBodyComponent;
 
 public class EtiScript extends Script
 {
-    private final Engine engine;
-
-    public EtiScript(Engine engine)
-    {
-        this.engine = engine;
-    }
-
     @Override
     public void update(float delta)
     {
@@ -40,7 +33,7 @@ public class EtiScript extends Script
         }
         if(Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE))
         {
-            engine.exit();
+            getEngine().exit();
         }
 
         direction.setLength(1);

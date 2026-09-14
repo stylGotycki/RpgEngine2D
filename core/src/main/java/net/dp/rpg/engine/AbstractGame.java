@@ -1,10 +1,13 @@
 package net.dp.rpg.engine;
 
+import lombok.Getter;
+
 public abstract class AbstractGame
 {
-    protected final Engine engine;
+    @Getter
+    private EngineServices engine;
 
-    protected AbstractGame(Engine engine)
+    void setEngine(EngineServices engine)
     {
         this.engine = engine;
     }

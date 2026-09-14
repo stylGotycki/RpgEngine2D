@@ -2,6 +2,7 @@ package net.dp.rpg.game;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.BodyDef;
@@ -16,17 +17,14 @@ import net.dp.rpg.engine.components.SpriteComponent;
 
 public class Game extends AbstractGame
 {
-    public Game(Engine engine)
-    {
-        super(engine);
-    }
-
     @Override
     public void create()
     {
-        engine.loadTexture("eti.png");
+        getEngine().getAssetManager().load("eti.png", Texture.class);
 
-        Scene scene = new Scene();
+        getEngine().getAssetManager().finishLoading();
+
+        Scene scene = getEngine().createScene();
 
         float cameraSize = 40;
         OrthographicCamera camera = new OrthographicCamera(cameraSize, (float) Gdx.graphics.getHeight()/Gdx.graphics.getWidth() * cameraSize);
@@ -34,7 +32,7 @@ public class Game extends AbstractGame
 
         //create ETI entity
         int eti = scene.createEntity();
-        Sprite etiSprite = new Sprite( engine.getTexture("eti.png") );
+        Sprite etiSprite = new Sprite( (Texture) getEngine().getAssetManager().get("eti.png") );
         etiSprite.setSize(2,2);
         etiSprite.setOriginCenter();
 
@@ -82,7 +80,7 @@ public class Game extends AbstractGame
             scene.createFixture(wall);
         }
 
-        scene.addComponent(eti, new ScriptComponent(new EtiScript(engine)));
+        scene.addComponent(eti, new ScriptComponent(new EtiScript()));
 
         shape.dispose();
 
