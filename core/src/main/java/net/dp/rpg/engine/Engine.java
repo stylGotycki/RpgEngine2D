@@ -3,7 +3,6 @@ package net.dp.rpg.engine;
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.assets.AssetManager;
-import com.badlogic.gdx.graphics.Texture;
 import lombok.Getter;
 import lombok.Setter;
 import net.dp.rpg.engine.systems.RenderSystem;
@@ -17,25 +16,36 @@ public class Engine extends ApplicationAdapter implements EngineServices
     @Getter
     private final AssetManager assetManager = new AssetManager();
 
-    private final AbstractGame game;
-    @Setter
+    private final AbstractGame game = new Game();
     private Scene activeScene;
 
-    @Setter
-    private boolean debugMode = false;
     private boolean running = true;
 
-    public Engine()
-    {
-        this.game = new Game();
-    }
+    @Setter
+    private boolean physicsDebug = false;
+    private boolean guiDebug = false;
 
     // --- Engine services ---
+
+    public void switchScene(Scene scene)
+    {
+        if(activeScene != null)
+            activeScene.dispose();
+        activeScene = scene;
+    }
 
     @Override
     public Scene createScene()
     {
-        return new Scene(this);
+        Scene scene = new Scene(this);
+        scene.getGui().getMainTable().setDebug(guiDebug);
+        return scene;
+    }
+
+    public void setGuiDebug(boolean enabled)
+    {
+        guiDebug = enabled;
+        activeScene.getGui().getMainTable().setDebug(enabled);
     }
 
     @Override
@@ -68,11 +78,9 @@ public class Engine extends ApplicationAdapter implements EngineServices
 
         activeScene.update(Gdx.graphics.getDeltaTime());
 
-        renderSystem.render(activeScene);
-
-        if(debugMode)
-            activeScene.debugRender();
+        renderSystem.render(activeScene, physicsDebug, guiDebug);
     }
+
     @Override
     public void dispose()
     {

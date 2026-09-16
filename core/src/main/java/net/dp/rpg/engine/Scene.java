@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.Setter;
 import net.dp.rpg.engine.bodyCreator.PhysicalBodyCreator;
 import net.dp.rpg.engine.components.*;
+import net.dp.rpg.engine.components.Component;
 import net.dp.rpg.engine.systems.MovementSystem;
 
 import java.util.ArrayList;
@@ -15,16 +16,18 @@ import java.util.ArrayList;
 public class Scene
 {
     private final EngineServices engine;
-    private final World physicalWorld = new World(new Vector2(0,0), true);
+    @Getter
+    private final World physicalWorld = new World(new Vector2(0, 0), true);
+
+    @Getter
+    private final Gui gui = new Gui();
 
     @Setter
     @Getter
-    private OrthographicCamera camera = new OrthographicCamera(20, (float) Gdx.graphics.getHeight()/Gdx.graphics.getWidth() * 20);
+    private OrthographicCamera camera = new OrthographicCamera(20, (float) Gdx.graphics.getHeight() / Gdx.graphics.getWidth() * 20);
 
     @Getter
     private final PhysicalBodyCreator bodyCreator = new PhysicalBodyCreator();
-
-    private final Box2DDebugRenderer debugRenderer = new Box2DDebugRenderer();
 
     private int nextEntity = 0;
     private final ArrayList<Integer> freeEntity = new ArrayList<>();
@@ -42,6 +45,11 @@ public class Scene
         componentStorages.add(new ComponentStorage<>(PhysicalBodyComponent.class));
         componentStorages.add(new ComponentStorage<>(SpriteComponent.class));
         componentStorages.add(new ComponentStorage<>(ScriptComponent.class));
+    }
+
+    public void resize(int width, int height)
+    {
+        gui.resize(width, height);
     }
 
     public <T extends Component> void addComponent(int entity, T component)
@@ -68,20 +76,12 @@ public class Scene
         Body body = getComponentStorage(PhysicalBodyComponent.class).getByEntity(entity).body;
         return body.createFixture(bodyCreator.getFixtureDef());
     }
-    //todo delete this func once PhysicalBodyCreator has full functionality
-
-    public Body addComponent(int entity, BodyDef bodyDef)
-    {
-        Body body = physicalWorld.createBody(bodyDef);
-        addComponent(entity, new PhysicalBodyComponent(body));
-        return body;
-    }
 
     public <T extends Component> ComponentStorage<T> getComponentStorage(Class<T> componentClass)
     {
-        for(ComponentStorage<? extends Component> componentStorage : componentStorages)
+        for (ComponentStorage<? extends Component> componentStorage : componentStorages)
         {
-            if(componentStorage.getComponentClass() == componentClass)
+            if (componentStorage.getComponentClass() == componentClass)
                 return (ComponentStorage<T>) componentStorage;
         }
         return null;
@@ -90,7 +90,7 @@ public class Scene
     public void update(float delta)
     {
         ComponentStorage<ScriptComponent> scriptsStorage = getComponentStorage(ScriptComponent.class);
-        for(int i = 0; i < scriptsStorage.size(); i++)
+        for (int i = 0; i < scriptsStorage.size(); i++)
         {
             scriptsStorage.getByIndex(i).script.update(delta);
         }
@@ -100,11 +100,8 @@ public class Scene
 
         movementSystem.updatePositions(getComponentStorage(TransformComponent.class), getComponentStorage(MoveComponent.class), delta);
         movementSystem.syncBodyAndSpritePositions(getComponentStorage(PhysicalBodyComponent.class), getComponentStorage(SpriteComponent.class));
-    }
 
-    public void debugRender()
-    {
-        debugRenderer.render(physicalWorld, camera.combined);
+        gui.update(delta);
     }
 
     public int createEntity()
@@ -126,6 +123,6 @@ public class Scene
 
     public void dispose()
     {
-        debugRenderer.dispose();
+        gui.dispose();
     }
 }

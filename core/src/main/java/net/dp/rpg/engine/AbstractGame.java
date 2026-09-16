@@ -13,9 +13,4 @@ public abstract class AbstractGame
     }
 
     public abstract void create();
-
-    public void setActiveScene(Scene scene)
-    {
-        engine.setActiveScene(scene);
-    }
 }

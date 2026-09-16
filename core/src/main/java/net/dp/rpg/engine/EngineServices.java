@@ -4,8 +4,10 @@ import com.badlogic.gdx.assets.AssetManager;
 
 public interface EngineServices
 {
-    public void setActiveScene(Scene scene);
-    public AssetManager getAssetManager();
-    public Scene createScene();
-    public void exit();
+    void switchScene(Scene scene);
+    void setPhysicsDebug(boolean enabled);
+    void setGuiDebug(boolean enabled);
+    AssetManager getAssetManager();
+    Scene createScene();
+    void exit();
 }

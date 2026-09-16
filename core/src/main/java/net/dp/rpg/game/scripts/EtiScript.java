@@ -1,10 +1,9 @@
-package net.dp.rpg.game;
+package net.dp.rpg.game.scripts;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
-import net.dp.rpg.engine.Engine;
 import net.dp.rpg.engine.Script;
 import net.dp.rpg.engine.components.PhysicalBodyComponent;
 
@@ -30,10 +29,6 @@ public class EtiScript extends Script
         if(Gdx.input.isKeyPressed(Input.Keys.S))
         {
             direction.y -= 1;
-        }
-        if(Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE))
-        {
-            getEngine().exit();
         }
 
         direction.setLength(1);
