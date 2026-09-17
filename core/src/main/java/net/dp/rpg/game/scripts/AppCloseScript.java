@@ -1,9 +1,9 @@
 package net.dp.rpg.game.scripts;
 
 import com.badlogic.gdx.Gdx;
-import net.dp.rpg.engine.Script;
+import net.dp.rpg.engine.EntityScript;
 
-public class AppCloseScript extends Script
+public class AppCloseScript extends EntityScript
 {
     private final int closeKey;
 

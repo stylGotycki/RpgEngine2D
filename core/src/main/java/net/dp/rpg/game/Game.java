@@ -20,6 +20,7 @@ import net.dp.rpg.engine.bodyCreator.FixtureParams;
 import net.dp.rpg.engine.components.ScriptComponent;
 import net.dp.rpg.engine.components.SpriteComponent;
 import net.dp.rpg.game.scripts.EtiScript;
+import net.dp.rpg.game.scripts.ToggleFullScreenScript;
 
 public class Game extends AbstractGame
 {
@@ -27,7 +28,7 @@ public class Game extends AbstractGame
     public void create()
     {
         getEngine().getAssetManager().load("eti.png", Texture.class);
-        getEngine().getAssetManager().load("uiskin.json", Skin.class);
+        getEngine().getAssetManager().load("skins/default/default.json", Skin.class);
 
         getEngine().getAssetManager().finishLoading();
 
@@ -37,5 +38,7 @@ public class Game extends AbstractGame
         menuBuilder.build(getEngine(), scene);
 
         getEngine().switchScene(scene);
+
+        getEngine().setGlobalScript(new ToggleFullScreenScript());
     }
 }

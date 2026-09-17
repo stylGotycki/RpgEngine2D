@@ -1,12 +1,12 @@
 package net.dp.rpg.engine.components;
 
-import net.dp.rpg.engine.Script;
+import net.dp.rpg.engine.EntityScript;
 
 public class ScriptComponent implements Component
 {
-    public Script script;
+    public EntityScript script;
 
-    public ScriptComponent(Script script)
+    public ScriptComponent(EntityScript script)
     {
         this.script = script;
     }

@@ -47,11 +47,6 @@ public class Scene
         componentStorages.add(new ComponentStorage<>(ScriptComponent.class));
     }
 
-    public void resize(int width, int height)
-    {
-        gui.resize(width, height);
-    }
-
     public <T extends Component> void addComponent(int entity, T component)
     {
         getComponentStorage((Class<T>) component.getClass()).add(entity, component);
@@ -87,6 +82,23 @@ public class Scene
         return null;
     }
 
+    public int createEntity()
+    {
+        if(!freeEntity.isEmpty())
+            return freeEntity.getFirst();
+
+        return nextEntity++;
+    }
+
+    public void deleteEntity(int entityId)
+    {
+        freeEntity.add(entityId);
+        for(ComponentStorage<? extends Component> componentStorage : componentStorages)
+        {
+            componentStorage.remove(entityId);
+        }
+    }
+
     public void update(float delta)
     {
         ComponentStorage<ScriptComponent> scriptsStorage = getComponentStorage(ScriptComponent.class);
@@ -104,21 +116,11 @@ public class Scene
         gui.update(delta);
     }
 
-    public int createEntity()
+    public void resize(int width, int height)
     {
-        if(!freeEntity.isEmpty())
-            return freeEntity.getFirst();
-
-        return nextEntity++;
-    }
-
-    public void deleteEntity(int entityId)
-    {
-        freeEntity.add(entityId);
-        for(ComponentStorage<? extends Component> componentStorage : componentStorages)
-        {
-            componentStorage.remove(entityId);
-        }
+        gui.resize(width, height);
+        camera.viewportWidth = (float) width / height * camera.viewportHeight;
+        camera.update();
     }
 
     public void dispose()

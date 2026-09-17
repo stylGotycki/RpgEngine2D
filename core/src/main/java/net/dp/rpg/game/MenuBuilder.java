@@ -1,12 +1,8 @@
 package net.dp.rpg.game;
 
-import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
-import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
-import com.badlogic.gdx.scenes.scene2d.ui.Container;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import net.dp.rpg.engine.EngineServices;
@@ -26,16 +22,16 @@ public class MenuBuilder
         Gui gui = scene.getGui();
         Table guiTable = gui.getMainTable();
 
-        Skin guiSkin = engine.getAssetManager().get("uiskin.json");
+        Skin guiSkin = engine.getAssetManager().get("skins/default/default.json");
 
-        FreeTypeFontGenerator generator = new FreeTypeFontGenerator(Gdx.files.internal("EspiaHungaro.otf"));
-        FreeTypeFontGenerator.FreeTypeFontParameter parameter = new FreeTypeFontGenerator.FreeTypeFontParameter();
-        parameter.size = 96;
-        BitmapFont font = generator.generateFont(parameter);
-        generator.dispose();
-        guiSkin.add("EspiaHungaro.otf", font, BitmapFont.class);
-
-        guiSkin.get(Label.LabelStyle.class).font = guiSkin.getFont("EspiaHungaro.otf");
+//        FreeTypeFontGenerator generator = new FreeTypeFontGenerator(Gdx.files.internal("EspiaHungaro.otf"));
+//        FreeTypeFontGenerator.FreeTypeFontParameter parameter = new FreeTypeFontGenerator.FreeTypeFontParameter();
+//        parameter.size = 96;
+//        BitmapFont font = generator.generateFont(parameter);
+//        generator.dispose();
+//        guiSkin.add("EspiaHungaro.otf", font, BitmapFont.class);
+//
+//        guiSkin.get(Label.LabelStyle.class).font = guiSkin.getFont("EspiaHungaro.otf");
 
         // title
         Label title = new Label("THE DUNGEON", guiSkin);
@@ -64,7 +60,7 @@ public class MenuBuilder
             }
         });
 
-        // filling table
+        // filling table;
         guiTable.add(title).space(100);
         guiTable.row();
         guiTable.add(playButton).width(100).space(10);
