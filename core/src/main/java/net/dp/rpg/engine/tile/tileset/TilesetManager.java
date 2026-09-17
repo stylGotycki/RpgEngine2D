@@ -19,7 +19,7 @@ import net.dp.rpg.engine.tile.exception.UnknownTilesetException;
 
 public final class TilesetManager {
 
-  private final TilesetLoader loader;
+  private final TilesetSource source;
 
   private final TileTypeRegistry typeRegistry;
 
@@ -32,8 +32,8 @@ public final class TilesetManager {
   @Getter
   private String activeTilesetId;
 
-  public TilesetManager(TilesetLoader loader, TileTypeRegistry typeRegistry) {
-    if (loader == null) {
+  public TilesetManager(TilesetSource source, TileTypeRegistry typeRegistry) {
+    if (source == null) {
       throw new IllegalArgumentException("Tileset loader must not be null");
     }
 
@@ -41,7 +41,7 @@ public final class TilesetManager {
       throw new IllegalArgumentException("Tile type registry must not be null");
     }
 
-    this.loader = loader;
+    this.source = source;
     this.typeRegistry = typeRegistry;
   }
 
@@ -53,7 +53,7 @@ public final class TilesetManager {
       return cached;
     }
 
-    LoadedTileset loaded = loader.load(path);
+    LoadedTileset loaded = source.load(path);
     TilesetDefinition definition = loaded.definition();
 
     TilesetDefinition conflicting = tilesetsById.get(definition.id());

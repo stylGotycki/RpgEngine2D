@@ -1,7 +1,7 @@
 package net.dp.rpg.engine.tile.tileset;
 
 @FunctionalInterface
-public interface TilesetLoader {
+public interface TilesetSource {
 
   LoadedTileset load(String internalPath);
 }
