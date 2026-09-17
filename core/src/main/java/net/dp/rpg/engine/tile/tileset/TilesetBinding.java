@@ -110,6 +110,15 @@ public record TilesetBinding(Map<String, List<Integer>> localIdsByTypeId) {
     return Collections.unmodifiableMap(result);
   }
 
+  public Map<Integer, String> typeIdByLocalId() {
+    Map<Integer, String> result = new LinkedHashMap<>();
+
+    localIdsByTypeId.forEach((typeId, localIds) ->
+        localIds.forEach(localId -> result.put(localId, typeId)));
+
+    return Collections.unmodifiableMap(result);
+  }
+
   public static final class Builder {
 
     private final Map<String, List<Integer>> localIdsByTypeId = new LinkedHashMap<>();

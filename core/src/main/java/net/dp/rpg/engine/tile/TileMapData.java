@@ -10,7 +10,7 @@ import java.util.Set;
 import net.dp.rpg.engine.tile.exception.InvalidTileMapException;
 import net.dp.rpg.engine.tile.exception.UnknownTileLayerException;
 
-public record TileMapData(List<TileLayer> layers, Map<String, Object> properties) {
+public record TileMapData(List<TileLayer> layers, List<TileMapObject> objects, Map<String, Object> properties) {
 
   public TileMapData {
     if (layers == null || layers.isEmpty()) {
@@ -19,11 +19,12 @@ public record TileMapData(List<TileLayer> layers, Map<String, Object> properties
 
     layers = List.copyOf(layers);
     validateLayers(layers);
+    objects = objects == null ? List.of() : List.copyOf(objects);
     properties = copyProperties(properties);
   }
 
   public static TileMapData of(List<TileLayer> layers) {
-    return new TileMapData(layers, Map.of());
+    return new TileMapData(layers, List.of(), Map.of());
   }
 
   public int width() {
@@ -58,6 +59,12 @@ public record TileMapData(List<TileLayer> layers, Map<String, Object> properties
     return layers.stream().anyMatch(layer -> layer.name().equals(name));
   }
 
+  public List<TileMapObject> findObjects(String type) {
+    return objects.stream()
+        .filter(object -> object.isType(type))
+        .toList();
+  }
+
   public int topTileAt(int x, int y) {
     int result = TileGrid.EMPTY;
 
@@ -70,12 +77,6 @@ public record TileMapData(List<TileLayer> layers, Map<String, Object> properties
     }
 
     return result;
-  }
-
-  public List<String> layerNames() {
-    return layers.stream()
-        .map(TileLayer::name)
-        .toList();
   }
 
   public Set<Integer> usedRuntimeIds() {
@@ -96,6 +97,12 @@ public record TileMapData(List<TileLayer> layers, Map<String, Object> properties
     }
 
     return used;
+  }
+
+  public List<String> layerNames() {
+    return layers.stream()
+        .map(TileLayer::name)
+        .toList();
   }
 
   private static void validateLayers(List<TileLayer> layers) {
