@@ -78,6 +78,26 @@ public record TileMapData(List<TileLayer> layers, Map<String, Object> properties
         .toList();
   }
 
+  public Set<Integer> usedRuntimeIds() {
+    Set<Integer> used = new LinkedHashSet<>();
+
+    for (TileLayer layer : layers) {
+      TileGrid grid = layer.grid();
+
+      for (int y = 0; y < grid.getHeight(); y++) {
+        for (int x = 0; x < grid.getWidth(); x++) {
+          int value = grid.get(x, y);
+
+          if (value != TileGrid.EMPTY) {
+            used.add(value);
+          }
+        }
+      }
+    }
+
+    return used;
+  }
+
   private static void validateLayers(List<TileLayer> layers) {
     TileLayer first = layers.getFirst();
     int width = first.width();
