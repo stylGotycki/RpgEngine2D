@@ -29,7 +29,12 @@ public final class TileTypeRegistry {
       TileType existingType = types.get(existingRuntimeId);
 
       if (!existingType.equals(type)) {
-        throw new TileTypeConflictException(type.id(), existingType, type);
+        if (existingType.properties().equals(type.properties())) {
+          throw new TileTypeConflictException(type.id(), existingType, type);
+        }
+
+        throw TileTypeConflictException.ofProperties(
+            type.id(), existingType.properties(), type.properties());
       }
 
       return existingRuntimeId;

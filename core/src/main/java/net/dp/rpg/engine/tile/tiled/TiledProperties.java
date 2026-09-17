@@ -29,6 +29,9 @@ public final class TiledProperties {
 
   private final Map<String, Object> values;
 
+  private static final Set<String> CONSUMED = Set.of(
+      TILE_ID, ROLE, GENERATION_LAYER, WALKABLE, BLOCKS_SIGHT, TAGS, WEIGHT);
+
   private TiledProperties(Map<String, Object> values) {
     this.values = values;
   }
@@ -158,6 +161,18 @@ public final class TiledProperties {
     } catch (NumberFormatException exception) {
       throw new InvalidTiledFormatException("Invalid value of property '%s': %s".formatted(name, raw), exception);
     }
+  }
+
+  public Map<String, Object> extras() {
+    Map<String, Object> extras = new LinkedHashMap<>();
+
+    values.forEach((name, value) -> {
+      if (!CONSUMED.contains(name)) {
+        extras.put(name, value);
+      }
+    });
+
+    return Collections.unmodifiableMap(extras);
   }
 
   private static String rawValue(Element property) {

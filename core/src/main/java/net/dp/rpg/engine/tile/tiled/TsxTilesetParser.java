@@ -24,8 +24,6 @@ public final class TsxTilesetParser {
       throw InvalidTiledFormatException.unexpectedRoot(ROOT_ELEMENT, root.getName(), sourcePath);
     }
 
-    // The name attribute is the single source of tileset identity; a tilesetId property would be a
-    // second one, and the two would eventually disagree.
     String id = requireAttribute(root, "name", sourcePath);
     int tileWidth = root.getIntAttribute("tilewidth");
     int tileHeight = root.getIntAttribute("tileheight");
@@ -51,8 +49,7 @@ public final class TsxTilesetParser {
     }
 
     if (types.isEmpty()) {
-      throw new InvalidTiledFormatException(
-          "Tileset '%s' defines no usable tiles in %s".formatted(id, sourcePath));
+      throw new InvalidTiledFormatException("Tileset '%s' defines no usable tiles in %s".formatted(id, sourcePath));
     }
 
     TilesetDefinition definition = new TilesetDefinition(id, sourcePath, imagePath, tileWidth,
@@ -84,7 +81,7 @@ public final class TsxTilesetParser {
         .blocksSight(properties.getBoolean(TiledProperties.BLOCKS_SIGHT))
         .defaultWeight(properties.getDouble(TiledProperties.WEIGHT))
         .tags(properties.getTags(TiledProperties.TAGS))
-        .properties(properties.asMap())
+        .properties(properties.extras())
         .build();
 
     types.add(type);

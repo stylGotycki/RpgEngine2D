@@ -127,6 +127,7 @@
 
     <tile id="10">
         <properties>
+            <property name="damage" type="int" value="1"/>
             <property name="generationLayer" value="details"/>
             <property name="role" value="HAZARD"/>
             <property name="tags" value="detail,hazard,trap,spikes"/>
