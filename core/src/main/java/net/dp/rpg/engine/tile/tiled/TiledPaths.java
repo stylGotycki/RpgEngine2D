@@ -53,4 +53,35 @@ public final class TiledPaths {
 
     return String.join("/", segments);
   }
+
+  public static String relativize(String fromFile, String target) {
+    String[] fromSegments = split(parentOf(fromFile));
+    String[] targetSegments = split(target.replace('\\', '/'));
+
+    int common = 0;
+
+    while (common < fromSegments.length
+        && common < targetSegments.length - 1
+        && fromSegments[common].equals(targetSegments[common])) {
+      common++;
+    }
+
+    StringBuilder builder = new StringBuilder();
+
+    builder.repeat("../", Math.max(0, fromSegments.length - common));
+
+    for (int i = common; i < targetSegments.length; i++) {
+      builder.append(targetSegments[i]);
+
+      if (i < targetSegments.length - 1) {
+        builder.append('/');
+      }
+    }
+
+    return builder.isEmpty() ? fileNameOf(target) : builder.toString();
+  }
+
+  private static String[] split(String path) {
+    return path.isEmpty() ? new String[0] : path.split("/");
+  }
 }
