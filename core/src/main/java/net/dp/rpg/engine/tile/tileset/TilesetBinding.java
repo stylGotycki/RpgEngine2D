@@ -81,7 +81,7 @@ public record TilesetBinding(Map<String, List<Integer>> localIdsByTypeId) {
     return variants;
   }
 
-  private static int variantIndex(int variantCount, int x, int y, long seed) {
+  public static int variantIndex(int variantCount, int x, int y, long seed) {
     long hash = seed * 0x9e3779b97f4a7c15L + x;
 
     hash = hash * 0x9e3779b97f4a7c15L + y;
