@@ -1,8 +1,5 @@
 package net.dp.rpg.engine.tile.tiled;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 import net.dp.rpg.engine.tile.TileGrid;
 import net.dp.rpg.engine.tile.TileLayer;
 import net.dp.rpg.engine.tile.TileMapData;
@@ -11,6 +8,10 @@ import net.dp.rpg.engine.tile.TileTypeRegistry;
 import net.dp.rpg.engine.tile.exception.TilesetCoverageException;
 import net.dp.rpg.engine.tile.tileset.TilesetBinding;
 import net.dp.rpg.engine.tile.tileset.TilesetDefinition;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 public final class TmxMapWriter {
 

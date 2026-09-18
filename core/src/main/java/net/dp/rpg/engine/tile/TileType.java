@@ -1,12 +1,10 @@
 package net.dp.rpg.engine.tile;
 
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.Map;
-import java.util.Set;
 import lombok.Builder;
 import net.dp.rpg.engine.tile.exception.InvalidTileDefinitionException;
+
+import java.util.Map;
+import java.util.Set;
 
 public record TileType(String id, TileRole role, TileLayerKind layer, boolean walkable,
                        boolean blocksSight, double defaultWeight, Set<String> tags, Map<String, Object> properties) {

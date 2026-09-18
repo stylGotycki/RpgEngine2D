@@ -1,11 +1,12 @@
 package net.dp.rpg.engine.tile.tiled;
 
+import net.dp.rpg.engine.tile.exception.InvalidTiledFormatException;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Base64;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.Inflater;
-import net.dp.rpg.engine.tile.exception.InvalidTiledFormatException;
 
 public final class TiledGids {
 

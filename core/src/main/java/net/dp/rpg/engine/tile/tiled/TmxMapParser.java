@@ -1,8 +1,6 @@
 package net.dp.rpg.engine.tile.tiled;
 
 import com.badlogic.gdx.utils.XmlReader.Element;
-import java.util.ArrayList;
-import java.util.List;
 import net.dp.rpg.engine.tile.TileGrid;
 import net.dp.rpg.engine.tile.TileLayer;
 import net.dp.rpg.engine.tile.TileLayerKind;
@@ -12,6 +10,9 @@ import net.dp.rpg.engine.tile.TileTypeRegistry;
 import net.dp.rpg.engine.tile.exception.InvalidTiledFormatException;
 import net.dp.rpg.engine.tile.tileset.TilesetDefinition;
 import net.dp.rpg.engine.tile.tileset.TilesetManager;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public final class TmxMapParser {
 

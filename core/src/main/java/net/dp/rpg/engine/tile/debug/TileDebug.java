@@ -1,10 +1,5 @@
 package net.dp.rpg.engine.tile.debug;
 
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.function.IntFunction;
-
 import net.dp.rpg.engine.tile.TileGrid;
 import net.dp.rpg.engine.tile.TileLayer;
 import net.dp.rpg.engine.tile.TileMapData;
@@ -14,6 +9,11 @@ import net.dp.rpg.engine.tile.TileType;
 import net.dp.rpg.engine.tile.TileTypeRegistry;
 import net.dp.rpg.engine.tile.tileset.TilesetDefinition;
 import net.dp.rpg.engine.tile.tileset.TilesetManager;
+
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.function.IntFunction;
 
 public final class TileDebug {
 

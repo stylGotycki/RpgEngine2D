@@ -86,7 +86,8 @@ final class XmlWriter {
     if (startTagPending) {
       out.append("/>").append(NEW_LINE);
       startTagPending = false;
-    } else {
+    }
+    else {
       indent();
       out.append("</").append(name).append('>').append(NEW_LINE);
     }

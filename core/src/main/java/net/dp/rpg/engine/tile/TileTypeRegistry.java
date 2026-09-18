@@ -1,5 +1,8 @@
 package net.dp.rpg.engine.tile;
 
+import net.dp.rpg.engine.tile.exception.TileTypeConflictException;
+import net.dp.rpg.engine.tile.exception.UnknownTileTypeException;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -7,8 +10,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import net.dp.rpg.engine.tile.exception.TileTypeConflictException;
-import net.dp.rpg.engine.tile.exception.UnknownTileTypeException;
 
 public final class TileTypeRegistry {
 

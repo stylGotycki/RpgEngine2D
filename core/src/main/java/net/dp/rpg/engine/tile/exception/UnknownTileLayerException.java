@@ -8,10 +8,6 @@ public class UnknownTileLayerException extends TileException {
     super(message);
   }
 
-  public static UnknownTileLayerException byName(String name, Collection<String> available) {
-    return new UnknownTileLayerException("Unknown tile layer '%s', available: %s".formatted(name, available));
-  }
-
   public static UnknownTileLayerException byKind(Object kind, Collection<String> available) {
     return new UnknownTileLayerException("Map has no %s layer, available: %s".formatted(kind, available));
   }

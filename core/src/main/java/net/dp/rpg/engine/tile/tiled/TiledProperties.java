@@ -1,13 +1,14 @@
 package net.dp.rpg.engine.tile.tiled;
 
 import com.badlogic.gdx.utils.XmlReader.Element;
+import net.dp.rpg.engine.tile.exception.InvalidTiledFormatException;
+
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
-import net.dp.rpg.engine.tile.exception.InvalidTiledFormatException;
 
 public final class TiledProperties {
 

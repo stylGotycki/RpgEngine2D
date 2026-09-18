@@ -2,8 +2,6 @@ package net.dp.rpg.engine.tile;
 
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import java.util.Arrays;
-import java.util.List;
 import net.dp.rpg.engine.tile.debug.TileDebug;
 import net.dp.rpg.engine.tile.render.TileMapRenderer;
 import net.dp.rpg.engine.tile.render.TilePalette;
@@ -15,6 +13,9 @@ import net.dp.rpg.engine.tile.tiled.TsxTilesetSource;
 import net.dp.rpg.engine.tile.tileset.TilesetDefinition;
 import net.dp.rpg.engine.tile.tileset.TilesetManager;
 import net.dp.rpg.engine.tile.tileset.TilesetSource;
+
+import java.util.Arrays;
+import java.util.List;
 
 public final class TileSystem {
 

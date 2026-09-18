@@ -1,10 +1,10 @@
 package net.dp.rpg.engine.tile.tileset;
 
+import net.dp.rpg.engine.tile.exception.InvalidTilesetException;
+
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
-
-import net.dp.rpg.engine.tile.exception.InvalidTilesetException;
 
 public record TilesetDefinition(String id, String sourcePath, String imagePath, int tileWidth,
                                 int tileHeight, int columns, int tileCount, int spacing, int margin,

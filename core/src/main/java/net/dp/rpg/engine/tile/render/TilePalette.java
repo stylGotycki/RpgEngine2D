@@ -1,11 +1,11 @@
 package net.dp.rpg.engine.tile.render;
 
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
-import java.util.List;
-
 import lombok.Getter;
 import net.dp.rpg.engine.tile.TileTypeRegistry;
 import net.dp.rpg.engine.tile.tileset.TilesetBinding;
+
+import java.util.List;
 
 public final class TilePalette {
 

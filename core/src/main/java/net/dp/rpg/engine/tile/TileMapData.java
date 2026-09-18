@@ -1,12 +1,13 @@
 package net.dp.rpg.engine.tile;
 
+import net.dp.rpg.engine.tile.exception.InvalidTileMapException;
+import net.dp.rpg.engine.tile.exception.UnknownTileLayerException;
+
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import net.dp.rpg.engine.tile.exception.InvalidTileMapException;
-import net.dp.rpg.engine.tile.exception.UnknownTileLayerException;
 
 public record TileMapData(List<TileLayer> layers, List<TileMapObject> objects, Map<String, Object> properties) {
 

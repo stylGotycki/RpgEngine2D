@@ -1,5 +1,7 @@
 package net.dp.rpg.engine.tile.room;
 
+import net.dp.rpg.engine.tile.exception.InvalidRoomShapeException;
+
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -9,7 +11,6 @@ import java.util.Deque;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
-import net.dp.rpg.engine.tile.exception.InvalidRoomShapeException;
 
 public record RoomShape(Set<RoomCell> cells, int cellsAcross, int cellsDown) {
 

@@ -1,10 +1,11 @@
 package net.dp.rpg.engine.tile.tiled;
 
-import java.util.Map;
 import net.dp.rpg.engine.tile.TileGrid;
 import net.dp.rpg.engine.tile.TileTypeRegistry;
 import net.dp.rpg.engine.tile.exception.InvalidTiledFormatException;
 import net.dp.rpg.engine.tile.tileset.TilesetDefinition;
+
+import java.util.Map;
 
 public final class GidResolver {
 

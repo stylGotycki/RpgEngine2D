@@ -1,8 +1,6 @@
 package net.dp.rpg.engine.tile.tiled;
 
 import com.badlogic.gdx.utils.XmlReader.Element;
-import java.util.ArrayList;
-import java.util.List;
 import net.dp.rpg.engine.tile.TileLayerKind;
 import net.dp.rpg.engine.tile.TileRole;
 import net.dp.rpg.engine.tile.TileType;
@@ -10,6 +8,9 @@ import net.dp.rpg.engine.tile.exception.InvalidTiledFormatException;
 import net.dp.rpg.engine.tile.tileset.LoadedTileset;
 import net.dp.rpg.engine.tile.tileset.TilesetBinding;
 import net.dp.rpg.engine.tile.tileset.TilesetDefinition;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public final class TsxTilesetParser {
 

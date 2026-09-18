@@ -1,5 +1,7 @@
 package net.dp.rpg.engine.tile.tileset;
 
+import net.dp.rpg.engine.tile.exception.InvalidTilesetException;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -7,7 +9,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import net.dp.rpg.engine.tile.exception.InvalidTilesetException;
 
 public record TilesetBinding(Map<String, List<Integer>> localIdsByTypeId) {
 

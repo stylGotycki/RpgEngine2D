@@ -1,7 +1,5 @@
 package net.dp.rpg.engine.tile;
 
-import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 public record TileMapObject(int id, String name, String type, float x, float y, float width, float height,

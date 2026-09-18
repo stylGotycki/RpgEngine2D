@@ -1,7 +1,8 @@
 package net.dp.rpg.engine.tile.tileset;
 
-import java.util.List;
 import net.dp.rpg.engine.tile.TileType;
+
+import java.util.List;
 
 public record LoadedTileset(TilesetDefinition definition, List<TileType> types) {
 

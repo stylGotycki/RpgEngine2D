@@ -1,5 +1,12 @@
 package net.dp.rpg.engine.tile.tileset;
 
+import lombok.Getter;
+import net.dp.rpg.engine.tile.TileType;
+import net.dp.rpg.engine.tile.TileTypeRegistry;
+import net.dp.rpg.engine.tile.exception.InvalidTilesetException;
+import net.dp.rpg.engine.tile.exception.TilesetCoverageException;
+import net.dp.rpg.engine.tile.exception.UnknownTilesetException;
+
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -7,13 +14,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-
-import lombok.Getter;
-import net.dp.rpg.engine.tile.TileType;
-import net.dp.rpg.engine.tile.TileTypeRegistry;
-import net.dp.rpg.engine.tile.exception.InvalidTilesetException;
-import net.dp.rpg.engine.tile.exception.TilesetCoverageException;
-import net.dp.rpg.engine.tile.exception.UnknownTilesetException;
 
 public final class TilesetManager {
 

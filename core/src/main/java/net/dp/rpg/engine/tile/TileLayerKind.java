@@ -1,7 +1,8 @@
 package net.dp.rpg.engine.tile;
 
-import java.util.Locale;
 import net.dp.rpg.engine.tile.exception.InvalidTileDefinitionException;
+
+import java.util.Locale;
 
 public enum TileLayerKind {
 
