@@ -1,6 +1,7 @@
 package net.dp.rpg.demo.floor;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -62,12 +63,18 @@ public final class DemoRoomPainter {
 
     scatter(ground, details, random);
 
+    Map<String, Object> properties = new LinkedHashMap<>();
+
+    properties.put("roomId", draft.getId());
+    properties.put("cells", shape.size());
+    properties.put(RoomShapes.SHAPE_PROPERTY, RoomShapes.encode(shape));
+
     TileMapData map = new TileMapData(
         List.of(
             new TileLayer("Ground", TileLayerKind.GROUND, ground),
             new TileLayer("Details", TileLayerKind.DETAILS, details)),
         markers(draft, shape),
-        Map.of("roomId", draft.getId(), "cells", shape.size()));
+        properties);
 
     return new DemoRoom(draft.getId(), shape, draft.getOrigin(), draft.getDoors(), map);
   }

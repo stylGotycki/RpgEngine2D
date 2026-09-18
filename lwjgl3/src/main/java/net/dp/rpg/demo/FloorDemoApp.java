@@ -15,6 +15,7 @@ import java.util.Set;
 import net.dp.rpg.demo.floor.DemoFloorGenerator;
 import net.dp.rpg.demo.floor.DemoRoom;
 import net.dp.rpg.demo.floor.DemoRoomPainter;
+import net.dp.rpg.demo.floor.RoomShapes;
 import net.dp.rpg.engine.tile.TileMapData;
 import net.dp.rpg.engine.tile.TileSystem;
 import net.dp.rpg.engine.tile.debug.GdxTileLogger;
@@ -31,7 +32,8 @@ public final class FloorDemoApp extends ApplicationAdapter {
 
   private static final String[] TILESET_PATHS = {"tiles/terrain.tsx", "tiles/basement.tsx"};
 
-  private static final String MAP_PATH = "maps/room-19x13.tmx";
+  // private static final String MAP_PATH = "maps/room-19x13.tmx";
+  private static final String MAP_PATH = "export/floor1/room-01.tmx";
 
   private static final long SEED = 20260918L;
 
@@ -202,16 +204,21 @@ public final class FloorDemoApp extends ApplicationAdapter {
     }
 
     TileMapData map = tiles.loadMap(MAP_PATH);
+    RoomShape shape;
 
-    if (map.width() != RoomGeometry.CELL_WIDTH || map.height() != RoomGeometry.CELL_HEIGHT) {
-      logger.log("Warning: %s is %dx%d, expected one cell of %dx%d".formatted(MAP_PATH,
-          map.width(), map.height(), RoomGeometry.CELL_WIDTH, RoomGeometry.CELL_HEIGHT));
+    try {
+      shape = RoomShapes.of(map);
+    } catch (TileException exception) {
+      logger.log("Cannot recover a room shape from %s, treating it as one cell: %s".formatted(MAP_PATH, exception.getMessage()));
+
+      shape = RoomShape.single();
     }
 
-    rooms.add(new DemoRoom(rooms.size(), RoomShape.single(), RoomCell.ORIGIN, Set.of(), map));
+    rooms.add(new DemoRoom(rooms.size(), shape, RoomCell.ORIGIN, Set.of(), map));
     mapLoaded = true;
 
-    logger.log("Loaded %s as room %d".formatted(MAP_PATH, rooms.size() - 1));
+    logger.log("Loaded %s as room %d: %dx%d tiles, shape %s".formatted(MAP_PATH,
+        rooms.size() - 1, map.width(), map.height(), RoomShapes.encode(shape)));
 
     showRoom(rooms.size() - 1);
   }
