@@ -3,6 +3,8 @@ package net.dp.rpg.engine;
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.assets.AssetManager;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.utils.Array;
 import lombok.Getter;
 import lombok.Setter;
 import net.dp.rpg.engine.systems.RenderSystem;
@@ -34,6 +36,7 @@ public class Engine extends ApplicationAdapter implements EngineServices
     {
         if(activeScene != null)
             activeScene.dispose();
+        scene.getGui().getMainTable().setDebug(guiDebug);
         activeScene = scene;
     }
 
@@ -41,14 +44,26 @@ public class Engine extends ApplicationAdapter implements EngineServices
     public Scene createScene()
     {
         Scene scene = new Scene(this);
-        scene.getGui().getMainTable().setDebug(guiDebug);
         return scene;
     }
 
     public void setGuiDebug(boolean enabled)
     {
         guiDebug = enabled;
-        activeScene.getGui().getMainTable().setDebug(enabled);
+        if(activeScene != null)
+            activeScene.getGui().getMainTable().setDebug(enabled);
+    }
+
+    @Override
+    public void setTextureFilters(Texture.TextureFilter minFilter, Texture.TextureFilter magFilter)
+    {
+        com.badlogic.gdx.utils.Array<Texture> textures = new Array<>();
+
+        assetManager.getAll(Texture.class, textures);
+        for(Texture texture : textures)
+        {
+            texture.setFilter(minFilter, magFilter);
+        }
     }
 
     @Override

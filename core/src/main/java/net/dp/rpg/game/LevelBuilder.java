@@ -19,7 +19,7 @@ import net.dp.rpg.game.scripts.EtiScript;
 
 public class LevelBuilder
 {
-    void build(EngineServices engine, Scene scene)
+    public void build(EngineServices engine, Scene scene)
     {
         float cameraSize = 40;
         OrthographicCamera camera = new OrthographicCamera(cameraSize, (float) Gdx.graphics.getHeight()/Gdx.graphics.getWidth() * cameraSize);
