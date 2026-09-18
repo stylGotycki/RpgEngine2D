@@ -33,7 +33,4 @@ public enum Direction {
     };
   }
 
-  public boolean isHorizontal() {
-    return this == EAST || this == WEST;
-  }
 }

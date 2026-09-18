@@ -119,10 +119,6 @@ public final class TileGrid {
     return new TileGrid(width, height, cells.clone());
   }
 
-  public int[] copyCells() {
-    return cells.clone();
-  }
-
   public int size() {
     return cells.length;
   }
@@ -132,18 +128,6 @@ public final class TileGrid {
 
     for (int cell : cells) {
       if (cell != EMPTY) {
-        count++;
-      }
-    }
-
-    return count;
-  }
-
-  public int count(int runtimeTileId) {
-    int count = 0;
-
-    for (int cell : cells) {
-      if (cell == runtimeTileId) {
         count++;
       }
     }

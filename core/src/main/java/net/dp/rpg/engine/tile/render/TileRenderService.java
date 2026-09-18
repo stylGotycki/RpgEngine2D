@@ -38,7 +38,7 @@ public final class TileRenderService implements Disposable {
     return TilePalette.build(typeRegistry, atlas(tilesetId), variantSeed);
   }
 
-  public TilesetAtlas atlas(String tilesetId) {
+  private TilesetAtlas atlas(String tilesetId) {
     return atlasesByTilesetId.computeIfAbsent(tilesetId,
         id -> TilesetAtlas.load(tilesetManager.require(id)));
   }

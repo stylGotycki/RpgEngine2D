@@ -44,10 +44,6 @@ public final class TilesetAtlas implements Disposable {
     }
   }
 
-  public String getTilesetId() {
-    return definition.id();
-  }
-
   public TextureRegion region(int localId) {
     if (localId < 0 || localId >= regionsByLocalId.length) {
       throw new InvalidTilesetException("Local tile id %d is outside tileset '%s' holding %d tiles"

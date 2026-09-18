@@ -72,10 +72,4 @@ public final class TilePalette {
     return regions[TilesetBinding.variantIndex(regions.length, x, y, seed)];
   }
 
-  public boolean canDraw(int runtimeId) {
-    return runtimeId >= 0
-        && runtimeId < variantsByRuntimeId.length
-        && variantsByRuntimeId[runtimeId] != null;
-  }
-
 }

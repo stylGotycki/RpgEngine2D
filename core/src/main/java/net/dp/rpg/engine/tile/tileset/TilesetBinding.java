@@ -31,10 +31,6 @@ public record TilesetBinding(Map<String, List<Integer>> localIdsByTypeId) {
     return localIdsByTypeId.getOrDefault(tileTypeId, List.of());
   }
 
-  public int variantCount(String tileTypeId) {
-    return variants(tileTypeId).size();
-  }
-
   public int localId(String tileTypeId) {
     List<Integer> variants = requireVariants(tileTypeId);
 
@@ -49,10 +45,6 @@ public record TilesetBinding(Map<String, List<Integer>> localIdsByTypeId) {
     }
 
     return variants.get(variantIndex(variants.size(), x, y, seed));
-  }
-
-  public Set<String> coveredTypeIds() {
-    return localIdsByTypeId.keySet();
   }
 
   public List<String> findMissing(Iterable<String> requiredTypeIds) {

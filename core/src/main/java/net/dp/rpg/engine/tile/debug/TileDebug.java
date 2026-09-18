@@ -155,7 +155,7 @@ public final class TileDebug {
         runtimeId -> typeRegistry.require(runtimeId).walkable() ? " " : "#");
   }
 
-  public IntFunction<String> roleSymbols() {
+  private IntFunction<String> roleSymbols() {
     return runtimeId -> switch (typeRegistry.require(runtimeId).role()) {
       case FLOOR -> "-";
       case WALL -> "#";

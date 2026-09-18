@@ -22,14 +22,14 @@ public final class TiledPaths {
     return normalize(parentOf(sourcePath) + "/" + normalized);
   }
 
-  public static String parentOf(String path) {
+  private static String parentOf(String path) {
     String normalized = path.replace('\\', '/');
     int lastSlash = normalized.lastIndexOf('/');
 
     return lastSlash < 0 ? "" : normalized.substring(0, lastSlash);
   }
 
-  public static String fileNameOf(String path) {
+  private static String fileNameOf(String path) {
     String normalized = path.replace('\\', '/');
 
     return normalized.substring(normalized.lastIndexOf('/') + 1);

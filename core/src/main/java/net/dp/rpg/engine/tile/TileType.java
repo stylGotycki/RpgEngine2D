@@ -54,16 +54,6 @@ public record TileType(String id, TileRole role, TileLayerKind layer, boolean wa
     return tags.contains(tag);
   }
 
-  public boolean isRole(TileRole... candidates) {
-    for (TileRole candidate : candidates) {
-      if (role == candidate) {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
   private static Set<String> copyTags(Set<String> source) {
     if (source == null || source.isEmpty()) {
       return Set.of();

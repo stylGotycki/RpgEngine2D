@@ -14,7 +14,7 @@ public final class TiledGids {
   private TiledGids() {
   }
 
-  public static int stripFlags(long rawGid) {
+  private static int stripFlags(long rawGid) {
     return (int) (rawGid & FLAG_MASK);
   }
 

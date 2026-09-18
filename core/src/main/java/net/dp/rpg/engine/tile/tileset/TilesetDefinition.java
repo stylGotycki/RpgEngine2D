@@ -29,7 +29,7 @@ public record TilesetDefinition(String id, String sourcePath, String imagePath, 
     properties = copyProperties(properties);
   }
 
-  public int rows() {
+  private int rows() {
     return (tileCount + columns - 1) / columns;
   }
 
@@ -43,11 +43,11 @@ public record TilesetDefinition(String id, String sourcePath, String imagePath, 
     return margin * 2 + rows * tileHeight + Math.max(0, rows - 1) * spacing;
   }
 
-  public int columnOf(int localId) {
+  private int columnOf(int localId) {
     return localId % columns;
   }
 
-  public int rowOf(int localId) {
+  private int rowOf(int localId) {
     return localId / columns;
   }
 

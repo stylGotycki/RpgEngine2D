@@ -17,14 +17,6 @@ public record TileMapObject(int id, String name, String type, float x, float y, 
     return width == 0.0f && height == 0.0f;
   }
 
-  public int cellX() {
-    return (int) Math.floor(x);
-  }
-
-  public int cellY() {
-    return (int) Math.floor(y);
-  }
-
   public boolean isType(String candidate) {
     return type.equals(candidate);
   }

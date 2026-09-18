@@ -70,10 +70,6 @@ public final class TiledProperties {
     return values.isEmpty();
   }
 
-  public boolean has(String name) {
-    return values.containsKey(name);
-  }
-
   public String getString(String name) {
     Object value = values.get(name);
 

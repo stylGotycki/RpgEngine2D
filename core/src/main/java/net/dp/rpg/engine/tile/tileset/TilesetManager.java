@@ -1,6 +1,5 @@
 package net.dp.rpg.engine.tile.tileset;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -8,7 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Consumer;
 
 import lombok.Getter;
 import net.dp.rpg.engine.tile.TileType;
@@ -27,14 +25,12 @@ public final class TilesetManager {
 
   private final Map<String, TilesetDefinition> tilesetsByPath = new LinkedHashMap<>();
 
-  private final List<Consumer<TilesetDefinition>> changeListeners = new ArrayList<>();
-
   @Getter
   private String activeTilesetId;
 
   public TilesetManager(TilesetSource source, TileTypeRegistry typeRegistry) {
     if (source == null) {
-      throw new IllegalArgumentException("Tileset loader must not be null");
+      throw new IllegalArgumentException("Tileset source must not be null");
     }
 
     if (typeRegistry == null) {
@@ -91,10 +87,6 @@ public final class TilesetManager {
     return Optional.ofNullable(tilesetsById.get(tilesetId));
   }
 
-  public boolean isLoaded(String tilesetId) {
-    return tilesetId != null && tilesetsById.containsKey(tilesetId);
-  }
-
   public TilesetDefinition requireActive() {
     if (activeTilesetId == null) {
       throw UnknownTilesetException.noActive();
@@ -109,7 +101,6 @@ public final class TilesetManager {
     validateCoverage(definition, requiredTypeIds);
 
     activeTilesetId = tilesetId;
-    changeListeners.forEach(listener -> listener.accept(definition));
 
     return definition;
   }
@@ -122,28 +113,12 @@ public final class TilesetManager {
     validateCoverage(require(tilesetId), requiredTypeIds);
   }
 
-  public List<String> findMissingCoverage(String tilesetId, Collection<String> requiredTypeIds) {
-    return require(tilesetId).binding().findMissing(requiredTypeIds);
-  }
-
   public Set<String> toTypeIds(Collection<Integer> runtimeIds) {
     Set<String> typeIds = new LinkedHashSet<>();
 
     runtimeIds.forEach(runtimeId -> typeIds.add(typeRegistry.require(runtimeId).id()));
 
     return typeIds;
-  }
-
-  public void addChangeListener(Consumer<TilesetDefinition> listener) {
-    if (listener == null) {
-      throw new IllegalArgumentException("Listener must not be null");
-    }
-
-    changeListeners.add(listener);
-  }
-
-  public void removeChangeListener(Consumer<TilesetDefinition> listener) {
-    changeListeners.remove(listener);
   }
 
   public List<TilesetDefinition> getLoaded() {
@@ -154,30 +129,13 @@ public final class TilesetManager {
     return tilesetsById.size();
   }
 
-  public boolean unload(String tilesetId) {
-    TilesetDefinition removed = tilesetsById.remove(tilesetId);
-
-    if (removed == null) {
-      return false;
-    }
-
-    tilesetsByPath.entrySet().removeIf(entry -> entry.getValue() == removed);
-
-    if (tilesetId.equals(activeTilesetId)) {
-      activeTilesetId = tilesetsById.isEmpty() ? null : tilesetsById.keySet().iterator().next();
-    }
-
-    return true;
-  }
-
   public void clear() {
     tilesetsById.clear();
     tilesetsByPath.clear();
     activeTilesetId = null;
   }
 
-  private static void validateCoverage(TilesetDefinition definition,
-                                       Collection<String> requiredTypeIds) {
+  private static void validateCoverage(TilesetDefinition definition, Collection<String> requiredTypeIds) {
     if (requiredTypeIds == null || requiredTypeIds.isEmpty()) {
       return;
     }
