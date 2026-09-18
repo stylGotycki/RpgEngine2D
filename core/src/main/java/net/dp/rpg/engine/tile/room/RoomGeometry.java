@@ -2,9 +2,9 @@ package net.dp.rpg.engine.tile.room;
 
 public final class RoomGeometry {
 
-  public static final int CELL_WIDTH = 25;
+  public static final int CELL_WIDTH = 19;
 
-  public static final int CELL_HEIGHT = 19;
+  public static final int CELL_HEIGHT = 13;
 
   public static final int CENTER_X = CELL_WIDTH / 2;
 

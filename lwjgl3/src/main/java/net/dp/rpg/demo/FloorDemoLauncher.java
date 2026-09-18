@@ -17,7 +17,7 @@ public final class FloorDemoLauncher {
     Lwjgl3ApplicationConfiguration configuration = new Lwjgl3ApplicationConfiguration();
 
     configuration.setTitle("Floor demo");
-    configuration.setWindowedMode(1000, 760);
+    configuration.setWindowedMode(1216, 832);
     configuration.useVsync(true);
     configuration.setForegroundFPS(60);
 

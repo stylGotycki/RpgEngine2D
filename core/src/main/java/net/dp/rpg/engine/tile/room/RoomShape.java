@@ -3,6 +3,8 @@ package net.dp.rpg.engine.tile.room;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Deque;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -16,7 +18,7 @@ public record RoomShape(Set<RoomCell> cells, int cellsAcross, int cellsDown) {
       throw new InvalidRoomShapeException("Room shape must contain at least one cell");
     }
 
-    cells = Set.copyOf(cells);
+    cells = Collections.unmodifiableSet(new LinkedHashSet<>(cells));
   }
 
   public static RoomShape of(Collection<RoomCell> cells) {
@@ -72,6 +74,12 @@ public record RoomShape(Set<RoomCell> cells, int cellsAcross, int cellsDown) {
     return RoomGeometry.tileHeight(cellsDown);
   }
 
+  public RoomCell topLeftCell() {
+    return cells.stream()
+        .min(Comparator.comparingInt(RoomCell::y).thenComparingInt(RoomCell::x))
+        .orElseThrow();
+  }
+
   public List<RoomEdge> outerEdges() {
     List<RoomEdge> edges = new ArrayList<>();
 
@@ -119,9 +127,8 @@ public record RoomShape(Set<RoomCell> cells, int cellsAcross, int cellsDown) {
     }
 
     if (seen.size() != cells.size()) {
-      throw new InvalidRoomShapeException(
-          "Room shape is not connected: %d of %d cells are unreachable"
-              .formatted(cells.size() - seen.size(), cells.size()));
+      throw new InvalidRoomShapeException("Room shape is not connected: %d of %d cells are unreachable"
+          .formatted(cells.size() - seen.size(), cells.size()));
     }
   }
 }

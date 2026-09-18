@@ -20,6 +20,14 @@ public record RoomCell(int x, int y) {
     return RoomGeometry.originYOf(y);
   }
 
+  public int centerTileX() {
+    return tileOriginX() + RoomGeometry.CENTER_X;
+  }
+
+  public int centerTileY() {
+    return tileOriginY() + RoomGeometry.CENTER_Y;
+  }
+
   public int doorTileX(Direction direction) {
     return switch (direction) {
       case NORTH, SOUTH -> tileOriginX() + RoomGeometry.CENTER_X;

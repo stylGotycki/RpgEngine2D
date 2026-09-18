@@ -7,8 +7,10 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
+
 import java.util.ArrayList;
 import java.util.List;
+
 import net.dp.rpg.demo.floor.DemoFloorGenerator;
 import net.dp.rpg.demo.floor.DemoRoom;
 import net.dp.rpg.demo.floor.DemoRoomPainter;
@@ -19,7 +21,10 @@ import net.dp.rpg.engine.tile.debug.TileLogger;
 import net.dp.rpg.engine.tile.exception.TileException;
 import net.dp.rpg.engine.tile.render.TileMapRenderer;
 import net.dp.rpg.engine.tile.render.TileRenderService;
+import net.dp.rpg.engine.tile.room.Direction;
+import net.dp.rpg.engine.tile.room.RoomCell;
 import net.dp.rpg.engine.tile.room.RoomEdge;
+import net.dp.rpg.engine.tile.room.RoomGeometry;
 import net.dp.rpg.engine.tile.tiled.TmxMapExporter;
 import net.dp.rpg.engine.tile.tiled.TsxTilesetSource;
 import net.dp.rpg.engine.tile.tileset.TilesetDefinition;
@@ -53,6 +58,8 @@ public final class FloorDemoApp extends ApplicationAdapter {
 
   private Viewport viewport;
 
+  private RoomCell focusCell;
+
   private int activeRoom;
 
   private int activeTileset;
@@ -72,6 +79,9 @@ public final class FloorDemoApp extends ApplicationAdapter {
     generateFloor();
 
     camera = new OrthographicCamera();
+
+    viewport = new FitViewport(RoomGeometry.CELL_WIDTH, RoomGeometry.CELL_HEIGHT, camera);
+
     renderService = new TileRenderService(tilesetManager, typeRegistry, SEED);
     renderer = new TileMapRenderer(renderService.palette(tilesetIds.getFirst()));
 
@@ -111,7 +121,7 @@ public final class FloorDemoApp extends ApplicationAdapter {
   @Override
   public void resize(int width, int height) {
     if (viewport != null) {
-      viewport.update(width, height, true);
+      viewport.update(width, height);
     }
   }
 
@@ -143,12 +153,50 @@ public final class FloorDemoApp extends ApplicationAdapter {
       swapTileset();
     }
 
-    if (Gdx.input.isKeyJustPressed(Input.Keys.D)) {
-      logger.log(debug.dump(rooms.get(activeRoom).map()));
-    }
-
     if (Gdx.input.isKeyJustPressed(Input.Keys.E)) {
       exportFloor();
+    }
+
+    handleFocusInput();
+    handleDebugInput();
+  }
+
+  private void handleFocusInput() {
+    DemoRoom room = rooms.get(activeRoom);
+
+    for (Direction direction : Direction.values()) {
+      if (!Gdx.input.isKeyJustPressed(keyOf(direction))) {
+        continue;
+      }
+
+      RoomCell target = focusCell.neighbour(direction);
+
+      if (room.shape().contains(target)) {
+        focusCell = target;
+
+        centerOnFocus(room);
+        updateTitle();
+      }
+    }
+  }
+
+  private void handleDebugInput() {
+    DemoRoom room = rooms.get(activeRoom);
+
+    if (Gdx.input.isKeyJustPressed(Input.Keys.F1)) {
+      logger.log(debug.dump(room.map()));
+    }
+
+    if (Gdx.input.isKeyJustPressed(Input.Keys.F2)) {
+      logger.log(debug.dumpWalkable(room.map()));
+    }
+
+    if (Gdx.input.isKeyJustPressed(Input.Keys.F3)) {
+      logger.log(debug.describeHistogram(room.map()));
+    }
+
+    if (Gdx.input.isKeyJustPressed(Input.Keys.F4)) {
+      logger.log(debug.describeCatalog(tilesetManager));
     }
   }
 
@@ -157,13 +205,19 @@ public final class FloorDemoApp extends ApplicationAdapter {
 
     DemoRoom room = rooms.get(index);
 
-    viewport = new FitViewport(room.map().width(), room.map().height(), camera);
-    viewport.update(Gdx.graphics.getWidth(), Gdx.graphics.getHeight(), true);
+    focusCell = room.shape().topLeftCell();
+
+    centerOnFocus(room);
+    updateTitle();
 
     logger.log(debug.describeMap(room.map(), room.label()));
+  }
 
-    Gdx.graphics.setTitle("Floor demo - %s (%d/%d), tileset: %s  [N/P] room  [T] tileset  [E] export"
-        .formatted(room.label(), activeRoom + 1, rooms.size(), tilesetIds.get(activeTileset)));
+  private void centerOnFocus(DemoRoom room) {
+    float worldX = focusCell.centerTileX() + 0.5f;
+    float worldY = room.map().height() - focusCell.centerTileY() - 0.5f;
+
+    camera.position.set(worldX, worldY, 0f);
   }
 
   private void swapTileset() {
@@ -173,7 +227,7 @@ public final class FloorDemoApp extends ApplicationAdapter {
       renderService.swap(tilesetIds.get(next), rooms.get(activeRoom).map(), renderer);
       activeTileset = next;
 
-      showRoom(activeRoom);
+      updateTitle();
     } catch (TileException exception) {
       logger.log("Swap refused: " + exception.getMessage());
     }
@@ -188,5 +242,22 @@ public final class FloorDemoApp extends ApplicationAdapter {
     }
 
     logger.log("Exported %d rooms as '%s'".formatted(rooms.size(), tileset.id()));
+  }
+
+  private void updateTitle() {
+    DemoRoom room = rooms.get(activeRoom);
+
+    Gdx.graphics.setTitle("Floor demo - %s (%d/%d) cell %d,%d of %dx%d - tileset %s - [N/P] room [WASD] cell [T] "
+        + "tileset [E] export [F1-F4] debug".formatted(room.label(), activeRoom + 1, rooms.size(),
+        focusCell.x(), focusCell.y(), room.shape().cellsAcross(), room.shape().cellsDown(), tilesetIds.get(activeTileset)));
+  }
+
+  private static int keyOf(Direction direction) {
+    return switch (direction) {
+      case NORTH -> Input.Keys.W;
+      case SOUTH -> Input.Keys.S;
+      case WEST -> Input.Keys.A;
+      case EAST -> Input.Keys.D;
+    };
   }
 }
