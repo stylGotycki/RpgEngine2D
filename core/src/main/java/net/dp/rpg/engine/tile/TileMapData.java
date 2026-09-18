@@ -1,7 +1,5 @@
 package net.dp.rpg.engine.tile;
 
-import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -20,7 +18,7 @@ public record TileMapData(List<TileLayer> layers, List<TileMapObject> objects, M
     layers = List.copyOf(layers);
     validateLayers(layers);
     objects = objects == null ? List.of() : List.copyOf(objects);
-    properties = copyProperties(properties);
+    properties = TileValues.properties(properties);
   }
 
   public static TileMapData of(List<TileLayer> layers) {
@@ -35,16 +33,6 @@ public record TileMapData(List<TileLayer> layers, List<TileMapObject> objects, M
     return layers.getFirst().height();
   }
 
-  public TileLayer requireLayer(String name) {
-    for (TileLayer layer : layers) {
-      if (layer.name().equals(name)) {
-        return layer;
-      }
-    }
-
-    throw UnknownTileLayerException.byName(name, layerNames());
-  }
-
   public TileLayer requireLayer(TileLayerKind kind) {
     return findLayer(kind).orElseThrow(() -> UnknownTileLayerException.byKind(kind, layerNames()));
   }
@@ -53,10 +41,6 @@ public record TileMapData(List<TileLayer> layers, List<TileMapObject> objects, M
     return layers.stream()
         .filter(layer -> layer.kind() == kind)
         .findFirst();
-  }
-
-  public boolean hasLayer(String name) {
-    return layers.stream().anyMatch(layer -> layer.name().equals(name));
   }
 
   public List<TileMapObject> findObjects(String type) {
@@ -99,7 +83,7 @@ public record TileMapData(List<TileLayer> layers, List<TileMapObject> objects, M
     return used;
   }
 
-  public List<String> layerNames() {
+  private List<String> layerNames() {
     return layers.stream()
         .map(TileLayer::name)
         .toList();
@@ -122,13 +106,5 @@ public record TileMapData(List<TileLayer> layers, List<TileMapObject> objects, M
         throw InvalidTileMapException.duplicateLayer(layer.name());
       }
     }
-  }
-
-  private static Map<String, Object> copyProperties(Map<String, Object> source) {
-    if (source == null || source.isEmpty()) {
-      return Map.of();
-    }
-
-    return Collections.unmodifiableMap(new LinkedHashMap<>(source));
   }
 }

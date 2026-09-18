@@ -13,7 +13,6 @@ import net.dp.rpg.engine.tile.TileType;
 import net.dp.rpg.engine.tile.TileTypeRegistry;
 import net.dp.rpg.engine.tile.room.Direction;
 import net.dp.rpg.engine.tile.room.RoomCell;
-import net.dp.rpg.engine.tile.room.RoomEdge;
 import net.dp.rpg.engine.tile.room.RoomGeometry;
 import net.dp.rpg.engine.tile.room.RoomShape;
 

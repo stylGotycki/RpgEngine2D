@@ -29,8 +29,8 @@ public record TileType(String id, TileRole role, TileLayerKind layer, boolean wa
           .formatted(id, defaultWeight));
     }
 
-    tags = copyTags(tags);
-    properties = copyProperties(properties);
+    tags = TileValues.tags(tags);
+    properties = TileValues.properties(properties);
   }
 
   @Builder(toBuilder = true)
@@ -54,19 +54,4 @@ public record TileType(String id, TileRole role, TileLayerKind layer, boolean wa
     return tags.contains(tag);
   }
 
-  private static Set<String> copyTags(Set<String> source) {
-    if (source == null || source.isEmpty()) {
-      return Set.of();
-    }
-
-    return Collections.unmodifiableSet(new LinkedHashSet<>(source));
-  }
-
-  private static Map<String, Object> copyProperties(Map<String, Object> source) {
-    if (source == null || source.isEmpty()) {
-      return Map.of();
-    }
-
-    return Collections.unmodifiableMap(new LinkedHashMap<>(source));
-  }
 }

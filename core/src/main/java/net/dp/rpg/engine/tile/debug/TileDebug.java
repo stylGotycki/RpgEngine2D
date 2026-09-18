@@ -59,7 +59,7 @@ public final class TileDebug {
     return out.toString();
   }
 
-  public String describeTileset(TilesetDefinition tileset) {
+  private String describeTileset(TilesetDefinition tileset) {
     int variants = tileset.binding().localIdsByTypeId().values().stream()
         .mapToInt(List::size)
         .sum();

@@ -29,8 +29,15 @@ import net.dp.rpg.engine.tile.tiled.TmxMapExporter;
 import net.dp.rpg.engine.tile.tiled.TsxTilesetSource;
 import net.dp.rpg.engine.tile.tileset.TilesetDefinition;
 import net.dp.rpg.engine.tile.tileset.TilesetManager;
+import net.dp.rpg.engine.tile.TileMapData;
+import net.dp.rpg.engine.tile.tiled.TmxMapSource;
+import net.dp.rpg.engine.tile.room.RoomShape;
+
+import java.util.Set;
 
 public final class FloorDemoApp extends ApplicationAdapter {
+
+  private static final String MAP_PATH = "maps/room-19x13.tmx";
 
   private static final String[] TILESET_PATHS = {"tiles/terrain.tsx", "tiles/basement.tsx"};
 
@@ -63,6 +70,8 @@ public final class FloorDemoApp extends ApplicationAdapter {
   private int activeRoom;
 
   private int activeTileset;
+
+  private boolean mapLoaded;
 
   @Override
   public void create() {
@@ -157,6 +166,10 @@ public final class FloorDemoApp extends ApplicationAdapter {
       exportFloor();
     }
 
+    if (Gdx.input.isKeyJustPressed(Input.Keys.L)) {
+      loadRoomFromFile();
+    }
+
     handleFocusInput();
     handleDebugInput();
   }
@@ -247,9 +260,31 @@ public final class FloorDemoApp extends ApplicationAdapter {
   private void updateTitle() {
     DemoRoom room = rooms.get(activeRoom);
 
-    Gdx.graphics.setTitle("Floor demo - %s (%d/%d) cell %d,%d of %dx%d - tileset %s - [N/P] room [WASD] cell [T] "
-        + "tileset [E] export [F1-F4] debug".formatted(room.label(), activeRoom + 1, rooms.size(),
-        focusCell.x(), focusCell.y(), room.shape().cellsAcross(), room.shape().cellsDown(), tilesetIds.get(activeTileset)));
+    Gdx.graphics.setTitle("Floor demo - %s (%d/%d) cell %d,%d of %dx%d - tileset %s - [N/P] room [WASD] cell [T] tileset [E] export [L] load tmx [F1-F4] debug"
+        .formatted(room.label(), activeRoom + 1, rooms.size(), focusCell.x(), focusCell.y(),
+            room.shape().cellsAcross(), room.shape().cellsDown(), tilesetIds.get(activeTileset)));
+  }
+
+  private void loadRoomFromFile() {
+    if (mapLoaded) {
+      logger.log("Map already loaded as room %d".formatted(rooms.size() - 1));
+
+      return;
+    }
+
+    TileMapData map = new TmxMapSource(tilesetManager, typeRegistry).load(MAP_PATH);
+
+    if (map.width() != RoomGeometry.CELL_WIDTH || map.height() != RoomGeometry.CELL_HEIGHT) {
+      logger.log("Warning: %s is %dx%d, expected one cell of %dx%d".formatted(MAP_PATH,
+          map.width(), map.height(), RoomGeometry.CELL_WIDTH, RoomGeometry.CELL_HEIGHT));
+    }
+
+    rooms.add(new DemoRoom(rooms.size(), RoomShape.single(), RoomCell.ORIGIN, Set.of(), map));
+    mapLoaded = true;
+
+    logger.log("Loaded %s as room %d".formatted(MAP_PATH, rooms.size() - 1));
+
+    showRoom(rooms.size() - 1);
   }
 
   private static int keyOf(Direction direction) {

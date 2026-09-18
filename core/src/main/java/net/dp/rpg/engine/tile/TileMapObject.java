@@ -10,7 +10,7 @@ public record TileMapObject(int id, String name, String type, float x, float y, 
   public TileMapObject {
     name = name == null ? "" : name;
     type = type == null ? "" : type;
-    properties = copyProperties(properties);
+    properties = TileValues.properties(properties);
   }
 
   public boolean isPoint() {
@@ -21,11 +21,4 @@ public record TileMapObject(int id, String name, String type, float x, float y, 
     return type.equals(candidate);
   }
 
-  private static Map<String, Object> copyProperties(Map<String, Object> source) {
-    if (source == null || source.isEmpty()) {
-      return Map.of();
-    }
-
-    return Collections.unmodifiableMap(new LinkedHashMap<>(source));
-  }
 }

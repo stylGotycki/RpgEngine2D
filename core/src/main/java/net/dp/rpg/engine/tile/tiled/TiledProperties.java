@@ -36,10 +36,6 @@ public final class TiledProperties {
     this.values = values;
   }
 
-  public static TiledProperties empty() {
-    return EMPTY;
-  }
-
   public static TiledProperties read(Element owner) {
     Element block = owner == null ? null : owner.getChildByName("properties");
 
