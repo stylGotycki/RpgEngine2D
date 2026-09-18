@@ -21,15 +21,22 @@ public final class TileDebug {
 
   private final TileTypeRegistry typeRegistry;
 
-  public TileDebug(TileTypeRegistry typeRegistry) {
+  private final TilesetManager tilesetManager;
+
+  public TileDebug(TileTypeRegistry typeRegistry, TilesetManager tilesetManager) {
     if (typeRegistry == null) {
       throw new IllegalArgumentException("Tile type registry must not be null");
     }
 
+    if (tilesetManager == null) {
+      throw new IllegalArgumentException("Tileset manager must not be null");
+    }
+
     this.typeRegistry = typeRegistry;
+    this.tilesetManager = tilesetManager;
   }
 
-  public String describeCatalog(TilesetManager tilesetManager) {
+  public String describeCatalog() {
     StringBuilder out = new StringBuilder(1024);
 
     out.append("Tile catalog: ").append(typeRegistry.size()).append(" types, ")

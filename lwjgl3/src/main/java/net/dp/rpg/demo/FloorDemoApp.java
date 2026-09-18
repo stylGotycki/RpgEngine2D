@@ -10,54 +10,40 @@ import com.badlogic.gdx.utils.viewport.Viewport;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import net.dp.rpg.demo.floor.DemoFloorGenerator;
 import net.dp.rpg.demo.floor.DemoRoom;
 import net.dp.rpg.demo.floor.DemoRoomPainter;
-import net.dp.rpg.engine.tile.TileTypeRegistry;
+import net.dp.rpg.engine.tile.TileMapData;
+import net.dp.rpg.engine.tile.TileSystem;
 import net.dp.rpg.engine.tile.debug.GdxTileLogger;
-import net.dp.rpg.engine.tile.debug.TileDebug;
 import net.dp.rpg.engine.tile.debug.TileLogger;
 import net.dp.rpg.engine.tile.exception.TileException;
 import net.dp.rpg.engine.tile.render.TileMapRenderer;
-import net.dp.rpg.engine.tile.render.TileRenderService;
 import net.dp.rpg.engine.tile.room.Direction;
 import net.dp.rpg.engine.tile.room.RoomCell;
 import net.dp.rpg.engine.tile.room.RoomEdge;
 import net.dp.rpg.engine.tile.room.RoomGeometry;
-import net.dp.rpg.engine.tile.tiled.TmxMapExporter;
-import net.dp.rpg.engine.tile.tiled.TsxTilesetSource;
-import net.dp.rpg.engine.tile.tileset.TilesetDefinition;
-import net.dp.rpg.engine.tile.tileset.TilesetManager;
-import net.dp.rpg.engine.tile.TileMapData;
-import net.dp.rpg.engine.tile.tiled.TmxMapSource;
 import net.dp.rpg.engine.tile.room.RoomShape;
-
-import java.util.Set;
 
 public final class FloorDemoApp extends ApplicationAdapter {
 
-  private static final String MAP_PATH = "maps/room-19x13.tmx";
-
   private static final String[] TILESET_PATHS = {"tiles/terrain.tsx", "tiles/basement.tsx"};
+
+  private static final String MAP_PATH = "maps/room-19x13.tmx";
 
   private static final long SEED = 20260918L;
 
   private static final int ROOM_COUNT = 12;
 
-  private final List<String> tilesetIds = new ArrayList<>();
-
   private final List<DemoRoom> rooms = new ArrayList<>();
 
-  private TileTypeRegistry typeRegistry;
+  private TileSystem tiles;
 
-  private TilesetManager tilesetManager;
-
-  private TileRenderService renderService;
+  private List<String> tilesetIds;
 
   private TileMapRenderer renderer;
-
-  private TileDebug debug;
 
   private TileLogger logger;
 
@@ -75,15 +61,11 @@ public final class FloorDemoApp extends ApplicationAdapter {
 
   @Override
   public void create() {
-    typeRegistry = new TileTypeRegistry();
-    tilesetManager = new TilesetManager(new TsxTilesetSource(), typeRegistry);
-
-    for (String path : TILESET_PATHS) {
-      tilesetIds.add(tilesetManager.load(path).id());
-    }
-
-    debug = new TileDebug(typeRegistry);
     logger = new GdxTileLogger("Floor");
+
+    tiles = new TileSystem(SEED);
+    tiles.loadTilesets(TILESET_PATHS);
+    tilesetIds = tiles.tilesetIds();
 
     generateFloor();
 
@@ -91,16 +73,15 @@ public final class FloorDemoApp extends ApplicationAdapter {
 
     viewport = new FitViewport(RoomGeometry.CELL_WIDTH, RoomGeometry.CELL_HEIGHT, camera);
 
-    renderService = new TileRenderService(tilesetManager, typeRegistry, SEED);
-    renderer = new TileMapRenderer(renderService.palette(tilesetIds.getFirst()));
+    renderer = tiles.createRenderer();
 
-    logger.log(debug.describeCatalog(tilesetManager));
+    logger.log(tiles.debug().describeCatalog());
 
     showRoom(0);
   }
 
   private void generateFloor() {
-    DemoRoomPainter painter = new DemoRoomPainter(typeRegistry);
+    DemoRoomPainter painter = new DemoRoomPainter(tiles.types());
 
     new DemoFloorGenerator(9, 7).generate(SEED, ROOM_COUNT)
         .forEach(draft -> rooms.add(painter.paint(draft, SEED)));
@@ -140,8 +121,8 @@ public final class FloorDemoApp extends ApplicationAdapter {
       renderer.dispose();
     }
 
-    if (renderService != null) {
-      renderService.dispose();
+    if (tiles != null) {
+      tiles.dispose();
     }
   }
 
@@ -162,12 +143,12 @@ public final class FloorDemoApp extends ApplicationAdapter {
       swapTileset();
     }
 
-    if (Gdx.input.isKeyJustPressed(Input.Keys.E)) {
-      exportFloor();
-    }
-
     if (Gdx.input.isKeyJustPressed(Input.Keys.L)) {
       loadRoomFromFile();
+    }
+
+    if (Gdx.input.isKeyJustPressed(Input.Keys.E)) {
+      exportFloor();
     }
 
     handleFocusInput();
@@ -194,23 +175,45 @@ public final class FloorDemoApp extends ApplicationAdapter {
   }
 
   private void handleDebugInput() {
-    DemoRoom room = rooms.get(activeRoom);
+    TileMapData map = rooms.get(activeRoom).map();
 
     if (Gdx.input.isKeyJustPressed(Input.Keys.F1)) {
-      logger.log(debug.dump(room.map()));
+      logger.log(tiles.debug().dump(map));
     }
 
     if (Gdx.input.isKeyJustPressed(Input.Keys.F2)) {
-      logger.log(debug.dumpWalkable(room.map()));
+      logger.log(tiles.debug().dumpWalkable(map));
     }
 
     if (Gdx.input.isKeyJustPressed(Input.Keys.F3)) {
-      logger.log(debug.describeHistogram(room.map()));
+      logger.log(tiles.debug().describeHistogram(map));
     }
 
     if (Gdx.input.isKeyJustPressed(Input.Keys.F4)) {
-      logger.log(debug.describeCatalog(tilesetManager));
+      logger.log(tiles.debug().describeCatalog());
     }
+  }
+
+  private void loadRoomFromFile() {
+    if (mapLoaded) {
+      logger.log("Map already loaded as room %d".formatted(rooms.size() - 1));
+
+      return;
+    }
+
+    TileMapData map = tiles.loadMap(MAP_PATH);
+
+    if (map.width() != RoomGeometry.CELL_WIDTH || map.height() != RoomGeometry.CELL_HEIGHT) {
+      logger.log("Warning: %s is %dx%d, expected one cell of %dx%d".formatted(MAP_PATH,
+          map.width(), map.height(), RoomGeometry.CELL_WIDTH, RoomGeometry.CELL_HEIGHT));
+    }
+
+    rooms.add(new DemoRoom(rooms.size(), RoomShape.single(), RoomCell.ORIGIN, Set.of(), map));
+    mapLoaded = true;
+
+    logger.log("Loaded %s as room %d".formatted(MAP_PATH, rooms.size() - 1));
+
+    showRoom(rooms.size() - 1);
   }
 
   private void showRoom(int index) {
@@ -223,7 +226,7 @@ public final class FloorDemoApp extends ApplicationAdapter {
     centerOnFocus(room);
     updateTitle();
 
-    logger.log(debug.describeMap(room.map(), room.label()));
+    logger.log(tiles.debug().describeMap(room.map(), room.label()));
   }
 
   private void centerOnFocus(DemoRoom room) {
@@ -237,7 +240,7 @@ public final class FloorDemoApp extends ApplicationAdapter {
     int next = (activeTileset + 1) % tilesetIds.size();
 
     try {
-      renderService.swap(tilesetIds.get(next), rooms.get(activeRoom).map(), renderer);
+      tiles.swapTileset(tilesetIds.get(next), rooms.get(activeRoom).map(), renderer);
       activeTileset = next;
 
       updateTitle();
@@ -247,44 +250,22 @@ public final class FloorDemoApp extends ApplicationAdapter {
   }
 
   private void exportFloor() {
-    TmxMapExporter exporter = new TmxMapExporter(typeRegistry);
-    TilesetDefinition tileset = tilesetManager.require(tilesetIds.get(activeTileset));
+    String tilesetId = tilesetIds.get(activeTileset);
 
     for (DemoRoom room : rooms) {
-      exporter.export(room.map(), tileset, "export/floor1/%s.tmx".formatted(room.label()));
+      tiles.exportMap(room.map(), tilesetId, "export/floor1/%s.tmx".formatted(room.label()));
     }
 
-    logger.log("Exported %d rooms as '%s'".formatted(rooms.size(), tileset.id()));
+    logger.log("Exported %d rooms as '%s'".formatted(rooms.size(), tilesetId));
   }
 
   private void updateTitle() {
     DemoRoom room = rooms.get(activeRoom);
 
-    Gdx.graphics.setTitle("Floor demo - %s (%d/%d) cell %d,%d of %dx%d - tileset %s - [N/P] room [WASD] cell [T] tileset [E] export [L] load tmx [F1-F4] debug"
-        .formatted(room.label(), activeRoom + 1, rooms.size(), focusCell.x(), focusCell.y(),
-            room.shape().cellsAcross(), room.shape().cellsDown(), tilesetIds.get(activeTileset)));
-  }
-
-  private void loadRoomFromFile() {
-    if (mapLoaded) {
-      logger.log("Map already loaded as room %d".formatted(rooms.size() - 1));
-
-      return;
-    }
-
-    TileMapData map = new TmxMapSource(tilesetManager, typeRegistry).load(MAP_PATH);
-
-    if (map.width() != RoomGeometry.CELL_WIDTH || map.height() != RoomGeometry.CELL_HEIGHT) {
-      logger.log("Warning: %s is %dx%d, expected one cell of %dx%d".formatted(MAP_PATH,
-          map.width(), map.height(), RoomGeometry.CELL_WIDTH, RoomGeometry.CELL_HEIGHT));
-    }
-
-    rooms.add(new DemoRoom(rooms.size(), RoomShape.single(), RoomCell.ORIGIN, Set.of(), map));
-    mapLoaded = true;
-
-    logger.log("Loaded %s as room %d".formatted(MAP_PATH, rooms.size() - 1));
-
-    showRoom(rooms.size() - 1);
+    Gdx.graphics.setTitle(
+        "Floor demo - %s (%d/%d) cell %d,%d of %dx%d - tileset %s - [N/P] room [WASD] cell [T] tileset [L] load tmx [E] export [F1-F4] debug"
+            .formatted(room.label(), activeRoom + 1, rooms.size(), focusCell.x(), focusCell.y(),
+                room.shape().cellsAcross(), room.shape().cellsDown(), tilesetIds.get(activeTileset)));
   }
 
   private static int keyOf(Direction direction) {
