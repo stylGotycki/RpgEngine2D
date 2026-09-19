@@ -5,7 +5,6 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.*;
 import lombok.Getter;
-import lombok.Setter;
 import net.dp.rpg.engine.bodyCreator.PhysicalBodyCreator;
 import net.dp.rpg.engine.components.*;
 import net.dp.rpg.engine.components.Component;
@@ -22,9 +21,8 @@ public class Scene
     @Getter
     private final Gui gui = new Gui();
 
-    @Setter
     @Getter
-    private OrthographicCamera camera = new OrthographicCamera(20, (float) Gdx.graphics.getHeight() / Gdx.graphics.getWidth() * 20);
+    private OrthographicCamera activeCamera = new OrthographicCamera(20, (float) Gdx.graphics.getHeight() / Gdx.graphics.getWidth() * 20);
 
     @Getter
     private final PhysicalBodyCreator bodyCreator = new PhysicalBodyCreator();
@@ -50,6 +48,7 @@ public class Scene
         componentStorages.add(new ComponentStorage<>(PhysicalBodyComponent.class));
         componentStorages.add(new ComponentStorage<>(SpriteComponent.class));
         componentStorages.add(new ComponentStorage<>(ScriptComponent.class));
+        componentStorages.add(new ComponentStorage<>(CameraComponent.class));
     }
 
     public <T extends Component> void addComponent(int entity, T component)
@@ -125,6 +124,13 @@ public class Scene
         sceneScript = script;
     }
 
+    public void setActiveCamera(int entityId)
+    {
+        CameraComponent component = getComponentStorage(CameraComponent.class).getByIndex(entityId);
+        if(component != null)
+            this.activeCamera = component.camera;
+    }
+
     public void update(float delta)
     {
         if(sceneScript != null)
@@ -143,6 +149,7 @@ public class Scene
 
         movementSystem.updatePositions(getComponentStorage(TransformComponent.class), getComponentStorage(MoveComponent.class), delta);
         movementSystem.syncBodyAndSpritePositions(getComponentStorage(PhysicalBodyComponent.class), getComponentStorage(SpriteComponent.class));
+        movementSystem.updateCameraPosition(getComponentStorage(CameraComponent.class), getComponentStorage(PhysicalBodyComponent.class), getComponentStorage(TransformComponent.class));
 
         gui.update(delta);
     }
@@ -150,8 +157,8 @@ public class Scene
     public void resize(int width, int height)
     {
         gui.resize(width, height);
-        camera.viewportWidth = (float) width / height * camera.viewportHeight;
-        camera.update();
+        activeCamera.viewportWidth = (float) width / height * activeCamera.viewportHeight;
+        activeCamera.update();
     }
 
     public void dispose()

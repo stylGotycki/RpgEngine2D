@@ -1,7 +1,6 @@
 package net.dp.rpg.game;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
@@ -12,6 +11,7 @@ import net.dp.rpg.engine.EngineServices;
 import net.dp.rpg.engine.Scene;
 import net.dp.rpg.engine.bodyCreator.BodyParams;
 import net.dp.rpg.engine.bodyCreator.FixtureParams;
+import net.dp.rpg.engine.components.CameraComponent;
 import net.dp.rpg.engine.components.ScriptComponent;
 import net.dp.rpg.engine.components.SpriteComponent;
 import net.dp.rpg.game.scripts.EtiScript;
@@ -20,10 +20,6 @@ public class LevelBuilder
 {
     public void build(EngineServices engine, Scene scene)
     {
-        float cameraSize = 40;
-        OrthographicCamera camera = new OrthographicCamera(cameraSize, (float) Gdx.graphics.getHeight()/Gdx.graphics.getWidth() * cameraSize);
-        scene.setCamera(camera);
-
         //create ETI entity
         int eti = scene.createEntity();
         Sprite etiSprite = new Sprite( (Texture) engine.getAssetManager().get("eti.png") );
@@ -52,6 +48,11 @@ public class LevelBuilder
         scene.createBodyComponent(eti);
         scene.createFixture(eti);
 
+        float cameraSize = 40;
+        OrthographicCamera camera = new OrthographicCamera(cameraSize, (float) Gdx.graphics.getHeight()/Gdx.graphics.getWidth() * cameraSize);
+        scene.addComponent(eti, new CameraComponent(camera));
+        scene.setActiveCamera(eti);
+
         //create walls
         int wall = scene.createEntity();
 
@@ -61,15 +62,15 @@ public class LevelBuilder
 
         Vector2[] wallPositions =
             {
-                new Vector2(0,-scene.getCamera().viewportHeight/2),
-                new Vector2(-scene.getCamera().viewportWidth/2, 0),
-                new Vector2(0, scene.getCamera().viewportHeight/2),
-                new Vector2(scene.getCamera().viewportWidth/2, 0)
+                new Vector2(0,-scene.getActiveCamera().viewportHeight/2),
+                new Vector2(-scene.getActiveCamera().viewportWidth/2, 0),
+                new Vector2(0, scene.getActiveCamera().viewportHeight/2),
+                new Vector2(scene.getActiveCamera().viewportWidth/2, 0)
             };
 
         for(int i = 0; i < 4; i++)
         {
-            shape.setAsBox(i%2 == 1 ? 0 : scene.getCamera().viewportWidth, i%2 == 0 ? 0 : scene.getCamera().viewportHeight, wallPositions[i], 0);
+            shape.setAsBox(i%2 == 1 ? 0 : scene.getActiveCamera().viewportWidth, i%2 == 0 ? 0 : scene.getActiveCamera().viewportHeight, wallPositions[i], 0);
             scene.getBodyCreator().setFixtureDefParams(FixtureParams.builder().shape(shape).build());
             scene.createFixture(wall);
         }

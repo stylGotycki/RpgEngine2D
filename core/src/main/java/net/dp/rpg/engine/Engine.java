@@ -70,7 +70,7 @@ public class Engine extends ApplicationAdapter implements EngineServices
     {
         guiDebug = enabled;
         if(activeScene != null)
-            activeScene.getGui().getMainTable().setDebug(enabled);
+            activeScene.getGui().getMainTable().setDebug(enabled, true);
     }
 
     @Override
