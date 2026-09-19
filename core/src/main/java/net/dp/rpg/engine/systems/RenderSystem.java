@@ -1,6 +1,5 @@
 package net.dp.rpg.engine.systems;
 
-import com.badlogic.gdx.graphics.g2d.ParticleEffect;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector2;
@@ -26,7 +25,10 @@ public class RenderSystem
     {
         ScreenUtils.clear(0f, 0f, 0f, 1f);
 
-        Matrix4 projMatrix = scene.getCamera().combined;
+        if(scene.getActiveCamera() == null)
+            return;
+
+        Matrix4 projMatrix = scene.getActiveCamera().combined;
 
         batch.setProjectionMatrix(projMatrix);
         batch.begin();
