@@ -210,3 +210,13 @@ tasks.withType(JavaExec.class).configureEach {
 if(enableGraalNative == 'true') {
   apply from: file("nativeimage.gradle")
 }
+
+tasks.register('runFloorDemo', JavaExec) {
+    group = 'application'
+    description = 'Generates a floor in memory and renders it'
+    mainClass = 'net.dp.rpg.demo.FloorDemoLauncher'
+    classpath = sourceSets.main.runtimeClasspath
+    workingDir = rootProject.file('assets').path
+    jvmArgs += "--enable-native-access=ALL-UNNAMED"
+    if (os.contains('mac')) jvmArgs += "-XstartOnFirstThread"
+}
