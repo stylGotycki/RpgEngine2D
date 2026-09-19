@@ -12,7 +12,7 @@ public class EtiScript extends EntityScript
     @Override
     public void update(float delta)
     {
-        float speed = 3f;
+        float speed = 300f;
         Vector2 direction = new Vector2(0,0);
         if(Gdx.input.isKeyPressed(Input.Keys.A))
         {
@@ -34,6 +34,6 @@ public class EtiScript extends EntityScript
         direction.setLength(1);
 
         Body etiBody = getScene().getComponentStorage(PhysicalBodyComponent.class).getByIndex(getEntity()).body;
-        etiBody.applyLinearImpulse(direction.scl(speed), etiBody.getPosition(), true);
+        etiBody.applyForce(direction.scl(speed), etiBody.getPosition(), true);
     }
 }

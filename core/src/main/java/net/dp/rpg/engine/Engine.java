@@ -2,6 +2,7 @@ package net.dp.rpg.engine;
 
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.utils.Array;
@@ -21,7 +22,9 @@ public class Engine extends ApplicationAdapter implements EngineServices
     private final AbstractGame game = new Game();
     private Scene activeScene;
 
-    @Setter
+    private final EngineInputAdapter inputAdapter = new EngineInputAdapter();
+    private final InputMultiplexer inputMultiplexer = new InputMultiplexer();
+
     private Script globalScript;
 
     private boolean running = true;
@@ -32,21 +35,37 @@ public class Engine extends ApplicationAdapter implements EngineServices
 
     // --- Engine services ---
 
+    @Override
     public void switchScene(Scene scene)
     {
         if(activeScene != null)
+        {
+            inputMultiplexer.removeProcessor(activeScene.getGui().getStage());
             activeScene.dispose();
+        }
         scene.getGui().getMainTable().setDebug(guiDebug);
+        inputMultiplexer.addProcessor(scene.getGui().getStage());
         activeScene = scene;
+    }
+
+    @Override
+    public void setGlobalScript(Script script)
+    {
+        if(globalScript != null && globalScript instanceof InputListener listener)
+            inputAdapter.removeListener(listener);
+        if(script instanceof InputListener listener)
+            inputAdapter.addListener(listener);
+        script.setOwners(this);
+        globalScript = script;
     }
 
     @Override
     public Scene createScene()
     {
-        Scene scene = new Scene(this);
-        return scene;
+        return new Scene(this, inputAdapter);
     }
 
+    @Override
     public void setGuiDebug(boolean enabled)
     {
         guiDebug = enabled;
@@ -77,6 +96,11 @@ public class Engine extends ApplicationAdapter implements EngineServices
     @Override
     public void create()
     {
+        inputAdapter.create();
+
+        inputMultiplexer.addProcessor(inputAdapter);
+        Gdx.input.setInputProcessor(inputMultiplexer);
+
         game.setEngine(this);
         game.create();
 
@@ -99,7 +123,6 @@ public class Engine extends ApplicationAdapter implements EngineServices
             Gdx.app.exit();
             return;
         }
-
         if(globalScript != null) globalScript.update(Gdx.graphics.getDeltaTime());
 
         activeScene.update(Gdx.graphics.getDeltaTime());

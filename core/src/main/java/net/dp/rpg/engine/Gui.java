@@ -1,6 +1,5 @@
 package net.dp.rpg.engine;
 
-import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
@@ -15,7 +14,6 @@ public class Gui
 
     Gui()
     {
-        Gdx.input.setInputProcessor(stage);
         mainTable.setFillParent(true);
         stage.addActor(mainTable);
         ScreenViewport screenViewport = new ScreenViewport();

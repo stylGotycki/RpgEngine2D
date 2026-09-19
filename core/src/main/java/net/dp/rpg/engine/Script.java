@@ -7,7 +7,7 @@ public abstract class Script
     @Getter
     EngineServices engine;
 
-    void setOwners(EngineServices engine)
+    final void setOwners(EngineServices engine)
     {
         this.engine = engine;
     }

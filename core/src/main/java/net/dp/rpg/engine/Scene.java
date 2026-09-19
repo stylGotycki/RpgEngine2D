@@ -33,11 +33,16 @@ public class Scene
     private final ArrayList<Integer> freeEntity = new ArrayList<>();
     private final ArrayList<ComponentStorage<? extends Component>> componentStorages = new ArrayList<>();
 
+    private SceneScript sceneScript;
+
+    private final EngineInputAdapter inputAdapter;
+
     private final MovementSystem movementSystem = new MovementSystem();
 
-    Scene(EngineServices engine)
+    Scene(EngineServices engine, EngineInputAdapter inputAdapter)
     {
         this.engine = engine;
+        this.inputAdapter = inputAdapter;
 
         componentStorages.add(new ComponentStorage<>(MoveComponent.class));
         componentStorages.add(new ComponentStorage<>(TransformComponent.class));
@@ -53,6 +58,17 @@ public class Scene
         if (component instanceof ScriptComponent scriptComp)
         {
             scriptComp.script.setOwners(engine, this, entity);
+            if(scriptComp.script instanceof InputListener)
+                inputAdapter.addListener((InputListener) scriptComp.script);
+        }
+    }
+
+    public <T extends Component> void removeComponent(int entity, T component)
+    {
+        getComponentStorage((Class<T>) component.getClass()).remove(entity);
+        if (component instanceof ScriptComponent scriptComp && scriptComp.script instanceof InputListener listener)
+        {
+            inputAdapter.removeListener(listener);
         }
     }
 
@@ -99,8 +115,23 @@ public class Scene
         }
     }
 
+    public void setSceneScript(SceneScript script)
+    {
+        if(sceneScript != null && sceneScript instanceof InputListener listener)
+            inputAdapter.removeListener(listener);
+        if(script instanceof InputListener listener)
+            inputAdapter.addListener(listener);
+        script.setOwners(engine, this);
+        sceneScript = script;
+    }
+
     public void update(float delta)
     {
+        if(sceneScript != null)
+        {
+            sceneScript.update(delta);
+        }
+
         ComponentStorage<ScriptComponent> scriptsStorage = getComponentStorage(ScriptComponent.class);
         for (int i = 0; i < scriptsStorage.size(); i++)
         {

@@ -14,7 +14,6 @@ import net.dp.rpg.engine.bodyCreator.BodyParams;
 import net.dp.rpg.engine.bodyCreator.FixtureParams;
 import net.dp.rpg.engine.components.ScriptComponent;
 import net.dp.rpg.engine.components.SpriteComponent;
-import net.dp.rpg.game.scripts.AppCloseScript;
 import net.dp.rpg.game.scripts.EtiScript;
 
 public class LevelBuilder
@@ -76,10 +75,6 @@ public class LevelBuilder
         }
 
         scene.addComponent(eti, new ScriptComponent(new EtiScript()));
-
-        int closeEntity = scene.createEntity();
-        AppCloseScript closeScript = new AppCloseScript(Input.Keys.ESCAPE);
-        scene.addComponent(closeEntity, new ScriptComponent(closeScript));
 
         shape.dispose();
     }

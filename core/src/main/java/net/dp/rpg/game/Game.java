@@ -6,7 +6,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import net.dp.rpg.engine.AbstractGame;
 import net.dp.rpg.engine.Scene;
 import net.dp.rpg.game.menu.MenuBuilder;
-import net.dp.rpg.game.scripts.ToggleFullScreenScript;
+import net.dp.rpg.game.scripts.GlobalScript;
 
 public class Game extends AbstractGame
 {
@@ -29,8 +29,6 @@ public class Game extends AbstractGame
 
         getEngine().switchScene(scene);
 
-        getEngine().setGlobalScript(new ToggleFullScreenScript());
-
-        getEngine().setPhysicsDebug(true);
+        getEngine().setGlobalScript(new GlobalScript());
     }
 }
