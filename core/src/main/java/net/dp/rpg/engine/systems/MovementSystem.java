@@ -1,8 +1,10 @@
 package net.dp.rpg.engine.systems;
 
 import com.badlogic.gdx.graphics.Camera;
+import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
+import com.badlogic.gdx.utils.viewport.Viewport;
 import net.dp.rpg.engine.components.*;
 
 public class MovementSystem
@@ -43,20 +45,46 @@ public class MovementSystem
         for(int i = 0; i < cSize; i++)
         {
             int entity = cameras.getEntity(i);
-            Camera camera = cameras.getByIndex(i).camera;
+            CameraComponent component = cameras.getByIndex(i);
+            Camera camera = component.camera;
             Vector2 position;
             if(transforms.hasComponent(entity))
             {
                 position = transforms.getByEntity(entity).position;
+                camera.position.x = position.x;
+                camera.position.y = position.y;
             }
             else if(bodies.hasComponent(entity))
             {
                 position = bodies.getByEntity(entity).body.getPosition();
+                camera.position.x = position.x;
+                camera.position.y = position.y;
             }
-            else
-                return;
-            camera.position.x = position.x;
-            camera.position.y = position.y;
+
+            if(component.isBounded)
+            {
+                Rectangle bounds = component.boundingRectangle;
+                float minX = bounds.x + camera.viewportWidth/2;
+                float minY = bounds.y + camera.viewportHeight/2;
+                float maxX = bounds.width - camera.viewportWidth/2;
+                float maxY = bounds.height - camera.viewportHeight/2;
+                if(camera.position.x < minX)
+                {
+                    camera.position.x = minX;
+                }
+                else if(camera.position.x > maxX)
+                {
+                    camera.position.x = maxX;
+                }
+                if(camera.position.y < minY)
+                {
+                    camera.position.y = minY;
+                }
+                else if(camera.position.y > maxY)
+                {
+                    camera.position.y = maxY;
+                }
+            }
             camera.update();
         }
     }
