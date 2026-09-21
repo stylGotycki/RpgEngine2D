@@ -10,11 +10,14 @@ import net.dp.rpg.engine.components.ComponentStorage;
 import net.dp.rpg.engine.components.SpriteComponent;
 import net.dp.rpg.engine.components.TextureComponent;
 import net.dp.rpg.engine.components.TransformComponent;
+import net.dp.rpg.engine.tile.TileSystem;
+import net.dp.rpg.engine.tile.render.TileMapRenderer;
 
 public class RenderSystem
 {
     private final SpriteBatch batch;
     private final Box2DDebugRenderer b2dDebugRenderer = new Box2DDebugRenderer();
+    private TileMapRenderer tileMapRenderer;
 
     public RenderSystem()
     {
@@ -29,6 +32,17 @@ public class RenderSystem
             return;
 
         Matrix4 projMatrix = scene.getActiveCamera().combined;
+
+        if(tileMapRenderer == null)
+        {
+            TileSystem tileSystem = scene.getTileSystem();
+            if(tileSystem != null)
+                tileMapRenderer = scene.getTileSystem().createRenderer();
+        }
+        else
+        {
+            tileMapRenderer.render(scene.getTileMap(), scene.getActiveCamera());
+        }
 
         batch.setProjectionMatrix(projMatrix);
         batch.begin();

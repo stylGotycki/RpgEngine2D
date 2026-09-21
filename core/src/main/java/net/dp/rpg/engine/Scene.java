@@ -4,11 +4,15 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.*;
+import com.badlogic.gdx.utils.Array;
 import lombok.Getter;
 import net.dp.rpg.engine.bodyCreator.PhysicalBodyCreator;
 import net.dp.rpg.engine.components.*;
 import net.dp.rpg.engine.components.Component;
 import net.dp.rpg.engine.systems.MovementSystem;
+import net.dp.rpg.engine.systems.TileConverter;
+import net.dp.rpg.engine.tile.TileMapData;
+import net.dp.rpg.engine.tile.TileSystem;
 
 import java.util.ArrayList;
 
@@ -17,6 +21,11 @@ public class Scene
     private final EngineServices engine;
     @Getter
     private final World physicalWorld = new World(new Vector2(0, 0), true);
+
+    @Getter
+    private TileSystem tileSystem;
+    @Getter
+    private TileMapData tileMap;
 
     @Getter
     private final Gui gui = new Gui();
@@ -36,6 +45,7 @@ public class Scene
     private final EngineInputAdapter inputAdapter;
 
     private final MovementSystem movementSystem = new MovementSystem();
+    private final TileConverter tileConverter = new TileConverter();
 
     Scene(EngineServices engine, EngineInputAdapter inputAdapter)
     {
@@ -129,6 +139,27 @@ public class Scene
         CameraComponent component = getComponentStorage(CameraComponent.class).getByIndex(entityId);
         if(component != null)
             this.activeCamera = component.camera;
+    }
+
+    public void setTileMap(TileMapData tileMap, TileSystem tileSystem)
+    {
+        if(this.tileMap == null && tileMap != null && this.tileSystem == null && tileSystem != null)
+        {
+            this.tileSystem = tileSystem;
+            this.tileMap = tileMap;
+
+            BodyDef bodyDef = new BodyDef();
+            bodyDef.type = BodyDef.BodyType.StaticBody;
+            Body tileMapBody = physicalWorld.createBody(bodyDef);
+
+            Array<FixtureDef> fixtureDefs = tileConverter.creatFixtureDefsOnNotWalkable(tileMap, tileSystem);
+
+            if(!fixtureDefs.isEmpty())
+            {
+                for(FixtureDef fixtureDef : fixtureDefs)
+                    tileMapBody.createFixture(fixtureDef);
+            }
+        }
     }
 
     public void update(float delta)

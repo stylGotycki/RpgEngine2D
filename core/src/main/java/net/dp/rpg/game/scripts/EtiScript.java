@@ -12,7 +12,7 @@ public class EtiScript extends EntityScript
     @Override
     public void update(float delta)
     {
-        float speed = 300f;
+        float speed = 100f;
         Vector2 direction = new Vector2(0,0);
         if(Gdx.input.isKeyPressed(Input.Keys.A))
         {
