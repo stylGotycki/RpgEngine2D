@@ -4,6 +4,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
+import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.BodyDef;
 import com.badlogic.gdx.physics.box2d.CircleShape;
@@ -15,6 +16,7 @@ import net.dp.rpg.engine.bodyCreator.FixtureParams;
 import net.dp.rpg.engine.components.CameraComponent;
 import net.dp.rpg.engine.components.ScriptComponent;
 import net.dp.rpg.engine.components.SpriteComponent;
+import net.dp.rpg.game.scripts.CameraScript;
 import net.dp.rpg.game.scripts.EtiScript;
 
 public class LevelBuilder
@@ -50,39 +52,20 @@ public class LevelBuilder
         scene.createBodyComponent(eti);
         scene.createFixture(eti);
 
-        float cameraSize = 40;
-        OrthographicCamera camera = new OrthographicCamera(cameraSize, (float) Gdx.graphics.getHeight()/Gdx.graphics.getWidth() * cameraSize);
-        scene.addComponent(eti, new CameraComponent(camera));
-        scene.setActiveCamera(eti);
-
-        //create walls
-//        int wall = scene.createEntity();
-//
-//        scene.getBodyCreator().setBodyDefParams(BodyParams.builder().type(BodyDef.BodyType.StaticBody).build());
-//
-//        scene.createBodyComponent(wall);
-//
-//        Vector2[] wallPositions =
-//            {
-//                new Vector2(0,-scene.getActiveCamera().viewportHeight/2),
-//                new Vector2(-scene.getActiveCamera().viewportWidth/2, 0),
-//                new Vector2(0, scene.getActiveCamera().viewportHeight/2),
-//                new Vector2(scene.getActiveCamera().viewportWidth/2, 0)
-//            };
-//
-//        for(int i = 0; i < 4; i++)
-//        {
-//            shape.setAsBox(i%2 == 1 ? 0 : scene.getActiveCamera().viewportWidth, i%2 == 0 ? 0 : scene.getActiveCamera().viewportHeight, wallPositions[i], 0);
-//            scene.getBodyCreator().setFixtureDefParams(FixtureParams.builder().shape(shape).build());
-//            scene.createFixture(wall);
-//        }
-
-        scene.addComponent(eti, new ScriptComponent(new EtiScript()));
-
         TileFloor floor = new TileFloor(20260918L, 12);
         floor.loadRoomFromFile();
 
         scene.setTileMap(floor.getActiveRoom().map(), floor.getTileSystem());
+
+        Rectangle camBounds = new Rectangle(0,0,scene.getTileMap().width(), scene.getTileMap().height());
+        float cameraHeight = 13;
+        int cameraEntity = scene.createEntity();
+        OrthographicCamera camera = new OrthographicCamera((float) Gdx.graphics.getWidth()/Gdx.graphics.getHeight() * cameraHeight, cameraHeight);
+        scene.addComponent(cameraEntity, new CameraComponent(camera, camBounds));
+        scene.setActiveCamera(cameraEntity);
+
+        scene.addComponent(eti, new ScriptComponent(new EtiScript()));
+        scene.addComponent(cameraEntity, new ScriptComponent(new CameraScript(eti)));
 
         shape.dispose();
     }

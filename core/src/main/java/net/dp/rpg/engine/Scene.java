@@ -136,7 +136,7 @@ public class Scene
 
     public void setActiveCamera(int entityId)
     {
-        CameraComponent component = getComponentStorage(CameraComponent.class).getByIndex(entityId);
+        CameraComponent component = getComponentStorage(CameraComponent.class).getByEntity(entityId);
         if(component != null)
             this.activeCamera = component.camera;
     }
