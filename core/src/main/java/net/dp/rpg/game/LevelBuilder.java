@@ -14,6 +14,7 @@ import net.dp.rpg.engine.Scene;
 import net.dp.rpg.engine.bodyCreator.BodyParams;
 import net.dp.rpg.engine.bodyCreator.FixtureParams;
 import net.dp.rpg.engine.components.CameraComponent;
+import net.dp.rpg.engine.components.FollowComponent;
 import net.dp.rpg.engine.components.ScriptComponent;
 import net.dp.rpg.engine.components.SpriteComponent;
 import net.dp.rpg.game.scripts.CameraScript;
@@ -65,7 +66,7 @@ public class LevelBuilder
         scene.setActiveCamera(cameraEntity);
 
         scene.addComponent(eti, new ScriptComponent(new EtiScript()));
-        scene.addComponent(cameraEntity, new ScriptComponent(new CameraScript(eti)));
+        scene.addComponent(cameraEntity, new FollowComponent(eti, 8));
 
         shape.dispose();
     }
