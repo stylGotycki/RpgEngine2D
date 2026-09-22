@@ -1,8 +1,10 @@
 package net.dp.rpg.engine.systems;
 
 import com.badlogic.gdx.graphics.Camera;
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import net.dp.rpg.engine.components.*;
@@ -63,29 +65,56 @@ public class MovementSystem
 
             if(component.isBounded)
             {
-                Rectangle bounds = component.boundingRectangle;
-                float minX = bounds.x + camera.viewportWidth/2;
-                float minY = bounds.y + camera.viewportHeight/2;
-                float maxX = bounds.width - camera.viewportWidth/2;
-                float maxY = bounds.height - camera.viewportHeight/2;
-                if(camera.position.x < minX)
-                {
-                    camera.position.x = minX;
-                }
-                else if(camera.position.x > maxX)
-                {
-                    camera.position.x = maxX;
-                }
-                if(camera.position.y < minY)
-                {
-                    camera.position.y = minY;
-                }
-                else if(camera.position.y > maxY)
-                {
-                    camera.position.y = maxY;
-                }
+                clamp(camera.position.x, camera.position.y, camera.viewportWidth, camera.viewportHeight, component.boundingRectangle);
             }
             camera.update();
         }
+    }
+
+    // todo follow on transform component
+    // todo transform hierarchy: body -> transform -> sprite, camera
+    public void follow(ComponentStorage<FollowComponent> followComponents, ComponentStorage<CameraComponent> cameras, ComponentStorage<PhysicalBodyComponent> bodies, float delta)
+    {
+        int fSize = followComponents.size();
+        for(int i = 0; i < fSize; i++)
+        {
+            FollowComponent followComponent = followComponents.getByIndex(i);
+            int following = followComponents.getEntity(i);
+            int target = followComponent.targetEntity;
+            if(cameras.hasComponent(following))
+            {
+                CameraComponent camComponent = cameras.getByEntity(following);
+                Camera camera = camComponent.camera;
+                Vector2 targetPosition = bodies.getByEntity(target).body.getPosition();
+                targetPosition = clamp(targetPosition.x, targetPosition.y, camera.viewportWidth, camera.viewportHeight, camComponent.boundingRectangle);
+                camera.position.x += followComponent.lerp * delta * (targetPosition.x - camera.position.x);
+                camera.position.y += followComponent.lerp * delta * (targetPosition.y - camera.position.y);
+            }
+        }
+    }
+
+    private Vector2 clamp(float x, float y, float width, float height, Rectangle bounds)
+    {
+        float minX = bounds.x + width/2;
+        float minY = bounds.y + height/2;
+        float maxX = bounds.width - width/2;
+        float maxY = bounds.height - height/2;
+        if(x < minX)
+        {
+            x = minX;
+        }
+        else if(x > maxX)
+        {
+            x = maxX;
+        }
+        if(y < minY)
+        {
+            y = minY;
+        }
+        else if(y > maxY)
+        {
+            y = maxY;
+        }
+        return new Vector2(x,y);
     }
 }

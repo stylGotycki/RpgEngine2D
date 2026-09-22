@@ -59,6 +59,7 @@ public class Scene
         componentStorages.add(new ComponentStorage<>(SpriteComponent.class));
         componentStorages.add(new ComponentStorage<>(ScriptComponent.class));
         componentStorages.add(new ComponentStorage<>(CameraComponent.class));
+        componentStorages.add(new ComponentStorage<>(FollowComponent.class));
     }
 
     public <T extends Component> void addComponent(int entity, T component)
@@ -180,6 +181,7 @@ public class Scene
 
         movementSystem.updatePositions(getComponentStorage(TransformComponent.class), getComponentStorage(MoveComponent.class), delta);
         movementSystem.syncBodyAndSpritePositions(getComponentStorage(PhysicalBodyComponent.class), getComponentStorage(SpriteComponent.class));
+        movementSystem.follow(getComponentStorage(FollowComponent.class), getComponentStorage(CameraComponent.class), getComponentStorage(PhysicalBodyComponent.class), delta);
         movementSystem.updateCameraPosition(getComponentStorage(CameraComponent.class), getComponentStorage(PhysicalBodyComponent.class), getComponentStorage(TransformComponent.class));
 
         gui.update(delta);

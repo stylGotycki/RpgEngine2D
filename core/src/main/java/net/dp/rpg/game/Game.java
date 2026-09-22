@@ -30,7 +30,5 @@ public class Game extends AbstractGame
         getEngine().switchScene(scene);
 
         getEngine().setGlobalScript(new GlobalScript());
-
-        getEngine().setPhysicsDebug(true);
     }
 }
