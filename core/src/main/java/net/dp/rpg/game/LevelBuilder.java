@@ -13,10 +13,7 @@ import net.dp.rpg.engine.EngineServices;
 import net.dp.rpg.engine.Scene;
 import net.dp.rpg.engine.bodyCreator.BodyParams;
 import net.dp.rpg.engine.bodyCreator.FixtureParams;
-import net.dp.rpg.engine.components.CameraComponent;
-import net.dp.rpg.engine.components.FollowComponent;
-import net.dp.rpg.engine.components.ScriptComponent;
-import net.dp.rpg.engine.components.SpriteComponent;
+import net.dp.rpg.engine.components.*;
 import net.dp.rpg.game.scripts.CameraScript;
 import net.dp.rpg.game.scripts.EtiScript;
 
@@ -58,11 +55,11 @@ public class LevelBuilder
 
         scene.setTileMap(floor.getActiveRoom().map(), floor.getTileSystem());
 
-        Rectangle camBounds = new Rectangle(0,0,scene.getTileMap().width(), scene.getTileMap().height());
         float cameraHeight = 13;
         int cameraEntity = scene.createEntity();
         OrthographicCamera camera = new OrthographicCamera((float) Gdx.graphics.getWidth()/Gdx.graphics.getHeight() * cameraHeight, cameraHeight);
-        scene.addComponent(cameraEntity, new CameraComponent(camera, camBounds));
+        scene.addComponent(cameraEntity, new CameraComponent(camera));
+        scene.addComponent(cameraEntity, new BoundingComponent(0,0,scene.getTileMap().width(), scene.getTileMap().height(), camera.viewportWidth, cameraHeight));
         scene.setActiveCamera(cameraEntity);
 
         scene.addComponent(eti, new ScriptComponent(new EtiScript()));
