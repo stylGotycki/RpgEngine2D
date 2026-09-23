@@ -60,6 +60,7 @@ public class Scene
         componentStorages.add(new ComponentStorage<>(ScriptComponent.class));
         componentStorages.add(new ComponentStorage<>(CameraComponent.class));
         componentStorages.add(new ComponentStorage<>(FollowComponent.class));
+        componentStorages.add(new ComponentStorage<>(BoundingComponent.class));
     }
 
     public <T extends Component> void addComponent(int entity, T component)
@@ -70,6 +71,13 @@ public class Scene
             scriptComp.script.setOwners(engine, this, entity);
             if(scriptComp.script instanceof InputListener)
                 inputAdapter.addListener((InputListener) scriptComp.script);
+        }
+        if ((component instanceof SpriteComponent
+            || component instanceof PhysicalBodyComponent
+            || component instanceof CameraComponent)
+            && !getComponentStorage(TransformComponent.class).hasComponent(entity))
+        {
+            addComponent(entity, new TransformComponent(new Vector2(0,0), 0, 1));
         }
     }
 
@@ -180,9 +188,11 @@ public class Scene
         physicalWorld.step(delta, 6, 2);
 
         movementSystem.updatePositions(getComponentStorage(TransformComponent.class), getComponentStorage(MoveComponent.class), delta);
-        movementSystem.syncBodyAndSpritePositions(getComponentStorage(PhysicalBodyComponent.class), getComponentStorage(SpriteComponent.class));
-        movementSystem.follow(getComponentStorage(FollowComponent.class), getComponentStorage(CameraComponent.class), getComponentStorage(PhysicalBodyComponent.class), delta);
-        movementSystem.updateCameraPosition(getComponentStorage(CameraComponent.class), getComponentStorage(PhysicalBodyComponent.class), getComponentStorage(TransformComponent.class));
+        movementSystem.bodyToTransform(getComponentStorage(PhysicalBodyComponent.class), getComponentStorage(TransformComponent.class));
+        movementSystem.follow(getComponentStorage(FollowComponent.class), getComponentStorage(TransformComponent.class), getComponentStorage(BoundingComponent.class), delta);
+        movementSystem.boundPositions(getComponentStorage(BoundingComponent.class), getComponentStorage(TransformComponent.class));
+        movementSystem.transformToSprite(getComponentStorage(TransformComponent.class), getComponentStorage(SpriteComponent.class));
+        movementSystem.transformToCamera(getComponentStorage(TransformComponent.class), getComponentStorage(CameraComponent.class));
 
         gui.update(delta);
     }
