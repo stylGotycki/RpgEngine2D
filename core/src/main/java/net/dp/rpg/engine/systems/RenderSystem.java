@@ -2,14 +2,11 @@ package net.dp.rpg.engine.systems;
 
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Matrix4;
-import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer;
 import com.badlogic.gdx.utils.ScreenUtils;
 import net.dp.rpg.engine.Scene;
 import net.dp.rpg.engine.components.ComponentStorage;
 import net.dp.rpg.engine.components.SpriteComponent;
-import net.dp.rpg.engine.components.TextureComponent;
-import net.dp.rpg.engine.components.TransformComponent;
 import net.dp.rpg.engine.tile.TileSystem;
 import net.dp.rpg.engine.tile.render.TileMapRenderer;
 
@@ -46,23 +43,9 @@ public class RenderSystem
 
         batch.setProjectionMatrix(projMatrix);
         batch.begin();
-        ComponentStorage<TextureComponent> textureStorage = scene.getComponentStorage(TextureComponent.class);
-        ComponentStorage<TransformComponent> transformStorage = scene.getComponentStorage(TransformComponent.class);
         ComponentStorage<SpriteComponent> spriteStorage = scene.getComponentStorage(SpriteComponent.class);
-        int size = textureStorage.size();
 
-        for(int i = 0; i < size; i++)
-        {
-            int entity = textureStorage.getEntity(i);
-            if(transformStorage.hasComponent(entity))
-            {
-                TransformComponent transform = transformStorage.getByEntity(entity);
-                Vector2 position = transform.position;
-                batch.draw(textureStorage.getByIndex(i).texture, position.x, position.y);
-            }
-        }
-
-        size = spriteStorage.size();
+        int size = spriteStorage.size();
 
         for(int i = 0; i < size; i++)
         {

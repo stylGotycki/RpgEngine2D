@@ -76,7 +76,7 @@ public class MovementSystem
                 Body body = bodies.getByIndex(i).body;
                 TransformComponent transform = transforms.getByEntity(entity);
                 transform.position.set(body.getPosition());
-                transform.rotation = body.getTransform().getRotation() * 180 / (float) Math.PI;
+                transform.rotation = body.getTransform().getRotation();
             }
         }
     }
@@ -92,7 +92,7 @@ public class MovementSystem
                 Sprite sprite = sprites.getByIndex(i).sprite;
                 TransformComponent transform = transforms.getByEntity(entity);
                 sprite.setCenter(transform.position.x, transform.position.y);
-                sprite.setRotation(transform.rotation * 180 / (float) Math.PI);
+                sprite.setRotation(transform.rotation * MathUtils.radDeg);
             }
         }
     }

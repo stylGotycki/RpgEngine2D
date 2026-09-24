@@ -4,17 +4,14 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
-import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.BodyDef;
-import com.badlogic.gdx.physics.box2d.CircleShape;
 import com.badlogic.gdx.physics.box2d.PolygonShape;
 import net.dp.rpg.engine.EngineServices;
 import net.dp.rpg.engine.Scene;
 import net.dp.rpg.engine.bodyCreator.BodyParams;
 import net.dp.rpg.engine.bodyCreator.FixtureParams;
 import net.dp.rpg.engine.components.*;
-import net.dp.rpg.game.scripts.CameraScript;
 import net.dp.rpg.game.scripts.EtiScript;
 
 public class LevelBuilder
@@ -25,7 +22,6 @@ public class LevelBuilder
         int eti = scene.createEntity();
         Sprite etiSprite = new Sprite( (Texture) engine.getAssetManager().get("eti.png") );
         etiSprite.setSize(0.8f,0.8f);
-        etiSprite.setOriginCenter();
 
         scene.addComponent(eti, new SpriteComponent(etiSprite));
 
@@ -64,6 +60,27 @@ public class LevelBuilder
 
         scene.addComponent(eti, new ScriptComponent(new EtiScript()));
         scene.addComponent(cameraEntity, new FollowComponent(eti, 8));
+
+        //chest
+        bodyParams.position.x = 12;
+        bodyParams.position.y = 10;
+        bodyParams.fixedRotation = false;
+        fixtureParams.friction = 10f;
+        fixtureParams.density = 1f;
+
+        shape.setAsBox(0.5f, 0.5f);
+        scene.getBodyCreator().setBodyDefParams(bodyParams);
+        scene.getBodyCreator().setFixtureDefParams(fixtureParams);
+
+        int chest1 = scene.createEntity();
+        scene.createBodyComponent(chest1);
+        scene.createFixture(chest1);
+        Sprite chestSprite = new Sprite( (Texture) engine.getAssetManager().get("eti.png"));
+        chestSprite.setSize(1,1);
+        scene.addComponent(chest1, new SpriteComponent(chestSprite));
+
+        int chest2 = scene.cloneEntity(chest1);
+        scene.getComponentStorage(PhysicalBodyComponent.class).getByEntity(chest2).body.getPosition().x = 14;
 
         shape.dispose();
     }

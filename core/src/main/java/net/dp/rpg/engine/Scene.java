@@ -54,7 +54,6 @@ public class Scene
 
         componentStorages.add(new ComponentStorage<>(MoveComponent.class));
         componentStorages.add(new ComponentStorage<>(TransformComponent.class));
-        componentStorages.add(new ComponentStorage<>(TextureComponent.class));
         componentStorages.add(new ComponentStorage<>(PhysicalBodyComponent.class));
         componentStorages.add(new ComponentStorage<>(SpriteComponent.class));
         componentStorages.add(new ComponentStorage<>(ScriptComponent.class));
@@ -72,12 +71,16 @@ public class Scene
             if(scriptComp.script instanceof InputListener)
                 inputAdapter.addListener((InputListener) scriptComp.script);
         }
-        if ((component instanceof SpriteComponent
+        else if ((component instanceof SpriteComponent
             || component instanceof PhysicalBodyComponent
             || component instanceof CameraComponent)
             && !getComponentStorage(TransformComponent.class).hasComponent(entity))
         {
             addComponent(entity, new TransformComponent(new Vector2(0,0), 0, 1));
+        }
+        else if(component instanceof SpriteComponent spriteComponent)
+        {
+            spriteComponent.sprite.setOriginCenter();
         }
     }
 
@@ -96,6 +99,7 @@ public class Scene
     public Body createBodyComponent(int entity)
     {
         Body body = physicalWorld.createBody(bodyCreator.getBodyDef());
+        body.setUserData(bodyCreator.getBodyDef());
         addComponent(entity, new PhysicalBodyComponent(body));
         return body;
     }
@@ -103,7 +107,9 @@ public class Scene
     public Fixture createFixture(int entity)
     {
         Body body = getComponentStorage(PhysicalBodyComponent.class).getByEntity(entity).body;
-        return body.createFixture(bodyCreator.getFixtureDef());
+        Fixture fixture = body.createFixture(bodyCreator.getFixtureDef());
+        fixture.setUserData(bodyCreator.getFixtureDef());
+        return fixture;
     }
 
     public <T extends Component> ComponentStorage<T> getComponentStorage(Class<T> componentClass)
@@ -122,6 +128,21 @@ public class Scene
             return freeEntity.getFirst();
 
         return nextEntity++;
+    }
+
+    public int cloneEntity(int entity)
+    {
+        if(entity < nextEntity && freeEntity.contains(entity))
+            throw new IllegalArgumentException("Entity " + entity + " does not exist.");
+        int newEntity = createEntity();
+        for(ComponentStorage<? extends Component> storage : componentStorages)
+        {
+            if(storage.hasComponent(entity))
+            {
+                addComponent(newEntity, storage.getByEntity(entity).copy());
+            }
+        }
+        return newEntity;
     }
 
     public void deleteEntity(int entityId)

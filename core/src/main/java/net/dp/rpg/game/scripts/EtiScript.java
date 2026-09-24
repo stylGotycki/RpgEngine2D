@@ -33,7 +33,7 @@ public class EtiScript extends EntityScript
 
         direction.setLength(1);
 
-        Body etiBody = getScene().getComponentStorage(PhysicalBodyComponent.class).getByIndex(getEntity()).body;
+        Body etiBody = getScene().getComponentStorage(PhysicalBodyComponent.class).getByEntity(getEntity()).body;
         etiBody.applyForce(direction.scl(speed), etiBody.getPosition(), true);
     }
 }
