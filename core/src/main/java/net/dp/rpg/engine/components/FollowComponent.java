@@ -10,4 +10,10 @@ public class FollowComponent implements Component
         this.targetEntity = targetEntity;
         this.lerp = lerp;
     }
+
+    @Override
+    public Component copy()
+    {
+        return new FollowComponent(targetEntity, lerp);
+    }
 }
