@@ -2,7 +2,6 @@ package net.dp.rpg.engine.floor;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.List;
 
 public final class ShapePool {
@@ -28,9 +27,13 @@ public final class ShapePool {
     return entries;
   }
 
+  public boolean contains(RoomShapeDef shape) {
+    return entries.stream().anyMatch(entry -> entry.shape() == shape);
+  }
+
   public ShapeEntry smallest() {
     return entries.stream()
-        .min(Comparator.comparingInt(shapeEntry -> shapeEntry.shape().size()))
+        .min((first, second) -> Integer.compare(first.shape().size(), second.shape().size()))
         .orElseThrow();
   }
 

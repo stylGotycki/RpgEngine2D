@@ -11,20 +11,22 @@ public final class FloorBuilder {
 
   private final HolePhase holes = new HolePhase();
 
+  private final RetrospectivePass retrospective = new RetrospectivePass();
+
   public FloorLayout build(FloorPlan plan, GridBounds bounds, WalkerSettings settings, long seed) {
-    WalkerLayout.WalkResult walk = walker.grow(plan.trunkPlan(), bounds, settings, seed);
+    return build(FloorContext.of(plan, bounds, settings, seed));
+  }
+
+  public FloorLayout build(FloorContext context) {
+    WalkerLayout.WalkResult walk = walker.grow(context);
     FloorGraph graph = walk.graph();
 
-    ShapeDrawContext shapes = new ShapeDrawContext(plan.exclusiveGroups());
+    ShapeDrawContext shapes = new ShapeDrawContext(context.plan().exclusiveGroups());
 
     graph.rooms().forEach(room -> shapes.confirm(room.variant()));
 
-    AppendixPhase.Result attached = appendices.attach(graph, plan, shapes, bounds,
-        RandomSource.derive(seed, "anchor"), RandomSource.derive(seed, "appendix"));
-
-    int holeRooms = holes.fill(graph, bounds,
-        RandomSource.derive(seed, "hole"), RandomSource.derive(seed, "holeShape"));
-
+    AppendixPhase.Result attached = appendices.attach(graph, context, shapes);
+    int holeRooms = holes.fill(graph, context);
     int extraDoors = walk.extraDoors() + completeDoorways(graph);
 
     graph.computeDepths();
@@ -32,8 +34,10 @@ public final class FloorBuilder {
     RoomNode boss = attached.boss();
     List<RoomNode> criticalPath = boss == null ? List.of() : graph.pathToStart(boss);
 
+    RetrospectivePass.Result late = retrospective.apply(graph, context, criticalPath);
+
     return new FloorLayout(graph, boss, criticalPath, walk.rooms(), attached.attached(), holeRooms,
-        extraDoors, walk.reason());
+        extraDoors, late.relocated(), context.loadout().unspentMandatory(), walk.reason());
   }
 
   private int completeDoorways(FloorGraph graph) {

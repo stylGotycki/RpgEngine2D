@@ -29,6 +29,9 @@ public final class RoomNode {
   @Setter
   private RoomPhase phase = RoomPhase.TRUNK;
 
+  @Setter
+  private RoomType type = RoomType.NORMAL;
+
   private int depth = -1;
 
   RoomNode(int index, ShapeVariant variant, RoomCell origin) {
@@ -130,6 +133,10 @@ public final class RoomNode {
     return linkedIndices.contains(other.index);
   }
 
+  public RoomType type() {
+    return type;
+  }
+
   public RoomPhase phase() {
     return phase;
   }
@@ -149,7 +156,7 @@ public final class RoomNode {
 
   @Override
   public String toString() {
-    return "room[%d] %s at %d,%d".formatted(index, variant.id(), anchor().x(), anchor().y());
+    return "room[%d] %s %s at %d,%d".formatted(index, type, variant.id(), anchor().x(), anchor().y());
   }
 
   private static Set<RoomCell> toFloorCells(RoomShape shape, RoomCell origin) {

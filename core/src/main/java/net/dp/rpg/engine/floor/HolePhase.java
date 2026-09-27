@@ -12,7 +12,10 @@ import net.dp.rpg.engine.tile.room.RoomEdge;
 
 public final class HolePhase {
 
-  public int fill(FloorGraph graph, GridBounds bounds, Random holeRandom, Random shapeRandom) {
+  public int fill(FloorGraph graph, FloorContext context) {
+    Random holeRandom = context.stream("hole");
+    Random shapeRandom = context.stream("holeShape");
+    ShapePool pool = context.types().poolFor(RoomType.VAULT);
     int filled = 0;
 
     for (RoomNode host : List.copyOf(graph.rooms())) {
@@ -31,7 +34,7 @@ public final class HolePhase {
           continue;
         }
 
-        if (placeInside(graph, host, cells, bounds, shapeRandom) != null) {
+        if (placeInside(graph, host, cells, pool, context.bounds(), shapeRandom) != null) {
           filled++;
         }
       }
@@ -40,12 +43,15 @@ public final class HolePhase {
     return filled;
   }
 
-  private RoomNode placeInside(FloorGraph graph, RoomNode host, List<RoomCell> region, GridBounds bounds,
-                               Random shapeRandom) {
+  private RoomNode placeInside(FloorGraph graph, RoomNode host, List<RoomCell> region, ShapePool pool,
+                               GridBounds bounds, Random shapeRandom) {
     Set<RoomCell> allowed = new LinkedHashSet<>(region);
     List<RoomShapeDef> candidates = new ArrayList<>();
 
-    Shapes.ALL.stream().filter(shape -> shape.size() <= region.size()).forEach(candidates::add);
+    pool.entries().stream()
+        .map(ShapePool.ShapeEntry::shape)
+        .filter(shape -> shape.size() <= region.size())
+        .forEach(candidates::add);
     Collections.shuffle(candidates, shapeRandom);
     candidates.sort((first, second) -> Integer.compare(second.size(), first.size()));
 
@@ -62,6 +68,7 @@ public final class HolePhase {
             RoomNode inner = graph.place(variant, origin);
 
             inner.setPhase(RoomPhase.HOLE);
+            inner.setType(RoomType.VAULT);
             graph.markExempt(inner);
             graph.connect(host, inner, hostEdgeTo(host, inner), DoorType.LOCKED);
 

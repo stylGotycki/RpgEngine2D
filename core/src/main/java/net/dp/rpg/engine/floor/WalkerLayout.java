@@ -12,15 +12,20 @@ public final class WalkerLayout {
 
   private static final int SHAPE_RETRIES = 6;
 
-  public WalkResult grow(TrunkPlan plan, GridBounds bounds, WalkerSettings settings, long seed) {
-    Random layoutRandom = RandomSource.derive(seed, "layout");
-    Random shapeRandom = RandomSource.derive(seed, "shape");
-    Random doorRandom = RandomSource.derive(seed, "door");
+  public WalkResult grow(FloorContext context) {
+    FloorPlan plan = context.plan();
+    GridBounds bounds = context.bounds();
+    WalkerSettings settings = context.settings();
+
+    Random layoutRandom = context.stream("layout");
+    Random shapeRandom = context.stream("shape");
+    Random typeRandom = context.stream("type");
+    Random doorRandom = context.stream("door");
 
     FloorGraph graph = new FloorGraph();
     ShapeDrawContext shapes = new ShapeDrawContext(plan.exclusiveGroups());
 
-    placeStart(graph, plan, shapes, bounds, shapeRandom);
+    placeStart(graph, context, shapes, shapeRandom);
 
     Walker walker = new Walker(bounds.center(), bounds, settings);
 
@@ -29,14 +34,14 @@ public final class WalkerLayout {
     StopReason reason = null;
 
     while (reason == null) {
-      if (graph.size() >= plan.roomBudget()) {
+      if (graph.size() >= plan.trunkRooms()) {
         reason = StopReason.BUDGET_REACHED;
       } else if (barrenSteps >= settings.maxBarrenSteps()) {
         reason = StopReason.BARREN;
       } else if (steps >= settings.hardStepCap()) {
         reason = StopReason.STEP_CAP;
       } else {
-        Outcome outcome = attemptStep(graph, walker, plan, shapes, bounds, layoutRandom, shapeRandom);
+        Outcome outcome = attemptStep(graph, walker, context, shapes, layoutRandom, shapeRandom, typeRandom);
 
         if (outcome == Outcome.BLOCKED) {
           reason = StopReason.BLOCKED;
@@ -49,30 +54,32 @@ public final class WalkerLayout {
 
     int extraDoors = connectTouchingRooms(graph, doorRandom, settings);
 
-    return new WalkResult(graph, steps, extraDoors, reason);
+    return new WalkResult(graph, graph.size(), steps, extraDoors, reason);
   }
 
-  private void placeStart(FloorGraph graph, TrunkPlan plan, ShapeDrawContext shapes, GridBounds bounds,
-                          Random shapeRandom) {
-    RoomCell centre = bounds.center();
+  private void placeStart(FloorGraph graph, FloorContext context, ShapeDrawContext shapes, Random shapeRandom) {
+    RoomCell centre = context.bounds().center();
+    ShapePool pool = context.types().poolFor(RoomType.START);
 
     for (int retry = 0; retry < SHAPE_RETRIES; retry++) {
-      ShapeVariant variant = drawShape(graph, plan, shapes, shapeRandom);
-      RoomCell origin = fittingOrigin(graph, variant, centre, bounds, shapeRandom);
+      ShapeVariant variant = drawShape(graph, context, pool, shapes, shapeRandom);
+      RoomCell origin = fittingOrigin(graph, variant, centre, context.bounds(), shapeRandom);
 
       if (origin != null) {
-        place(graph, variant, origin);
+        place(graph, variant, origin).setType(RoomType.START);
         shapes.confirm(variant);
+        context.loadout().spend(AbilityPhase.TRUNK, RoomType.START);
 
         return;
       }
     }
 
-    place(graph, Shapes.SINGLE.firstVariant(), centre);
+    place(graph, Shapes.SINGLE.firstVariant(), centre).setType(RoomType.START);
+    context.loadout().spend(AbilityPhase.TRUNK, RoomType.START);
   }
 
-  private Outcome attemptStep(FloorGraph graph, Walker walker, TrunkPlan plan, ShapeDrawContext shapes,
-                              GridBounds bounds, Random layoutRandom, Random shapeRandom) {
+  private Outcome attemptStep(FloorGraph graph, Walker walker, FloorContext context, ShapeDrawContext shapes,
+                              Random layoutRandom, Random shapeRandom, Random typeRandom) {
     Direction excluded = null;
 
     for (int attempt = 0; attempt < 2; attempt++) {
@@ -82,7 +89,7 @@ public final class WalkerLayout {
         return Outcome.BLOCKED;
       }
 
-      Outcome outcome = step(graph, walker, direction, plan, shapes, bounds, shapeRandom);
+      Outcome outcome = step(graph, walker, direction, context, shapes, shapeRandom, typeRandom);
 
       if (outcome != Outcome.NO_FIT) {
         return outcome;
@@ -94,8 +101,8 @@ public final class WalkerLayout {
     return Outcome.NO_FIT;
   }
 
-  private Outcome step(FloorGraph graph, Walker walker, Direction direction, TrunkPlan plan,
-                       ShapeDrawContext shapes, GridBounds bounds, Random shapeRandom) {
+  private Outcome step(FloorGraph graph, Walker walker, Direction direction, FloorContext context,
+                       ShapeDrawContext shapes, Random shapeRandom, Random typeRandom) {
     RoomCell from = walker.cell();
     RoomCell target = from.neighbour(direction);
     RoomNode currentRoom = graph.roomAt(from);
@@ -106,9 +113,13 @@ public final class WalkerLayout {
       return Outcome.MOVED;
     }
 
+    int opportunities = Math.max(1, context.plan().trunkRooms() - graph.size());
+    RoomType type = context.loadout().next(AbilityPhase.TRUNK, opportunities, typeRandom);
+    ShapePool pool = context.types().poolFor(type);
+
     for (int retry = 0; retry < SHAPE_RETRIES; retry++) {
-      ShapeVariant variant = drawShape(graph, plan, shapes, shapeRandom);
-      RoomCell origin = fittingOrigin(graph, variant, target, bounds, shapeRandom);
+      ShapeVariant variant = drawShape(graph, context, pool, shapes, shapeRandom);
+      RoomCell origin = fittingOrigin(graph, variant, target, context.bounds(), shapeRandom);
 
       if (origin == null) {
         continue;
@@ -116,7 +127,9 @@ public final class WalkerLayout {
 
       RoomNode created = place(graph, variant, origin);
 
+      created.setType(type);
       shapes.confirm(variant);
+      context.loadout().spend(AbilityPhase.TRUNK, type);
       graph.connect(currentRoom, created, new RoomEdge(from, direction), DoorType.NORMAL);
       walker.moveTo(target, direction);
 
@@ -151,13 +164,15 @@ public final class WalkerLayout {
     return room;
   }
 
-  private ShapeVariant drawShape(FloorGraph graph, TrunkPlan plan, ShapeDrawContext shapes, Random shapeRandom) {
-    int cellsLeft = plan.cellBudget() - graph.budgetedCells();
-    int roomsLeft = Math.max(1, plan.roomBudget() - graph.size());
-    double factor = ShapeDrawContext.budgetFactor(plan.cellBudget(), plan.roomBudget(),
+  private ShapeVariant drawShape(FloorGraph graph, FloorContext context, ShapePool pool, ShapeDrawContext shapes,
+                                 Random shapeRandom) {
+    FloorPlan plan = context.plan();
+    int cellsLeft = plan.trunkCellBudget() - graph.budgetedCells();
+    int roomsLeft = Math.max(1, plan.trunkRooms() - graph.size());
+    double factor = ShapeDrawContext.budgetFactor(plan.trunkCellBudget(), plan.trunkRooms(),
         graph.budgetedCells(), graph.size());
 
-    return shapes.draw(plan.shapes(), roomsLeft, cellsLeft, factor, shapeRandom);
+    return shapes.draw(pool, roomsLeft, cellsLeft, factor, shapeRandom);
   }
 
   private int connectTouchingRooms(FloorGraph graph, Random doorRandom, WalkerSettings settings) {
@@ -201,10 +216,6 @@ public final class WalkerLayout {
     BLOCKED
   }
 
-  public record WalkResult(FloorGraph graph, int steps, int extraDoors, StopReason reason) {
-
-    public int rooms() {
-      return graph.size();
-    }
+  public record WalkResult(FloorGraph graph, int rooms, int steps, int extraDoors, StopReason reason) {
   }
 }

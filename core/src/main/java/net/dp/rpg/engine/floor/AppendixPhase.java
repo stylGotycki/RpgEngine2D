@@ -17,34 +17,66 @@ public final class AppendixPhase {
 
   private static final int ANCHOR_RETRIES = 10;
 
-  public Result attach(FloorGraph graph, FloorPlan plan, ShapeDrawContext shapes, GridBounds bounds,
-                       Random anchorRandom, Random shapeRandom) {
-    int wanted = plan.appendixRooms();
+  public Result attach(FloorGraph graph, FloorContext context, ShapeDrawContext shapes) {
+    Random anchorRandom = context.stream("anchor");
+    Random shapeRandom = context.stream("appendix");
+    Random typeRandom = context.stream("appendixType");
+
+    int wanted = context.plan().appendixRooms();
     int attached = 0;
 
     for (int index = 0; index < wanted - 1; index++) {
-      if (attachOne(graph, plan, shapes, bounds, anchorRandom, shapeRandom) != null) {
+      int opportunities = Math.max(1, wanted - 1 - index);
+      RoomType type = context.loadout().next(AbilityPhase.APPENDIX, opportunities, typeRandom);
+
+      if (attachOne(graph, context, type, shapes, anchorRandom, shapeRandom) != null) {
         attached++;
       }
     }
 
-    RoomNode boss = attachBoss(graph, plan, shapes, bounds, shapeRandom);
+    attached += spendRemaining(graph, context, shapes, anchorRandom, shapeRandom);
+
+    RoomNode boss = attachBoss(graph, context, shapes, shapeRandom);
 
     return new Result(attached, boss);
   }
 
-  private RoomNode attachOne(FloorGraph graph, FloorPlan plan, ShapeDrawContext shapes, GridBounds bounds,
+  private int spendRemaining(FloorGraph graph, FloorContext context, ShapeDrawContext shapes,
                              Random anchorRandom, Random shapeRandom) {
+    int attached = 0;
+
+    for (Loadout.Charge charge : context.loadout().charges(AbilityPhase.APPENDIX)) {
+      boolean structural = charge.definition().slot() == SlotPreference.CRITICAL_TERMINAL;
+
+      while (charge.mandatory() && charge.remaining() > 0 && !structural) {
+        if (attachOne(graph, context, charge.type(), shapes, anchorRandom, shapeRandom) == null) {
+          break;
+        }
+
+        attached++;
+      }
+    }
+
+    return attached;
+  }
+
+  private RoomNode attachOne(FloorGraph graph, FloorContext context, RoomType type, ShapeDrawContext shapes,
+                             Random anchorRandom, Random shapeRandom) {
+    ShapePool pool = context.types().poolFor(type);
+
     for (int retry = 0; retry < ANCHOR_RETRIES; retry++) {
-      RoomNode anchor = pickAnchor(graph, bounds, anchorRandom);
+      RoomNode anchor = pickAnchor(graph, context.bounds(), anchorRandom);
 
       if (anchor == null) {
         return null;
       }
 
-      RoomNode room = attach(graph, anchor, plan.defaultShapes(), plan, shapes, bounds, shapeRandom);
+      RoomNode room = attach(graph, anchor, pool, context, shapes, shapeRandom);
 
       if (room != null) {
+        room.setType(type);
+        context.loadout().spend(AbilityPhase.APPENDIX, type);
+
         return room;
       }
     }
@@ -52,19 +84,22 @@ public final class AppendixPhase {
     return null;
   }
 
-  private RoomNode attachBoss(FloorGraph graph, FloorPlan plan, ShapeDrawContext shapes, GridBounds bounds,
+  private RoomNode attachBoss(FloorGraph graph, FloorContext context, ShapeDrawContext shapes,
                               Random shapeRandom) {
     graph.computeDepths();
 
+    ShapePool pool = context.types().poolFor(RoomType.BOSS);
     List<RoomNode> byDepth = new ArrayList<>(graph.rooms());
 
     byDepth.sort((first, second) -> Integer.compare(second.depth(), first.depth()));
 
     for (RoomNode anchor : byDepth) {
-      RoomNode boss = attach(graph, anchor, plan.bossShapes(), plan, shapes, bounds, shapeRandom);
+      RoomNode boss = attach(graph, anchor, pool, context, shapes, shapeRandom);
 
       if (boss != null) {
+        boss.setType(RoomType.BOSS);
         graph.markExempt(boss);
+        context.loadout().spend(AbilityPhase.APPENDIX, RoomType.BOSS);
 
         return boss;
       }
@@ -109,9 +144,9 @@ public final class AppendixPhase {
     return candidates.get(candidates.size() - 1);
   }
 
-  private RoomNode attach(FloorGraph graph, RoomNode anchor, ShapePool pool, FloorPlan plan,
-                          ShapeDrawContext shapes, GridBounds bounds, Random shapeRandom) {
-    List<RoomEdge> openings = freeNeighbourCells(graph, anchor, bounds);
+  private RoomNode attach(FloorGraph graph, RoomNode anchor, ShapePool pool, FloorContext context,
+                          ShapeDrawContext shapes, Random shapeRandom) {
+    List<RoomEdge> openings = freeNeighbourCells(graph, anchor, context.bounds());
 
     Collections.shuffle(openings, shapeRandom);
 
@@ -119,8 +154,8 @@ public final class AppendixPhase {
       RoomCell target = opening.cell().neighbour(opening.direction());
 
       for (int retry = 0; retry < SHAPE_RETRIES; retry++) {
-        ShapeVariant variant = draw(graph, plan, pool, shapes, shapeRandom);
-        RoomCell origin = fittingOrigin(graph, variant, target, anchor, bounds, shapeRandom);
+        ShapeVariant variant = draw(graph, context, pool, shapes, shapeRandom);
+        RoomCell origin = fittingOrigin(graph, variant, target, anchor, context.bounds(), shapeRandom);
 
         if (origin == null) {
           continue;
@@ -183,8 +218,9 @@ public final class AppendixPhase {
     return openings;
   }
 
-  private ShapeVariant draw(FloorGraph graph, FloorPlan plan, ShapePool pool, ShapeDrawContext shapes,
+  private ShapeVariant draw(FloorGraph graph, FloorContext context, ShapePool pool, ShapeDrawContext shapes,
                             Random shapeRandom) {
+    FloorPlan plan = context.plan();
     int cellsLeft = plan.cellBudget() - graph.budgetedCells();
     int roomsLeft = Math.max(1, plan.roomCount() - graph.size());
     double factor = ShapeDrawContext.budgetFactor(plan.cellBudget(), plan.roomCount(),

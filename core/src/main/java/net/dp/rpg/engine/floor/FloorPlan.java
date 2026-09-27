@@ -1,11 +1,13 @@
 package net.dp.rpg.engine.floor;
 
+import java.util.List;
+
 public record FloorPlan(
     int roomCount,
     double trunkRatio,
     double cellsPerRoom,
     ShapePool defaultShapes,
-    ShapePool bossShapes,
+    List<RoomTypeDefinition> roomTypes,
     boolean exclusiveGroups) {
 
   public static final double DEFAULT_TRUNK_RATIO = 0.70;
@@ -24,19 +26,25 @@ public record FloorPlan(
     if (cellsPerRoom < 1.0) {
       throw new IllegalArgumentException("cellsPerRoom must be at least 1, got " + cellsPerRoom);
     }
+
+    roomTypes = List.copyOf(roomTypes);
   }
 
   public static FloorPlan of(int roomCount) {
     return new FloorPlan(roomCount, DEFAULT_TRUNK_RATIO, DEFAULT_CELLS_PER_ROOM,
-        ShapePools.STANDARD, ShapePools.ARENA, true);
+        ShapePools.STANDARD, DefaultRoomTypes.catalog(), true);
   }
 
   public FloorPlan withTrunkRatio(double ratio) {
-    return new FloorPlan(roomCount, ratio, cellsPerRoom, defaultShapes, bossShapes, exclusiveGroups);
+    return new FloorPlan(roomCount, ratio, cellsPerRoom, defaultShapes, roomTypes, exclusiveGroups);
   }
 
   public FloorPlan withCellsPerRoom(double cells) {
-    return new FloorPlan(roomCount, trunkRatio, cells, defaultShapes, bossShapes, exclusiveGroups);
+    return new FloorPlan(roomCount, trunkRatio, cells, defaultShapes, roomTypes, exclusiveGroups);
+  }
+
+  public FloorPlan withRoomTypes(List<RoomTypeDefinition> types) {
+    return new FloorPlan(roomCount, trunkRatio, cellsPerRoom, defaultShapes, types, exclusiveGroups);
   }
 
   public int trunkRooms() {
@@ -51,7 +59,7 @@ public record FloorPlan(
     return (int) Math.round(roomCount * cellsPerRoom);
   }
 
-  public TrunkPlan trunkPlan() {
-    return new TrunkPlan(trunkRooms(), cellBudget() - appendixRooms(), defaultShapes, exclusiveGroups);
+  public int trunkCellBudget() {
+    return cellBudget() - appendixRooms();
   }
 }
