@@ -6,7 +6,11 @@ import net.dp.rpg.engine.tile.room.RoomCell;
 
 public final class FloorDebug {
 
-  private static final String SYMBOLS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  private static final String TRUNK_SYMBOLS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+  private static final String APPENDIX_SYMBOLS = "abcdefghijklmnopqrstuvwxyz";
+
+  private static final String HOLE_SYMBOLS = "0123456789";
 
   private static final char EMPTY = '.';
 
@@ -47,12 +51,12 @@ public final class FloorDebug {
   }
 
   private static void paintGaps(char[][] canvas, FloorGraph graph, RoomNode room, RoomCell cell) {
-    paintGap(canvas, graph, room, cell, Direction.EAST, '-');
-    paintGap(canvas, graph, room, cell, Direction.SOUTH, '|');
+    paintGap(canvas, graph, room, cell, Direction.EAST, '-', '=');
+    paintGap(canvas, graph, room, cell, Direction.SOUTH, '|', '"');
   }
 
   private static void paintGap(char[][] canvas, FloorGraph graph, RoomNode room, RoomCell cell,
-                               Direction direction, char doorSymbol) {
+                               Direction direction, char doorSymbol, char lockedSymbol) {
     RoomCell neighbour = cell.neighbour(direction);
     RoomNode other = graph.roomAt(neighbour);
 
@@ -69,13 +73,25 @@ public final class FloorDebug {
 
     if (other == room) {
       canvas[gapY][gapX] = symbolOf(room);
-    } else if (room.isLinkedTo(other)) {
-      canvas[gapY][gapX] = doorSymbol;
+
+      return;
+    }
+
+    RoomLink door = graph.doorAt(cell, direction);
+
+    if (door != null) {
+      canvas[gapY][gapX] = door.doorType() == DoorType.LOCKED ? lockedSymbol : doorSymbol;
     }
   }
 
   private static char symbolOf(RoomNode room) {
-    return SYMBOLS.charAt(room.index() % SYMBOLS.length());
+    String alphabet = switch (room.phase()) {
+      case TRUNK -> TRUNK_SYMBOLS;
+      case APPENDIX -> APPENDIX_SYMBOLS;
+      case HOLE -> HOLE_SYMBOLS;
+    };
+
+    return alphabet.charAt(room.index() % alphabet.length());
   }
 
   private static char[][] blank(int width, int height) {

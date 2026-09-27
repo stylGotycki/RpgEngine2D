@@ -78,7 +78,6 @@ public final class RoomNode {
     return floorCell.translated(-origin.x(), -origin.y());
   }
 
-  /** Floor-coordinate edges that face outside this room, and so may carry a door. */
   public List<RoomEdge> outerEdges() {
     List<RoomEdge> edges = new ArrayList<>();
 
@@ -93,6 +92,24 @@ public final class RoomNode {
     return edges;
   }
 
+  public Set<RoomEdge> localDoorEdges() {
+    Set<RoomEdge> edges = new LinkedHashSet<>();
+
+    for (RoomLink link : links) {
+      RoomEdge edge = link.edge();
+
+      if (contains(edge.cell())) {
+        edges.add(new RoomEdge(toLocalCell(edge.cell()), edge.direction()));
+      } else {
+        RoomCell ownCell = edge.cell().neighbour(edge.direction());
+
+        edges.add(new RoomEdge(toLocalCell(ownCell), edge.direction().opposite()));
+      }
+    }
+
+    return edges;
+  }
+
   public List<RoomLink> links() {
     return Collections.unmodifiableList(links);
   }
@@ -101,8 +118,12 @@ public final class RoomNode {
     return links.size();
   }
 
+  public int neighbourCount() {
+    return linkedIndices.size();
+  }
+
   public boolean isDeadEnd() {
-    return links.size() == 1;
+    return linkedIndices.size() == 1;
   }
 
   public boolean isLinkedTo(RoomNode other) {

@@ -34,7 +34,6 @@ public final class ShapePool {
         .orElseThrow();
   }
 
-  /** Narrows this pool to shapes that have a room corpus, keeping the original weights. */
   public ShapePool restrictedTo(Collection<String> allowedShapeIds) {
     List<ShapeEntry> kept = entries.stream()
         .filter(entry -> allowedShapeIds.contains(entry.shape().id()))
@@ -52,15 +51,11 @@ public final class ShapePool {
     return "pool %s(%d shapes)".formatted(id, entries.size());
   }
 
-  public record ShapeEntry(RoomShapeDef shape, double weight, double holeRoomChance) {
+  public record ShapeEntry(RoomShapeDef shape, double weight) {
 
     public ShapeEntry {
       if (!Double.isFinite(weight) || weight <= 0.0) {
         throw new IllegalArgumentException("Shape weight must be greater than zero: " + shape.id());
-      }
-
-      if (holeRoomChance < 0.0 || holeRoomChance > 1.0) {
-        throw new IllegalArgumentException("holeRoomChance must be within 0..1: " + shape.id());
       }
     }
   }
@@ -76,11 +71,7 @@ public final class ShapePool {
     }
 
     public Builder with(RoomShapeDef shape, double weight) {
-      return with(shape, weight, 0.0);
-    }
-
-    public Builder with(RoomShapeDef shape, double weight, double holeRoomChance) {
-      entries.add(new ShapeEntry(shape, weight, holeRoomChance));
+      entries.add(new ShapeEntry(shape, weight));
 
       return this;
     }

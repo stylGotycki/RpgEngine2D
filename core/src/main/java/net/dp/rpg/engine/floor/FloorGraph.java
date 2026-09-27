@@ -2,6 +2,7 @@ package net.dp.rpg.engine.floor;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.LinkedHashMap;
@@ -9,6 +10,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import net.dp.rpg.engine.tile.room.Direction;
 import net.dp.rpg.engine.tile.room.RoomCell;
 import net.dp.rpg.engine.tile.room.RoomEdge;
 
@@ -38,10 +40,6 @@ public final class FloorGraph {
     return occupied.get(cell);
   }
 
-  /**
-   * Checks that a shape fits at an origin. Hole cells must be free too: a ring closing around an existing room
-   * would seal it off from everything else.
-   */
   public boolean canPlace(ShapeVariant variant, RoomCell origin, GridBounds bounds) {
     for (RoomCell cell : variant.shape().cells()) {
       RoomCell floorCell = cell.translated(origin.x(), origin.y());
@@ -106,6 +104,29 @@ public final class FloorGraph {
     return link;
   }
 
+  public RoomLink doorAt(RoomCell cell, Direction direction) {
+    RoomNode room = occupied.get(cell);
+
+    if (room == null) {
+      return null;
+    }
+
+    RoomCell neighbour = cell.neighbour(direction);
+
+    for (RoomLink link : room.links()) {
+      RoomEdge edge = link.edge();
+
+      boolean onThisSide = edge.cell().equals(cell) && edge.direction() == direction;
+      boolean onTheOtherSide = edge.cell().equals(neighbour) && edge.direction() == direction.opposite();
+
+      if (onThisSide || onTheOtherSide) {
+        return link;
+      }
+    }
+
+    return null;
+  }
+
   public void computeDepths() {
     rooms.forEach(room -> room.setDepth(-1));
 
@@ -136,6 +157,27 @@ public final class FloorGraph {
     computeDepths();
 
     return rooms.stream().allMatch(room -> room.depth() >= 0);
+  }
+
+  public Set<RoomNode> touching(Collection<RoomCell> cells) {
+    Set<RoomCell> own = new LinkedHashSet<>(cells);
+    Set<RoomNode> found = new LinkedHashSet<>();
+
+    for (RoomCell cell : cells) {
+      for (Direction direction : Direction.values()) {
+        RoomCell neighbour = cell.neighbour(direction);
+
+        if (!own.contains(neighbour)) {
+          RoomNode room = occupied.get(neighbour);
+
+          if (room != null) {
+            found.add(room);
+          }
+        }
+      }
+    }
+
+    return found;
   }
 
   public List<RoomNode> deadEnds() {
