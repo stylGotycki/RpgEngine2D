@@ -5,18 +5,18 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
-import net.dp.rpg.engine.floor.type.AbilityPhase;
 import net.dp.rpg.engine.floor.FloorContext;
 import net.dp.rpg.engine.floor.FloorPlan;
 import net.dp.rpg.engine.floor.GridBounds;
-import net.dp.rpg.engine.floor.type.RoomType;
-import net.dp.rpg.engine.floor.shape.ShapeDrawContext;
-import net.dp.rpg.engine.floor.shape.ShapePool;
-import net.dp.rpg.engine.floor.shape.ShapeVariant;
 import net.dp.rpg.engine.floor.Shapes;
 import net.dp.rpg.engine.floor.graph.DoorType;
 import net.dp.rpg.engine.floor.graph.FloorGraph;
 import net.dp.rpg.engine.floor.graph.RoomNode;
+import net.dp.rpg.engine.floor.shape.ShapeDrawContext;
+import net.dp.rpg.engine.floor.shape.ShapePool;
+import net.dp.rpg.engine.floor.shape.ShapeVariant;
+import net.dp.rpg.engine.floor.type.AbilityPhase;
+import net.dp.rpg.engine.floor.type.RoomType;
 import net.dp.rpg.engine.tile.room.Direction;
 import net.dp.rpg.engine.tile.room.RoomCell;
 import net.dp.rpg.engine.tile.room.RoomEdge;
@@ -41,6 +41,9 @@ public final class WalkerLayout {
     placeStart(graph, context, shapes, shapeRandom);
 
     Walker walker = new Walker(bounds.center(), bounds, settings);
+    List<RoomCell> path = new ArrayList<>();
+
+    path.add(walker.cell());
 
     int steps = 0;
     int barrenSteps = 0;
@@ -61,13 +64,17 @@ public final class WalkerLayout {
         } else {
           steps++;
           barrenSteps = outcome == Outcome.CREATED ? 0 : barrenSteps + 1;
+
+          if (outcome != Outcome.NO_FIT) {
+            path.add(walker.cell());
+          }
         }
       }
     }
 
     int extraDoors = connectTouchingRooms(graph, doorRandom, settings);
 
-    return new WalkResult(graph, graph.size(), steps, extraDoors, reason);
+    return new WalkResult(graph, graph.size(), steps, extraDoors, List.copyOf(path), reason);
   }
 
   private void placeStart(FloorGraph graph, FloorContext context, ShapeDrawContext shapes, Random shapeRandom) {
@@ -229,6 +236,11 @@ public final class WalkerLayout {
     BLOCKED
   }
 
-  public record WalkResult(FloorGraph graph, int rooms, int steps, int extraDoors, StopReason reason) {
+  public record WalkResult(FloorGraph graph, int rooms, int steps, int extraDoors, List<RoomCell> path,
+                           StopReason reason) {
+
+    public WalkResult {
+      path = List.copyOf(path);
+    }
   }
 }

@@ -1,13 +1,14 @@
 package net.dp.rpg.engine.floor;
 
+import java.util.EnumMap;
+import java.util.List;
+import java.util.Map;
+
 import net.dp.rpg.engine.floor.graph.FloorGraph;
 import net.dp.rpg.engine.floor.graph.RoomNode;
 import net.dp.rpg.engine.floor.phase.WalkerLayout;
 import net.dp.rpg.engine.floor.type.RoomType;
-
-import java.util.EnumMap;
-import java.util.List;
-import java.util.Map;
+import net.dp.rpg.engine.tile.room.RoomCell;
 
 public record FloorLayout(
     FloorGraph graph,
@@ -19,11 +20,13 @@ public record FloorLayout(
     int extraDoors,
     int relocated,
     List<RoomType> unspentAbilities,
+    List<RoomCell> walkerPath,
     WalkerLayout.StopReason walkStop) {
 
   public FloorLayout {
     criticalPath = List.copyOf(criticalPath);
     unspentAbilities = List.copyOf(unspentAbilities);
+    walkerPath = List.copyOf(walkerPath);
   }
 
   public int rooms() {

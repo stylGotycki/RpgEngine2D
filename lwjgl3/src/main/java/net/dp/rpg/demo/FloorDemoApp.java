@@ -8,8 +8,8 @@ import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import java.util.List;
-import net.dp.rpg.demo.floor.DemoFloor;
 import net.dp.rpg.demo.floor.DemoFloorPainter;
+import net.dp.rpg.demo.floor.FloorReplay;
 import net.dp.rpg.engine.floor.FloorBuilder;
 import net.dp.rpg.engine.floor.FloorDebug;
 import net.dp.rpg.engine.floor.FloorLayout;
@@ -17,6 +17,7 @@ import net.dp.rpg.engine.floor.FloorPlan;
 import net.dp.rpg.engine.floor.GridBounds;
 import net.dp.rpg.engine.floor.graph.RoomNode;
 import net.dp.rpg.engine.floor.phase.WalkerSettings;
+import net.dp.rpg.engine.tile.TileMapData;
 import net.dp.rpg.engine.tile.TileSystem;
 import net.dp.rpg.engine.tile.debug.GdxTileLogger;
 import net.dp.rpg.engine.tile.debug.TileLogger;
@@ -28,13 +29,15 @@ public final class FloorDemoApp extends ApplicationAdapter {
 
   private static final String[] TILESET_PATHS = {"tiles/terrain.tsx", "tiles/basement.tsx"};
 
-  private static final int GRID_WIDTH = 25;
+  private static final int GRID_WIDTH = 11;
 
-  private static final int GRID_HEIGHT = 25;
+  private static final int GRID_HEIGHT = 9;
 
-  private static final int ROOM_COUNT = 250;
+  private static final int ROOM_COUNT = 20;
 
   private static final long FIRST_SEED = 20260927L;
+
+  private static final float[] STEP_SECONDS = {1.0f, 0.5f, 0.2f, 0.05f};
 
   private static final float MIN_ZOOM = 0.12f;
 
@@ -60,13 +63,23 @@ public final class FloorDemoApp extends ApplicationAdapter {
 
   private Viewport viewport;
 
-  private DemoFloor floor;
+  private FloorLayout layout;
+
+  private FloorReplay replay;
+
+  private TileMapData map;
 
   private long seed = FIRST_SEED;
+
+  private int speed = 1;
 
   private int focusRoom;
 
   private int activeTileset;
+
+  private float sinceStep;
+
+  private boolean playing = true;
 
   @Override
   public void create() {
@@ -88,29 +101,52 @@ public final class FloorDemoApp extends ApplicationAdapter {
 
   private void generate(long newSeed) {
     seed = newSeed;
-
-    FloorLayout layout = builder.build(FloorPlan.of(ROOM_COUNT), bounds, WalkerSettings.defaults(), seed);
-
-    floor = new DemoFloor(layout, bounds, painter.paint(layout, bounds, seed), seed);
+    layout = builder.build(FloorPlan.of(ROOM_COUNT), bounds, WalkerSettings.defaults(), seed);
+    replay = new FloorReplay(layout);
     focusRoom = 0;
+    sinceStep = 0f;
+    playing = true;
 
     logger.log("seed %d: %s".formatted(seed, layout.summary()));
     logger.log(System.lineSeparator() + FloorDebug.render(layout.graph(), bounds));
 
+    repaint();
     fitWholeFloor();
+  }
+
+  private void repaint() {
+    map = painter.paint(layout, bounds, seed, replay.reveal());
+
     updateTitle();
   }
 
   @Override
   public void render() {
     handleInput();
+    advanceReplay();
 
     ScreenUtils.clear(0.05f, 0.05f, 0.07f, 1f);
 
     viewport.apply();
     camera.update();
 
-    renderer.render(floor.map(), camera);
+    renderer.render(map, camera);
+  }
+
+  private void advanceReplay() {
+    if (!playing || replay.finished()) {
+      return;
+    }
+
+    sinceStep += Gdx.graphics.getDeltaTime();
+
+    if (sinceStep < STEP_SECONDS[speed]) {
+      return;
+    }
+
+    sinceStep = 0f;
+    replay.advance();
+    repaint();
   }
 
   @Override
@@ -140,9 +176,49 @@ public final class FloorDemoApp extends ApplicationAdapter {
       generate(seed + 1);
     }
 
+    if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
+      playing = !playing;
+      updateTitle();
+    }
+
+    if (Gdx.input.isKeyJustPressed(Input.Keys.PERIOD)) {
+      playing = false;
+      replay.advance();
+      repaint();
+    }
+
+    if (Gdx.input.isKeyJustPressed(Input.Keys.ENTER)) {
+      replay.finish();
+      repaint();
+    }
+
+    if (Gdx.input.isKeyJustPressed(Input.Keys.BACKSPACE)) {
+      replay.restart();
+      playing = true;
+      repaint();
+    }
+
+    handleSpeedInput();
+    handleViewInput();
+    handleZoom();
+    handlePan();
+    handleDebugInput();
+  }
+
+  private void handleSpeedInput() {
+    int[] keys = {Input.Keys.NUM_1, Input.Keys.NUM_2, Input.Keys.NUM_3, Input.Keys.NUM_4};
+
+    for (int index = 0; index < keys.length; index++) {
+      if (Gdx.input.isKeyJustPressed(keys[index])) {
+        speed = index;
+        updateTitle();
+      }
+    }
+  }
+
+  private void handleViewInput() {
     if (Gdx.input.isKeyJustPressed(Input.Keys.F)) {
       fitWholeFloor();
-      updateTitle();
     }
 
     if (Gdx.input.isKeyJustPressed(Input.Keys.N)) {
@@ -164,10 +240,6 @@ public final class FloorDemoApp extends ApplicationAdapter {
     if (Gdx.input.isKeyJustPressed(Input.Keys.E)) {
       exportFloor();
     }
-
-    handleZoom();
-    handlePan();
-    handleDebugInput();
   }
 
   private void handleZoom() {
@@ -204,15 +276,15 @@ public final class FloorDemoApp extends ApplicationAdapter {
 
   private void handleDebugInput() {
     if (Gdx.input.isKeyJustPressed(Input.Keys.F1)) {
-      logger.log(tiles.debug().dump(floor.map()));
+      logger.log(tiles.debug().dump(map));
     }
 
     if (Gdx.input.isKeyJustPressed(Input.Keys.F2)) {
-      logger.log(tiles.debug().dumpWalkable(floor.map()));
+      logger.log(tiles.debug().dumpWalkable(map));
     }
 
     if (Gdx.input.isKeyJustPressed(Input.Keys.F3)) {
-      logger.log(tiles.debug().describeHistogram(floor.map()));
+      logger.log(tiles.debug().describeHistogram(map));
     }
 
     if (Gdx.input.isKeyJustPressed(Input.Keys.F4)) {
@@ -222,40 +294,41 @@ public final class FloorDemoApp extends ApplicationAdapter {
 
   private void fitWholeFloor() {
     camera.zoom = 1f;
-    camera.position.set(floor.map().width() / 2f, floor.map().height() / 2f, 0f);
+    camera.position.set(map.width() / 2f, map.height() / 2f, 0f);
+
+    updateTitle();
   }
 
   private void focusOnBoss() {
-    RoomNode boss = floor.layout().boss();
+    RoomNode boss = layout.boss();
 
     if (boss != null) {
-      focusOn(floor.layout().graph().rooms().indexOf(boss));
+      focusOn(layout.graph().rooms().indexOf(boss));
     }
   }
 
   private void focusOn(int index) {
-    List<RoomNode> rooms = floor.layout().graph().rooms();
+    List<RoomNode> rooms = layout.graph().rooms();
 
     focusRoom = Math.floorMod(index, rooms.size());
 
     RoomNode room = rooms.get(focusRoom);
 
-    camera.zoom = Math.max(MIN_ZOOM, (float) RoomGeometry.CELL_WIDTH / floor.map().width() * 1.6f);
+    camera.zoom = Math.max(MIN_ZOOM, (float) RoomGeometry.CELL_WIDTH / map.width() * 1.6f);
     camera.position.set(room.anchor().centerTileX() + 0.5f, worldY(room.anchor().centerTileY()), 0f);
 
     updateTitle();
   }
 
-  /** Grid rows run downwards, world rows upwards; the renderer flips them, so focusing has to flip too. */
   private float worldY(int tileY) {
-    return floor.map().height() - tileY - 0.5f;
+    return map.height() - tileY - 0.5f;
   }
 
   private void swapTileset() {
     int next = (activeTileset + 1) % tilesetIds.size();
 
     try {
-      tiles.swapTileset(tilesetIds.get(next), floor.map(), renderer);
+      tiles.swapTileset(tilesetIds.get(next), map, renderer);
       activeTileset = next;
 
       updateTitle();
@@ -265,20 +338,19 @@ public final class FloorDemoApp extends ApplicationAdapter {
   }
 
   private void exportFloor() {
-    tiles.exportMap(floor.map(), tilesetIds.get(activeTileset), "export/%s.tmx".formatted(floor.label()));
+    tiles.exportMap(map, tilesetIds.get(activeTileset), "export/floor-%d.tmx".formatted(seed));
 
-    logger.log("Exported %s".formatted(floor.label()));
+    logger.log("Exported floor-%d".formatted(seed));
   }
 
   private void updateTitle() {
-    FloorLayout layout = floor.layout();
     RoomNode room = layout.graph().rooms().get(focusRoom);
 
     Gdx.graphics.setTitle(
-        "Floor %d - %d rooms, critical %d, holes %d, doors %d - room %d/%d %s depth %d - zoom %.2f - tileset %s"
-            .formatted(seed, layout.rooms(), layout.criticalLength(), layout.holeRooms(),
-                layout.graph().links().size(), focusRoom + 1, layout.graph().size(), room.variant().id(),
+        "Floor %d - %s %d/%d %s - %d rooms, critical %d, holes %d - focus %s %s depth %d - zoom %.2f - %s"
+            .formatted(seed, replay.stage(), replay.step(), replay.totalSteps(), playing ? "playing" : "paused",
+                layout.rooms(), layout.criticalLength(), layout.holeRooms(), room.type(), room.variant().id(),
                 room.depth(), camera.zoom, tilesetIds.get(activeTileset))
-            + " - [R] new seed [F] fit [N/P] room [B] boss [WASD] pan [+/-] zoom [T] tileset [E] export");
+            + " - [SPACE] play [.] step [ENTER] finish [BACKSPACE] replay [1-4] speed [R] seed [F] fit");
   }
 }

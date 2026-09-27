@@ -1,17 +1,18 @@
 package net.dp.rpg.demo.floor;
 
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
-import net.dp.rpg.engine.floor.graph.DoorType;
 import net.dp.rpg.engine.floor.FloorLayout;
 import net.dp.rpg.engine.floor.GridBounds;
+import net.dp.rpg.engine.floor.graph.DoorType;
 import net.dp.rpg.engine.floor.graph.RoomLink;
 import net.dp.rpg.engine.floor.graph.RoomNode;
-import net.dp.rpg.engine.floor.graph.RoomPhase;
+import net.dp.rpg.engine.floor.type.RoomType;
 import net.dp.rpg.engine.tile.TileGrid;
 import net.dp.rpg.engine.tile.TileLayer;
 import net.dp.rpg.engine.tile.TileLayerKind;
@@ -33,21 +34,19 @@ public final class DemoFloorPainter {
 
   private static final String DOOR_LOCKED = "obstacle.rubble";
 
-  private static final String FLOOR_PATH = "floor.stone";
+  private static final String WALKER_FLOOR = "floor.grass";
 
-  private static final String FLOOR_SIDE = "floor.dirt";
+  private static final String WALKER_BADGE = "obstacle.rubble";
 
-  private static final String FLOOR_START = "floor.grass";
+  private static final int WALKER_ARM = 4;
 
-  private static final String FLOOR_BOSS = "floor.sand";
-
-  private static final String FLOOR_HOLE = "floor.stone_cracked";
+  private static final int BADGE_ARM = 2;
 
   private static final float WORN_WALL_CHANCE = 0.10f;
 
-  private static final float DECORATION_CHANCE = 0.02f;
-
   private static final float TORCH_CHANCE = 0.06f;
+
+  private static final Map<RoomType, Palette> PALETTES = palettes();
 
   private final TileTypeRegistry registry;
 
@@ -55,7 +54,7 @@ public final class DemoFloorPainter {
     this.registry = registry;
   }
 
-  public TileMapData paint(FloorLayout floor, GridBounds bounds, long seed) {
+  public TileMapData paint(FloorLayout floor, GridBounds bounds, long seed, FloorReveal reveal) {
     int width = RoomGeometry.tileWidth(bounds.width());
     int height = RoomGeometry.tileHeight(bounds.height());
 
@@ -64,34 +63,59 @@ public final class DemoFloorPainter {
     Random random = new Random(seed);
 
     for (RoomNode room : floor.graph().rooms()) {
-      paintRoom(ground, room, floorIdOf(room, floor), random);
+      if (reveal.shows(room)) {
+        paintRoom(ground, details, room, reveal, random);
+      }
     }
 
     for (RoomLink link : floor.graph().links()) {
-      punchDoor(ground, link);
+      if (reveal.shows(link)) {
+        punchDoor(ground, link);
+      }
     }
 
-    scatter(ground, details, random);
+    scatterTorches(ground, details, random);
 
     return new TileMapData(
         List.of(
             new TileLayer("Ground", TileLayerKind.GROUND, ground),
             new TileLayer("Details", TileLayerKind.DETAILS, details)),
-        markers(floor),
-        properties(floor, seed));
+        markers(floor, reveal),
+        properties(floor, seed, reveal));
   }
 
-  private void paintRoom(TileGrid ground, RoomNode room, int floorId, Random random) {
+  private void paintRoom(TileGrid ground, TileGrid details, RoomNode room, FloorReveal reveal, Random random) {
+    Palette palette = PALETTES.getOrDefault(room.type(), PALETTES.get(RoomType.NORMAL));
     int wallId = registry.requireRuntimeId(WALL);
     int wornId = registry.requireRuntimeId(WALL_WORN);
+    int floorId = registry.requireRuntimeId(palette.floor());
 
     for (RoomCell cell : room.cells()) {
+      boolean here = reveal.isWalker(cell);
+      int fill = here ? registry.requireRuntimeId(WALKER_FLOOR) : floorId;
+
       ground.fillRect(cell.tileOriginX(), cell.tileOriginY(),
-          RoomGeometry.CELL_WIDTH, RoomGeometry.CELL_HEIGHT, floorId);
+          RoomGeometry.CELL_WIDTH, RoomGeometry.CELL_HEIGHT, fill);
+
+      if (here) {
+        paintCross(details, cell, registry.requireRuntimeId(WALKER_BADGE), WALKER_ARM);
+      } else if (palette.badge() != null) {
+        paintCross(details, cell, registry.requireRuntimeId(palette.badge()), BADGE_ARM);
+      }
     }
 
     for (RoomEdge edge : room.outerEdges()) {
       paintWall(ground, edge, wallId, wornId, random);
+    }
+  }
+
+  private void paintCross(TileGrid details, RoomCell cell, int tileId, int arm) {
+    int centreX = cell.centerTileX();
+    int centreY = cell.centerTileY();
+
+    for (int offset = -arm; offset <= arm; offset++) {
+      details.set(centreX + offset, centreY, tileId);
+      details.set(centreX, centreY + offset, tileId);
     }
   }
 
@@ -128,25 +152,16 @@ public final class DemoFloorPainter {
     ground.set(far.doorTileX(), far.doorTileY(), doorId);
   }
 
-  private void scatter(TileGrid ground, TileGrid details, Random random) {
-    List<Integer> decorations = runtimeIdsWithTag("decoration");
-
-    if (decorations.isEmpty()) {
-      return;
-    }
-
+  private void scatterTorches(TileGrid ground, TileGrid details, Random random) {
     int torchId = registry.requireRuntimeId("decoration.torch");
 
     for (int y = 1; y < ground.getHeight() - 1; y++) {
       for (int x = 1; x < ground.getWidth() - 1; x++) {
-        if (!isWalkableGround(ground, x, y)) {
-          continue;
-        }
+        boolean free = details.get(x, y) == TileGrid.EMPTY;
 
-        if (touchesWall(ground, x, y) && random.nextFloat() < TORCH_CHANCE) {
+        if (free && isWalkableGround(ground, x, y) && touchesWall(ground, x, y)
+            && random.nextFloat() < TORCH_CHANCE) {
           details.set(x, y, torchId);
-        } else if (random.nextFloat() < DECORATION_CHANCE) {
-          details.set(x, y, decorations.get(random.nextInt(decorations.size())));
         }
       }
     }
@@ -170,29 +185,17 @@ public final class DemoFloorPainter {
     return false;
   }
 
-  private int floorIdOf(RoomNode room, FloorLayout floor) {
-    if (room == floor.graph().start()) {
-      return registry.requireRuntimeId(FLOOR_START);
-    }
-
-    if (room == floor.boss()) {
-      return registry.requireRuntimeId(FLOOR_BOSS);
-    }
-
-    if (room.phase() == RoomPhase.HOLE) {
-      return registry.requireRuntimeId(FLOOR_HOLE);
-    }
-
-    return registry.requireRuntimeId(floor.criticalPath().contains(room) ? FLOOR_PATH : FLOOR_SIDE);
-  }
-
-  private List<TileMapObject> markers(FloorLayout floor) {
+  private List<TileMapObject> markers(FloorLayout floor, FloorReveal reveal) {
     List<TileMapObject> markers = new ArrayList<>();
     int id = 1;
 
     for (RoomNode room : floor.graph().rooms()) {
+      if (!reveal.shows(room)) {
+        continue;
+      }
+
       RoomCell cell = room.anchor();
-      String type = markerTypeOf(room, floor);
+      String type = room.type().name();
 
       markers.add(new TileMapObject(id++, type.toLowerCase(Locale.ROOT) + "-" + room.index(), type,
           cell.centerTileX() + 0.5f, cell.centerTileY() + 0.5f, 0f, 0f,
@@ -202,23 +205,12 @@ public final class DemoFloorPainter {
     return markers;
   }
 
-  private String markerTypeOf(RoomNode room, FloorLayout floor) {
-    if (room == floor.graph().start()) {
-      return "PLAYER_START";
-    }
-
-    if (room == floor.boss()) {
-      return "BOSS";
-    }
-
-    return room.phase() == RoomPhase.HOLE ? "VAULT" : "ENEMY_SPAWN";
-  }
-
-  private Map<String, Object> properties(FloorLayout floor, long seed) {
+  private Map<String, Object> properties(FloorLayout floor, long seed, FloorReveal reveal) {
     Map<String, Object> properties = new LinkedHashMap<>();
 
     properties.put("seed", seed);
     properties.put("rooms", floor.rooms());
+    properties.put("revealed", reveal.rooms().size());
     properties.put("criticalLength", floor.criticalLength());
     properties.put("holeRooms", floor.holeRooms());
     properties.put("extraDoors", floor.extraDoors());
@@ -226,11 +218,23 @@ public final class DemoFloorPainter {
     return properties;
   }
 
-  private List<Integer> runtimeIdsWithTag(String tag) {
-    List<Integer> ids = new ArrayList<>();
+  private static Map<RoomType, Palette> palettes() {
+    Map<RoomType, Palette> palettes = new EnumMap<>(RoomType.class);
 
-    registry.findByTag(tag).forEach(type -> ids.add(registry.requireRuntimeId(type.id())));
+    palettes.put(RoomType.START, new Palette("floor.grass", "decoration.flowers"));
+    palettes.put(RoomType.NORMAL, new Palette("floor.stone", null));
+    palettes.put(RoomType.PUZZLE, new Palette("floor.stone_cracked", "decoration.flowers"));
+    palettes.put(RoomType.EMPTY, new Palette("floor.dirt", null));
+    palettes.put(RoomType.COLLECTIBLE, new Palette("floor.stone", "decoration.bones"));
+    palettes.put(RoomType.POWER_FIELD, new Palette("floor.grass", "decoration.torch"));
+    palettes.put(RoomType.SHOP, new Palette("floor.dirt", "decoration.torch"));
+    palettes.put(RoomType.MINIBOSS, new Palette("floor.sand", "decoration.bones"));
+    palettes.put(RoomType.BOSS, new Palette("floor.sand", "decoration.torch"));
+    palettes.put(RoomType.VAULT, new Palette("floor.stone_cracked", "decoration.bones"));
 
-    return ids;
+    return palettes;
+  }
+
+  private record Palette(String floor, String badge) {
   }
 }

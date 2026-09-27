@@ -28,13 +28,6 @@ import net.dp.rpg.engine.systems.RenderSystem;
 public class RpgEngine2D extends ApplicationAdapter {
   @Override
   public void create() {
-    GridBounds bounds = new GridBounds(7, 7);
-    WalkerLayout.WalkResult result = new WalkerLayout().grow(TrunkPlan.of(20), bounds, WalkerSettings.defaults(), 424242L);
-
-    System.out.println(FloorDebug.summary(result.graph()));
-    System.out.println(FloorDebug.render(result.graph(), bounds));
-
-
     renderSystem = new RenderSystem();
     assetManager.load("eti.png", Texture.class);
     assetManager.finishLoading();

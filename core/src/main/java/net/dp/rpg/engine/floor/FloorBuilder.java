@@ -47,7 +47,7 @@ public final class FloorBuilder {
     RetrospectivePass.Result late = retrospective.apply(graph, context, criticalPath);
 
     return new FloorLayout(graph, boss, criticalPath, walk.rooms(), attached.attached(), holeRooms,
-        extraDoors, late.relocated(), context.loadout().unspentMandatory(), walk.reason());
+        extraDoors, late.relocated(), context.loadout().unspentMandatory(), walk.path(), walk.reason());
   }
 
   private int completeDoorways(FloorGraph graph) {
