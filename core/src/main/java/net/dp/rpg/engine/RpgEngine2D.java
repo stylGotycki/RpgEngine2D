@@ -17,6 +17,7 @@ import net.dp.rpg.engine.components.PhysicalBodyComponent;
 import net.dp.rpg.engine.components.SpriteComponent;
 import net.dp.rpg.engine.floor.FloorDebug;
 import net.dp.rpg.engine.floor.GridBounds;
+import net.dp.rpg.engine.floor.TrunkPlan;
 import net.dp.rpg.engine.floor.WalkerLayout;
 import net.dp.rpg.engine.floor.WalkerSettings;
 import net.dp.rpg.engine.systems.RenderSystem;
@@ -28,7 +29,7 @@ public class RpgEngine2D extends ApplicationAdapter {
   @Override
   public void create() {
     GridBounds bounds = new GridBounds(7, 7);
-    WalkerLayout.WalkResult result = new WalkerLayout().grow(18, bounds, WalkerSettings.defaults(), 424242L);
+    WalkerLayout.WalkResult result = new WalkerLayout().grow(TrunkPlan.of(20), bounds, WalkerSettings.defaults(), 424242L);
 
     System.out.println(FloorDebug.summary(result.graph()));
     System.out.println(FloorDebug.render(result.graph(), bounds));

@@ -16,7 +16,7 @@ public final class RoomNode {
 
   private final int index;
 
-  private final RoomShape shape;
+  private final ShapeVariant variant;
 
   private final RoomCell origin;
 
@@ -29,22 +29,25 @@ public final class RoomNode {
   @Setter
   private RoomPhase phase = RoomPhase.TRUNK;
 
-  @Setter(lombok.AccessLevel.PACKAGE)
   private int depth = -1;
 
-  RoomNode(int index, RoomShape shape, RoomCell origin) {
+  RoomNode(int index, ShapeVariant variant, RoomCell origin) {
     this.index = index;
-    this.shape = shape;
+    this.variant = variant;
     this.origin = origin;
-    this.cells = Collections.unmodifiableSet(toFloorCells(shape, origin));
+    this.cells = Collections.unmodifiableSet(toFloorCells(variant.shape(), origin));
   }
 
   public int index() {
     return index;
   }
 
+  public ShapeVariant variant() {
+    return variant;
+  }
+
   public RoomShape shape() {
-    return shape;
+    return variant.shape();
   }
 
   public RoomCell origin() {
@@ -52,7 +55,7 @@ public final class RoomNode {
   }
 
   public RoomCell anchor() {
-    return toFloorCell(shape.topLeftCell());
+    return toFloorCell(variant.shape().topLeftCell());
   }
 
   public Set<RoomCell> cells() {
@@ -75,6 +78,7 @@ public final class RoomNode {
     return floorCell.translated(-origin.x(), -origin.y());
   }
 
+  /** Floor-coordinate edges that face outside this room, and so may carry a door. */
   public List<RoomEdge> outerEdges() {
     List<RoomEdge> edges = new ArrayList<>();
 
@@ -113,6 +117,10 @@ public final class RoomNode {
     return depth;
   }
 
+  void setDepth(int depth) {
+    this.depth = depth;
+  }
+
   void addLink(RoomLink link) {
     links.add(link);
     linkedIndices.add(link.other(this).index);
@@ -120,8 +128,7 @@ public final class RoomNode {
 
   @Override
   public String toString() {
-    return "room[%d] %s at %d,%d".formatted(index, shape.size() == 1 ? "1x1" : shape.size() + " cells",
-        anchor().x(), anchor().y());
+    return "room[%d] %s at %d,%d".formatted(index, variant.id(), anchor().x(), anchor().y());
   }
 
   private static Set<RoomCell> toFloorCells(RoomShape shape, RoomCell origin) {

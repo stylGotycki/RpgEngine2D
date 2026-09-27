@@ -11,7 +11,6 @@ import java.util.Map;
 import java.util.Set;
 import net.dp.rpg.engine.tile.room.RoomCell;
 import net.dp.rpg.engine.tile.room.RoomEdge;
-import net.dp.rpg.engine.tile.room.RoomShape;
 
 public final class FloorGraph {
 
@@ -39,8 +38,12 @@ public final class FloorGraph {
     return occupied.get(cell);
   }
 
-  public boolean canPlace(RoomShape shape, RoomCell origin, GridBounds bounds) {
-    for (RoomCell cell : shape.cells()) {
+  /**
+   * Checks that a shape fits at an origin. Hole cells must be free too: a ring closing around an existing room
+   * would seal it off from everything else.
+   */
+  public boolean canPlace(ShapeVariant variant, RoomCell origin, GridBounds bounds) {
+    for (RoomCell cell : variant.shape().cells()) {
       RoomCell floorCell = cell.translated(origin.x(), origin.y());
 
       if (!bounds.contains(floorCell) || !isFree(floorCell)) {
@@ -48,11 +51,17 @@ public final class FloorGraph {
       }
     }
 
+    for (RoomCell hole : variant.holeCellsAt(origin)) {
+      if (!bounds.contains(hole) || !isFree(hole)) {
+        return false;
+      }
+    }
+
     return true;
   }
 
-  public RoomNode place(RoomShape shape, RoomCell origin) {
-    RoomNode node = new RoomNode(rooms.size(), shape, origin);
+  public RoomNode place(ShapeVariant variant, RoomCell origin) {
+    RoomNode node = new RoomNode(rooms.size(), variant, origin);
 
     for (RoomCell cell : node.cells()) {
       RoomNode previous = occupied.put(cell, node);
