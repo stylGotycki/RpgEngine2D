@@ -1,4 +1,4 @@
-package net.dp.rpg.engine.floor;
+package net.dp.rpg.engine.floor.graph;
 
 import net.dp.rpg.engine.tile.room.RoomEdge;
 

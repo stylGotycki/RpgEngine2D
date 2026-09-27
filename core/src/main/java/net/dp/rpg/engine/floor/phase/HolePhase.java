@@ -1,4 +1,4 @@
-package net.dp.rpg.engine.floor;
+package net.dp.rpg.engine.floor.phase;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -6,6 +6,17 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
+
+import net.dp.rpg.engine.floor.FloorContext;
+import net.dp.rpg.engine.floor.GridBounds;
+import net.dp.rpg.engine.floor.shape.RoomShapeDef;
+import net.dp.rpg.engine.floor.type.RoomType;
+import net.dp.rpg.engine.floor.shape.ShapePool;
+import net.dp.rpg.engine.floor.shape.ShapeVariant;
+import net.dp.rpg.engine.floor.graph.DoorType;
+import net.dp.rpg.engine.floor.graph.FloorGraph;
+import net.dp.rpg.engine.floor.graph.RoomNode;
+import net.dp.rpg.engine.floor.graph.RoomPhase;
 import net.dp.rpg.engine.tile.room.Direction;
 import net.dp.rpg.engine.tile.room.RoomCell;
 import net.dp.rpg.engine.tile.room.RoomEdge;

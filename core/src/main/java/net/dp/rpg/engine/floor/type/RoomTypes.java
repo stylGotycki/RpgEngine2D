@@ -1,4 +1,7 @@
-package net.dp.rpg.engine.floor;
+package net.dp.rpg.engine.floor.type;
+
+import net.dp.rpg.engine.floor.shape.ShapePool;
+import net.dp.rpg.engine.floor.shape.ShapePools;
 
 import java.util.ArrayList;
 import java.util.EnumMap;

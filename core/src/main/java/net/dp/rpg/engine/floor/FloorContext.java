@@ -1,5 +1,9 @@
 package net.dp.rpg.engine.floor;
 
+import net.dp.rpg.engine.floor.phase.WalkerSettings;
+import net.dp.rpg.engine.floor.type.Loadout;
+import net.dp.rpg.engine.floor.type.RoomTypes;
+
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Random;

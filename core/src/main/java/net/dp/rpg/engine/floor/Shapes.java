@@ -1,5 +1,7 @@
 package net.dp.rpg.engine.floor;
 
+import net.dp.rpg.engine.floor.shape.RoomShapeDef;
+
 import java.util.List;
 
 public final class Shapes {

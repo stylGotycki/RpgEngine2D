@@ -1,5 +1,10 @@
 package net.dp.rpg.engine.floor;
 
+import net.dp.rpg.engine.floor.shape.ShapePool;
+import net.dp.rpg.engine.floor.shape.ShapePools;
+import net.dp.rpg.engine.floor.type.DefaultRoomTypes;
+import net.dp.rpg.engine.floor.type.RoomTypeDefinition;
+
 import java.util.List;
 
 public record FloorPlan(

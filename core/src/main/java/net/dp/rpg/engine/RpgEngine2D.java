@@ -18,8 +18,8 @@ import net.dp.rpg.engine.components.SpriteComponent;
 import net.dp.rpg.engine.floor.FloorDebug;
 import net.dp.rpg.engine.floor.GridBounds;
 import net.dp.rpg.engine.floor.TrunkPlan;
-import net.dp.rpg.engine.floor.WalkerLayout;
-import net.dp.rpg.engine.floor.WalkerSettings;
+import net.dp.rpg.engine.floor.phase.WalkerLayout;
+import net.dp.rpg.engine.floor.phase.WalkerSettings;
 import net.dp.rpg.engine.systems.RenderSystem;
 
 /**

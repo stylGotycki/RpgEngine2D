@@ -1,4 +1,4 @@
-package net.dp.rpg.engine.floor;
+package net.dp.rpg.engine.floor.graph;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Set;
 
 import lombok.Setter;
+import net.dp.rpg.engine.floor.type.RoomType;
+import net.dp.rpg.engine.floor.shape.ShapeVariant;
 import net.dp.rpg.engine.tile.room.Direction;
 import net.dp.rpg.engine.tile.room.RoomCell;
 import net.dp.rpg.engine.tile.room.RoomEdge;

@@ -1,4 +1,6 @@
-package net.dp.rpg.engine.floor;
+package net.dp.rpg.engine.floor.shape;
+
+import net.dp.rpg.engine.floor.Shapes;
 
 public final class ShapePools {
 

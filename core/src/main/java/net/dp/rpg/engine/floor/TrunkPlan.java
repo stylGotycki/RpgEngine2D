@@ -1,5 +1,8 @@
 package net.dp.rpg.engine.floor;
 
+import net.dp.rpg.engine.floor.shape.ShapePool;
+import net.dp.rpg.engine.floor.shape.ShapePools;
+
 public record TrunkPlan(int roomBudget, int cellBudget, ShapePool shapes, boolean exclusiveGroups) {
 
   public static final double DEFAULT_CELLS_PER_ROOM = 1.8;
