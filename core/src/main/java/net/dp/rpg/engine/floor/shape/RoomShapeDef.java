@@ -18,32 +18,21 @@ public final class RoomShapeDef {
 
   private final RoomShape base;
 
-  private final double holeRoomChance;
-
   private final List<ShapeVariant> variants;
 
-  private RoomShapeDef(String id, String group, double holeRoomChance, RoomShape base) {
-    if (holeRoomChance < 0.0 || holeRoomChance > 1.0) {
-      throw new IllegalArgumentException("holeRoomChance must be within 0..1: " + id);
-    }
-
+  private RoomShapeDef(String id, String group, RoomShape base) {
     this.id = id;
     this.group = group;
-    this.holeRoomChance = holeRoomChance;
     this.base = base;
     this.variants = expand();
   }
 
   public static RoomShapeDef of(String id, String... rows) {
-    return new RoomShapeDef(id, NO_GROUP, 0.0, RoomShape.parse(rows));
+    return new RoomShapeDef(id, NO_GROUP, RoomShape.parse(rows));
   }
 
   public static RoomShapeDef grouped(String id, String group, String... rows) {
-    return new RoomShapeDef(id, group, 0.0, RoomShape.parse(rows));
-  }
-
-  public static RoomShapeDef withHole(String id, String group, double holeRoomChance, String... rows) {
-    return new RoomShapeDef(id, group, holeRoomChance, RoomShape.parse(rows));
+    return new RoomShapeDef(id, group, RoomShape.parse(rows));
   }
 
   public String id() {
@@ -60,10 +49,6 @@ public final class RoomShapeDef {
 
   public RoomShape base() {
     return base;
-  }
-
-  public double holeRoomChance() {
-    return holeRoomChance;
   }
 
   public int size() {

@@ -22,7 +22,7 @@ public final class Shapes {
 
   public static final RoomShapeDef BEAM = RoomShapeDef.grouped("H", SIGNATURE, "#.#", "###", "#.#");
 
-  public static final RoomShapeDef RING = RoomShapeDef.withHole("O", SIGNATURE, 0.60, "###", "#.#", "###");
+  public static final RoomShapeDef RING = RoomShapeDef.grouped("O", SIGNATURE, "###", "#.#", "###");
 
   public static final List<RoomShapeDef> ALL =
       List.of(SINGLE, WIDE, CORNER, SQUARE, JUNCTION, HORSESHOE, BEAM, RING);

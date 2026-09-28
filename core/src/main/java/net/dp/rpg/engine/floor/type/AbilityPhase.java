@@ -6,5 +6,7 @@ public enum AbilityPhase {
 
   APPENDIX,
 
+  HOLE,
+
   RETROSPECTIVE
 }

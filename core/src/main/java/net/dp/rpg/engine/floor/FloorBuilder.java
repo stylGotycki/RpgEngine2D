@@ -12,6 +12,7 @@ import net.dp.rpg.engine.floor.phase.RetrospectivePass;
 import net.dp.rpg.engine.floor.phase.WalkerLayout;
 import net.dp.rpg.engine.floor.phase.WalkerSettings;
 import net.dp.rpg.engine.floor.shape.ShapeDrawContext;
+import net.dp.rpg.engine.floor.type.RoomType;
 import net.dp.rpg.engine.tile.room.RoomEdge;
 
 public final class FloorBuilder {
@@ -44,7 +45,7 @@ public final class FloorBuilder {
 
     graph.computeDepths();
 
-    RoomNode boss = attached.boss();
+    RoomNode boss = bossOf(graph);
     List<RoomNode> criticalPath = boss == null ? List.of() : graph.pathToStart(boss);
 
     RetrospectivePass.Result late = retrospective.apply(graph, context, criticalPath);
@@ -54,6 +55,13 @@ public final class FloorBuilder {
         walk.rooms(), attached.attached(), holeRooms,
         extraDoors, late.relocated(), context.loadout().unspentMandatory(), walk.path(), bundles,
         walk.reason());
+  }
+
+  private RoomNode bossOf(FloorGraph graph) {
+    return graph.rooms().stream()
+        .filter(room -> room.type() == RoomType.BOSS)
+        .findFirst()
+        .orElse(null);
   }
 
   private int completeDoorways(FloorGraph graph) {

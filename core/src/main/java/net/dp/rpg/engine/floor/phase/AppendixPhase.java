@@ -99,6 +99,10 @@ public final class AppendixPhase {
 
   private RoomNode attachBoss(FloorGraph graph, FloorContext context, ShapeDrawContext shapes,
                               Random shapeRandom) {
+    if (!context.loadout().hasCharge(AbilityPhase.APPENDIX, RoomType.BOSS)) {
+      return null;
+    }
+
     graph.computeDepths();
 
     ShapePool pool = context.types().poolFor(RoomType.BOSS);

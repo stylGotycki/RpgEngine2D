@@ -53,6 +53,10 @@ public final class Loadout {
   }
 
   public RoomType next(AbilityPhase phase, int opportunitiesLeft, Random random) {
+    return next(phase, opportunitiesLeft, null, random);
+  }
+
+  public RoomType next(AbilityPhase phase, int opportunitiesLeft, RoomType fallback, Random random) {
     List<Charge> pending = new ArrayList<>();
 
     charges.get(phase).stream()
@@ -68,11 +72,11 @@ public final class Loadout {
       }
     }
 
-    return drawFiller(random);
+    return fallback == null ? drawFiller(random) : fallback;
   }
 
   private static boolean structural(SlotPreference slot) {
-    return slot == SlotPreference.CRITICAL_TERMINAL || slot == SlotPreference.HOLE;
+    return slot == SlotPreference.CRITICAL_TERMINAL;
   }
 
   public void spend(AbilityPhase phase, RoomType type) {

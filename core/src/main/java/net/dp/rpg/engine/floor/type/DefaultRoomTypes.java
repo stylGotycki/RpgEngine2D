@@ -22,7 +22,7 @@ public final class DefaultRoomTypes {
         new RoomTypeDefinition(RoomType.POWER_FIELD, new TypePolicy.Exactly(1), ShapePools.CHAMBER,
             AbilityPhase.TRUNK, SlotPreference.ANY, false),
         new RoomTypeDefinition(RoomType.VAULT, new TypePolicy.Disabled(), ShapePools.CHAMBER,
-            AbilityPhase.RETROSPECTIVE, SlotPreference.HOLE, false),
+            AbilityPhase.HOLE, SlotPreference.HOLE, false),
         RoomTypeDefinition.filler(RoomType.NORMAL, 0.70),
         RoomTypeDefinition.filler(RoomType.PUZZLE, 0.20),
         RoomTypeDefinition.filler(RoomType.EMPTY, 0.05),

@@ -58,10 +58,6 @@ public final class QuestPhase {
     return List.copyOf(bundles);
   }
 
-  /**
-   * Grows a connected group of the wanted size, starting from a random free room and spreading through doors to
-   * other free rooms.
-   */
   private List<RoomNode> findConnected(Set<RoomNode> free, int size, Random random) {
     List<RoomNode> seeds = new ArrayList<>(free);
 

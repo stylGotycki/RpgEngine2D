@@ -12,7 +12,7 @@ public final class ShapePools {
       .with(Shapes.JUNCTION, 0.025)
       .with(Shapes.HORSESHOE, 0.025)
       .with(Shapes.BEAM, 0.025)
-      .with(Shapes.RING, 0.025)
+      .with(Shapes.RING, 0.025, 0.60)
       .build();
 
   public static final ShapePool ARENA = ShapePool.named("arena")

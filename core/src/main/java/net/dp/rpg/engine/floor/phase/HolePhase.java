@@ -6,17 +6,16 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
-
 import net.dp.rpg.engine.floor.FloorContext;
-import net.dp.rpg.engine.floor.GridBounds;
-import net.dp.rpg.engine.floor.shape.RoomShapeDef;
-import net.dp.rpg.engine.floor.type.RoomType;
-import net.dp.rpg.engine.floor.shape.ShapePool;
-import net.dp.rpg.engine.floor.shape.ShapeVariant;
 import net.dp.rpg.engine.floor.graph.DoorType;
 import net.dp.rpg.engine.floor.graph.FloorGraph;
 import net.dp.rpg.engine.floor.graph.RoomNode;
 import net.dp.rpg.engine.floor.graph.RoomPhase;
+import net.dp.rpg.engine.floor.shape.RoomShapeDef;
+import net.dp.rpg.engine.floor.shape.ShapePool;
+import net.dp.rpg.engine.floor.shape.ShapeVariant;
+import net.dp.rpg.engine.floor.type.AbilityPhase;
+import net.dp.rpg.engine.floor.type.RoomType;
 import net.dp.rpg.engine.tile.room.Direction;
 import net.dp.rpg.engine.tile.room.RoomCell;
 import net.dp.rpg.engine.tile.room.RoomEdge;
@@ -26,26 +25,32 @@ public final class HolePhase {
   public int fill(FloorGraph graph, FloorContext context) {
     Random holeRandom = context.stream("hole");
     Random shapeRandom = context.stream("holeShape");
-    ShapePool pool = context.types().poolFor(RoomType.VAULT);
+    Random typeRandom = context.stream("holeType");
+
+    List<RoomNode> hosts = hostsWithHoles(graph);
+    int remaining = countRegions(hosts);
     int filled = 0;
 
-    for (RoomNode host : List.copyOf(graph.rooms())) {
-      if (!host.variant().hasHoles()) {
-        continue;
-      }
-
-      double chance = host.variant().definition().holeRoomChance();
+    for (RoomNode host : hosts) {
+      ShapePool hostPool = context.types().poolFor(host.type());
+      double chance = hostPool.holeRoomChanceOf(host.variant().definition());
 
       for (List<RoomCell> region : host.variant().holeRegions()) {
         List<RoomCell> cells = toFloorCells(region, host);
 
         cells.forEach(graph::release);
+        remaining--;
 
         if (holeRandom.nextDouble() >= chance) {
           continue;
         }
 
-        if (placeInside(graph, host, cells, pool, context.bounds(), shapeRandom) != null) {
+        RoomType type = context.loadout().next(AbilityPhase.HOLE, Math.max(1, remaining),
+            RoomType.VAULT, typeRandom);
+        ShapePool pool = context.types().poolFor(type);
+
+        if (placeInside(graph, host, cells, type, pool, context, shapeRandom) != null) {
+          context.loadout().spend(AbilityPhase.HOLE, type);
           filled++;
         }
       }
@@ -54,8 +59,20 @@ public final class HolePhase {
     return filled;
   }
 
-  private RoomNode placeInside(FloorGraph graph, RoomNode host, List<RoomCell> region, ShapePool pool,
-                               GridBounds bounds, Random shapeRandom) {
+  private List<RoomNode> hostsWithHoles(FloorGraph graph) {
+    List<RoomNode> hosts = new ArrayList<>();
+
+    graph.rooms().stream().filter(room -> room.variant().hasHoles()).forEach(hosts::add);
+
+    return hosts;
+  }
+
+  private int countRegions(List<RoomNode> hosts) {
+    return hosts.stream().mapToInt(host -> host.variant().holeRegions().size()).sum();
+  }
+
+  private RoomNode placeInside(FloorGraph graph, RoomNode host, List<RoomCell> region, RoomType type,
+                               ShapePool pool, FloorContext context, Random shapeRandom) {
     Set<RoomCell> allowed = new LinkedHashSet<>(region);
     List<RoomShapeDef> candidates = new ArrayList<>();
 
@@ -72,14 +89,15 @@ public final class HolePhase {
           for (RoomCell anchor : variant.shape().cells()) {
             RoomCell origin = new RoomCell(target.x() - anchor.x(), target.y() - anchor.y());
 
-            if (!fitsInside(variant, origin, allowed) || !graph.canPlace(variant, origin, bounds)) {
+            if (!fitsInside(variant, origin, allowed)
+                || !graph.canPlace(variant, origin, context.bounds())) {
               continue;
             }
 
             RoomNode inner = graph.place(variant, origin);
 
             inner.setPhase(RoomPhase.HOLE);
-            inner.setType(RoomType.VAULT);
+            inner.setType(type);
             graph.markExempt(inner);
             graph.connect(host, inner, hostEdgeTo(host, inner), DoorType.LOCKED);
 

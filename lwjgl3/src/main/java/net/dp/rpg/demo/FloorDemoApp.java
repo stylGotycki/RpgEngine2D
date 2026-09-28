@@ -3,6 +3,7 @@ package net.dp.rpg.demo;
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
+import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.FitViewport;
@@ -10,32 +11,31 @@ import com.badlogic.gdx.utils.viewport.Viewport;
 import java.util.List;
 import net.dp.rpg.demo.floor.DemoFloorPainter;
 import net.dp.rpg.demo.floor.FloorReplay;
-import net.dp.rpg.engine.floor.FloorBuilder;
+import net.dp.rpg.engine.floor.FloorArchetype;
+import net.dp.rpg.engine.floor.FloorArchetypes;
 import net.dp.rpg.engine.floor.FloorDebug;
+import net.dp.rpg.engine.floor.FloorGenerator;
 import net.dp.rpg.engine.floor.FloorLayout;
-import net.dp.rpg.engine.floor.FloorPlan;
 import net.dp.rpg.engine.floor.GridBounds;
 import net.dp.rpg.engine.floor.graph.RoomNode;
-import net.dp.rpg.engine.floor.phase.WalkerSettings;
+import net.dp.rpg.engine.floor.io.FloorDocument;
+import net.dp.rpg.engine.floor.io.FloorDocuments;
+import net.dp.rpg.engine.floor.io.FloorJson;
+import net.dp.rpg.engine.floor.io.FloorRestore;
 import net.dp.rpg.engine.tile.TileMapData;
 import net.dp.rpg.engine.tile.TileSystem;
 import net.dp.rpg.engine.tile.debug.GdxTileLogger;
 import net.dp.rpg.engine.tile.debug.TileLogger;
 import net.dp.rpg.engine.tile.exception.TileException;
 import net.dp.rpg.engine.tile.render.TileMapRenderer;
+import net.dp.rpg.engine.tile.room.RoomCell;
 import net.dp.rpg.engine.tile.room.RoomGeometry;
 
 public final class FloorDemoApp extends ApplicationAdapter {
 
-  private static final String[] TILESET_PATHS = {"tiles/terrain.tsx", "tiles/basement.tsx"};
+  private static final String[] TILESET_PATHS = {"tiles/rooms.tsx"};
 
-  private static final int GRID_WIDTH = 11;
-
-  private static final int GRID_HEIGHT = 9;
-
-  private static final int ROOM_COUNT = 20;
-
-  private static final long FIRST_SEED = 20260927L;
+  private static final long FIRST_SEED = 20260928L;
 
   private static final float[] STEP_SECONDS = {1.0f, 0.5f, 0.2f, 0.05f};
 
@@ -45,9 +45,7 @@ public final class FloorDemoApp extends ApplicationAdapter {
 
   private static final float PAN_CELLS_PER_SECOND = 3f;
 
-  private final GridBounds bounds = new GridBounds(GRID_WIDTH, GRID_HEIGHT);
-
-  private final FloorBuilder builder = new FloorBuilder();
+  private final FloorGenerator generator = new FloorGenerator();
 
   private TileSystem tiles;
 
@@ -63,7 +61,11 @@ public final class FloorDemoApp extends ApplicationAdapter {
 
   private Viewport viewport;
 
+  private FloorArchetype archetype = FloorArchetypes.CAVES;
+
   private FloorLayout layout;
+
+  private GridBounds bounds;
 
   private FloorReplay replay;
 
@@ -74,8 +76,6 @@ public final class FloorDemoApp extends ApplicationAdapter {
   private int speed = 1;
 
   private int focusRoom;
-
-  private int activeTileset;
 
   private float sinceStep;
 
@@ -91,9 +91,6 @@ public final class FloorDemoApp extends ApplicationAdapter {
 
     painter = new DemoFloorPainter(tiles.types());
     camera = new OrthographicCamera();
-
-    viewport = new FitViewport(RoomGeometry.tileWidth(GRID_WIDTH), RoomGeometry.tileHeight(GRID_HEIGHT), camera);
-
     renderer = tiles.createRenderer();
 
     generate(seed);
@@ -101,21 +98,40 @@ public final class FloorDemoApp extends ApplicationAdapter {
 
   private void generate(long newSeed) {
     seed = newSeed;
-    layout = builder.build(FloorPlan.of(ROOM_COUNT), bounds, WalkerSettings.defaults(), seed);
+    layout = generator.generate(archetype, seed);
+    bounds = boundsOf(layout);
     replay = new FloorReplay(layout);
     focusRoom = 0;
     sinceStep = 0f;
     playing = true;
 
-    logger.log("seed %d: %s".formatted(seed, layout.summary()));
+    viewport = new FitViewport(RoomGeometry.tileWidth(bounds.width()),
+        RoomGeometry.tileHeight(bounds.height()), camera);
+    viewport.update(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+
+    logger.log("%s seed %d: %s".formatted(archetype.id(), seed, layout.summary()));
     logger.log(System.lineSeparator() + FloorDebug.render(layout.graph(), bounds));
 
     repaint();
     fitWholeFloor();
   }
 
+  private GridBounds boundsOf(FloorLayout floor) {
+    int maxX = 0;
+    int maxY = 0;
+
+    for (RoomNode room : floor.graph().rooms()) {
+      for (RoomCell cell : room.cells()) {
+        maxX = Math.max(maxX, cell.x());
+        maxY = Math.max(maxY, cell.y());
+      }
+    }
+
+    return new GridBounds(maxX + 1, maxY + 1);
+  }
+
   private void repaint() {
-    map = painter.paint(layout, bounds, seed, replay.reveal());
+    map = painter.paint(layout, bounds, replay.reveal());
 
     updateTitle();
   }
@@ -176,6 +192,10 @@ public final class FloorDemoApp extends ApplicationAdapter {
       generate(seed + 1);
     }
 
+    if (Gdx.input.isKeyJustPressed(Input.Keys.TAB)) {
+      switchArchetype();
+    }
+
     if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
       playing = !playing;
       updateTitle();
@@ -198,11 +218,64 @@ public final class FloorDemoApp extends ApplicationAdapter {
       repaint();
     }
 
+    if (Gdx.input.isKeyJustPressed(Input.Keys.O)) {
+      saveFloor();
+    }
+
+    if (Gdx.input.isKeyJustPressed(Input.Keys.L)) {
+      loadFloor();
+    }
+
     handleSpeedInput();
     handleViewInput();
     handleZoom();
     handlePan();
     handleDebugInput();
+  }
+
+  private void saveFloor() {
+    FloorDocument document = FloorDocuments.of(layout, archetype, bounds);
+    FileHandle file = Gdx.files.local(fileName());
+
+    file.writeString(FloorJson.write(document), false);
+
+    logger.log("Saved %s (%d rooms, %d doors)".formatted(fileName(), document.rooms().size(),
+        document.doors().size()));
+  }
+
+  private void loadFloor() {
+    FileHandle file = Gdx.files.local(fileName());
+
+    if (!file.exists()) {
+      logger.log("No saved floor at " + fileName());
+
+      return;
+    }
+
+    try {
+      FloorRestore.Result restored = FloorRestore.read(FloorJson.read(file.readString()));
+
+      logger.log("Loaded %s: rooms %d of %d, doors %d of %d, quests %d of %d".formatted(
+          fileName(), restored.graph().size(), layout.rooms(),
+          restored.graph().links().size(), layout.graph().links().size(),
+          restored.quests().size(), layout.quests().size()));
+
+      restored.warnings().forEach(warning -> logger.log("  warning: " + warning));
+    } catch (RuntimeException exception) {
+      logger.log("Load failed: " + exception.getMessage());
+    }
+  }
+
+  private String fileName() {
+    return "export/floor-%s-%d.json".formatted(archetype.id(), seed);
+  }
+
+  private void switchArchetype() {
+    int next = (FloorArchetypes.ALL.indexOf(archetype) + 1) % FloorArchetypes.ALL.size();
+
+    archetype = FloorArchetypes.ALL.get(next);
+
+    generate(seed);
   }
 
   private void handleSpeedInput() {
@@ -231,10 +304,6 @@ public final class FloorDemoApp extends ApplicationAdapter {
 
     if (Gdx.input.isKeyJustPressed(Input.Keys.B)) {
       focusOnBoss();
-    }
-
-    if (Gdx.input.isKeyJustPressed(Input.Keys.T)) {
-      swapTileset();
     }
 
     if (Gdx.input.isKeyJustPressed(Input.Keys.E)) {
@@ -324,33 +393,25 @@ public final class FloorDemoApp extends ApplicationAdapter {
     return map.height() - tileY - 0.5f;
   }
 
-  private void swapTileset() {
-    int next = (activeTileset + 1) % tilesetIds.size();
-
-    try {
-      tiles.swapTileset(tilesetIds.get(next), map, renderer);
-      activeTileset = next;
-
-      updateTitle();
-    } catch (TileException exception) {
-      logger.log("Swap refused: " + exception.getMessage());
-    }
-  }
-
   private void exportFloor() {
-    tiles.exportMap(map, tilesetIds.get(activeTileset), "export/floor-%d.tmx".formatted(seed));
+    try {
+      tiles.exportMap(map, tilesetIds.get(0), "export/floor-%s-%d.tmx".formatted(archetype.id(), seed));
 
-    logger.log("Exported floor-%d".formatted(seed));
+      logger.log("Exported TMX for seed " + seed);
+    } catch (TileException exception) {
+      logger.log("Export failed: " + exception.getMessage());
+    }
   }
 
   private void updateTitle() {
     RoomNode room = layout.graph().rooms().get(focusRoom);
 
     Gdx.graphics.setTitle(
-        "Floor %d - %s %d/%d %s - %d rooms, critical %d, holes %d - focus %s %s depth %d - zoom %.2f - %s"
-            .formatted(seed, replay.stage(), replay.step(), replay.totalSteps(), playing ? "playing" : "paused",
-                layout.rooms(), layout.criticalLength(), layout.holeRooms(), room.type(), room.variant().id(),
-                room.depth(), camera.zoom, tilesetIds.get(activeTileset))
-            + " - [SPACE] play [.] step [ENTER] finish [BACKSPACE] replay [1-4] speed [R] seed [F] fit");
+        "%s %d - %s %d/%d %s - %d rooms, critical %d, holes %d, quests %d - focus %s %s depth %d - zoom %.2f"
+            .formatted(archetype.id(), seed, replay.stage(), replay.step(), replay.totalSteps(),
+                playing ? "playing" : "paused", layout.rooms(), layout.criticalLength(),
+                layout.holeRooms(), layout.quests().size(), room.type(), room.variant().id(),
+                room.depth(), camera.zoom)
+            + " - [TAB] archetype [R] seed [SPACE] play [.] step [ENTER] finish [O] save [L] load [F] fit");
   }
 }

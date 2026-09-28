@@ -27,6 +27,14 @@ public final class ShapePool {
     return entries;
   }
 
+  public double holeRoomChanceOf(RoomShapeDef shape) {
+    return entries.stream()
+        .filter(entry -> entry.shape() == shape)
+        .mapToDouble(ShapeEntry::holeRoomChance)
+        .findFirst()
+        .orElse(0.0);
+  }
+
   public boolean contains(RoomShapeDef shape) {
     return entries.stream().anyMatch(entry -> entry.shape() == shape);
   }
@@ -54,11 +62,15 @@ public final class ShapePool {
     return "pool %s(%d shapes)".formatted(id, entries.size());
   }
 
-  public record ShapeEntry(RoomShapeDef shape, double weight) {
+  public record ShapeEntry(RoomShapeDef shape, double weight, double holeRoomChance) {
 
     public ShapeEntry {
       if (!Double.isFinite(weight) || weight <= 0.0) {
         throw new IllegalArgumentException("Shape weight must be greater than zero: " + shape.id());
+      }
+
+      if (holeRoomChance < 0.0 || holeRoomChance > 1.0) {
+        throw new IllegalArgumentException("holeRoomChance must be within 0..1: " + shape.id());
       }
     }
   }
@@ -74,7 +86,11 @@ public final class ShapePool {
     }
 
     public Builder with(RoomShapeDef shape, double weight) {
-      entries.add(new ShapeEntry(shape, weight));
+      return with(shape, weight, 0.0);
+    }
+
+    public Builder with(RoomShapeDef shape, double weight, double holeRoomChance) {
+      entries.add(new ShapeEntry(shape, weight, holeRoomChance));
 
       return this;
     }
