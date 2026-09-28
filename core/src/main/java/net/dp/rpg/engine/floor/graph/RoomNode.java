@@ -34,6 +34,9 @@ public final class RoomNode {
   @Setter
   private RoomType type = RoomType.NORMAL;
 
+  @Setter
+  private String questId;
+
   private int depth = -1;
 
   RoomNode(int index, ShapeVariant variant, RoomCell origin) {
@@ -137,6 +140,10 @@ public final class RoomNode {
 
   public RoomType type() {
     return type;
+  }
+
+  public String questId() {
+    return questId;
   }
 
   public RoomPhase phase() {

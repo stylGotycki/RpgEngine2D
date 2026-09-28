@@ -1,12 +1,12 @@
 package net.dp.rpg.engine.floor;
 
 import java.util.List;
-
 import net.dp.rpg.engine.floor.graph.DoorType;
 import net.dp.rpg.engine.floor.graph.FloorGraph;
 import net.dp.rpg.engine.floor.graph.RoomNode;
 import net.dp.rpg.engine.floor.phase.AppendixPhase;
 import net.dp.rpg.engine.floor.phase.HolePhase;
+import net.dp.rpg.engine.floor.phase.QuestPhase;
 import net.dp.rpg.engine.floor.phase.RetrospectivePass;
 import net.dp.rpg.engine.floor.phase.WalkerLayout;
 import net.dp.rpg.engine.floor.phase.WalkerSettings;
@@ -22,6 +22,8 @@ public final class FloorBuilder {
   private final HolePhase holes = new HolePhase();
 
   private final RetrospectivePass retrospective = new RetrospectivePass();
+
+  private final QuestPhase quests = new QuestPhase();
 
   public FloorLayout build(FloorPlan plan, GridBounds bounds, WalkerSettings settings, long seed) {
     return build(FloorContext.of(plan, bounds, settings, seed));
@@ -45,9 +47,11 @@ public final class FloorBuilder {
     List<RoomNode> criticalPath = boss == null ? List.of() : graph.pathToStart(boss);
 
     RetrospectivePass.Result late = retrospective.apply(graph, context, criticalPath);
+    List<QuestBundle> bundles = quests.assign(graph, context);
 
     return new FloorLayout(graph, boss, criticalPath, walk.rooms(), attached.attached(), holeRooms,
-        extraDoors, late.relocated(), context.loadout().unspentMandatory(), walk.path(), walk.reason());
+        extraDoors, late.relocated(), context.loadout().unspentMandatory(), walk.path(), bundles,
+        walk.reason());
   }
 
   private int completeDoorways(FloorGraph graph) {

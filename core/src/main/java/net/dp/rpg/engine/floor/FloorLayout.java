@@ -3,7 +3,6 @@ package net.dp.rpg.engine.floor;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
-
 import net.dp.rpg.engine.floor.graph.FloorGraph;
 import net.dp.rpg.engine.floor.graph.RoomNode;
 import net.dp.rpg.engine.floor.phase.WalkerLayout;
@@ -21,12 +20,14 @@ public record FloorLayout(
     int relocated,
     List<RoomType> unspentAbilities,
     List<RoomCell> walkerPath,
+    List<QuestBundle> quests,
     WalkerLayout.StopReason walkStop) {
 
   public FloorLayout {
     criticalPath = List.copyOf(criticalPath);
     unspentAbilities = List.copyOf(unspentAbilities);
     walkerPath = List.copyOf(walkerPath);
+    quests = List.copyOf(quests);
   }
 
   public int rooms() {
@@ -49,10 +50,19 @@ public record FloorLayout(
     return counts;
   }
 
+  public int questRooms() {
+    return quests.stream().mapToInt(QuestBundle::size).sum();
+  }
+
+  public QuestBundle questOf(RoomNode room) {
+    return quests.stream().filter(bundle -> bundle.contains(room)).findFirst().orElse(null);
+  }
+
   public String summary() {
-    return "rooms=%d cells=%d doors=%d deadEnds=%d critical=%d holes=%d extraDoors=%d types=%s%s".formatted(
+    return ("rooms=%d cells=%d doors=%d deadEnds=%d critical=%d holes=%d extraDoors=%d "
+        + "quests=%d/%d types=%s%s").formatted(
         graph.size(), graph.usedCells(), graph.links().size(), graph.deadEnds().size(),
-        criticalPath.size(), holeRooms, extraDoors, typeCounts(),
+        criticalPath.size(), holeRooms, extraDoors, quests.size(), questRooms(), typeCounts(),
         unspentAbilities.isEmpty() ? "" : " UNSPENT=" + unspentAbilities);
   }
 }

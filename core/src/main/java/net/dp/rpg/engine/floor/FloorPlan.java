@@ -1,11 +1,10 @@
 package net.dp.rpg.engine.floor;
 
+import java.util.List;
 import net.dp.rpg.engine.floor.shape.ShapePool;
 import net.dp.rpg.engine.floor.shape.ShapePools;
 import net.dp.rpg.engine.floor.type.DefaultRoomTypes;
 import net.dp.rpg.engine.floor.type.RoomTypeDefinition;
-
-import java.util.List;
 
 public record FloorPlan(
     int roomCount,
@@ -13,6 +12,7 @@ public record FloorPlan(
     double cellsPerRoom,
     ShapePool defaultShapes,
     List<RoomTypeDefinition> roomTypes,
+    QuestSettings questSettings,
     boolean exclusiveGroups) {
 
   public static final double DEFAULT_TRUNK_RATIO = 0.70;
@@ -37,19 +37,27 @@ public record FloorPlan(
 
   public static FloorPlan of(int roomCount) {
     return new FloorPlan(roomCount, DEFAULT_TRUNK_RATIO, DEFAULT_CELLS_PER_ROOM,
-        ShapePools.STANDARD, DefaultRoomTypes.catalog(), true);
+        ShapePools.STANDARD, DefaultRoomTypes.catalog(), QuestSettings.defaults(), true);
   }
 
   public FloorPlan withTrunkRatio(double ratio) {
-    return new FloorPlan(roomCount, ratio, cellsPerRoom, defaultShapes, roomTypes, exclusiveGroups);
+    return new FloorPlan(roomCount, ratio, cellsPerRoom, defaultShapes, roomTypes, questSettings,
+        exclusiveGroups);
   }
 
   public FloorPlan withCellsPerRoom(double cells) {
-    return new FloorPlan(roomCount, trunkRatio, cells, defaultShapes, roomTypes, exclusiveGroups);
+    return new FloorPlan(roomCount, trunkRatio, cells, defaultShapes, roomTypes, questSettings,
+        exclusiveGroups);
+  }
+
+  public FloorPlan withQuestSettings(QuestSettings quests) {
+    return new FloorPlan(roomCount, trunkRatio, cellsPerRoom, defaultShapes, roomTypes, quests,
+        exclusiveGroups);
   }
 
   public FloorPlan withRoomTypes(List<RoomTypeDefinition> types) {
-    return new FloorPlan(roomCount, trunkRatio, cellsPerRoom, defaultShapes, types, exclusiveGroups);
+    return new FloorPlan(roomCount, trunkRatio, cellsPerRoom, defaultShapes, types, questSettings,
+        exclusiveGroups);
   }
 
   public int trunkRooms() {
