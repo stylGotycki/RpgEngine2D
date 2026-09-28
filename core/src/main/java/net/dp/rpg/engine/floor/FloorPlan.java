@@ -7,6 +7,7 @@ import net.dp.rpg.engine.floor.type.DefaultRoomTypes;
 import net.dp.rpg.engine.floor.type.RoomTypeDefinition;
 
 public record FloorPlan(
+    String archetypeId,
     int roomCount,
     double trunkRatio,
     double cellsPerRoom,
@@ -36,28 +37,28 @@ public record FloorPlan(
   }
 
   public static FloorPlan of(int roomCount) {
-    return new FloorPlan(roomCount, DEFAULT_TRUNK_RATIO, DEFAULT_CELLS_PER_ROOM,
+    return new FloorPlan("default", roomCount, DEFAULT_TRUNK_RATIO, DEFAULT_CELLS_PER_ROOM,
         ShapePools.STANDARD, DefaultRoomTypes.catalog(), QuestSettings.defaults(), true);
   }
 
   public FloorPlan withTrunkRatio(double ratio) {
-    return new FloorPlan(roomCount, ratio, cellsPerRoom, defaultShapes, roomTypes, questSettings,
-        exclusiveGroups);
+    return new FloorPlan(archetypeId, roomCount, ratio, cellsPerRoom, defaultShapes, roomTypes,
+        questSettings, exclusiveGroups);
   }
 
   public FloorPlan withCellsPerRoom(double cells) {
-    return new FloorPlan(roomCount, trunkRatio, cells, defaultShapes, roomTypes, questSettings,
-        exclusiveGroups);
+    return new FloorPlan(archetypeId, roomCount, trunkRatio, cells, defaultShapes, roomTypes,
+        questSettings, exclusiveGroups);
   }
 
   public FloorPlan withQuestSettings(QuestSettings quests) {
-    return new FloorPlan(roomCount, trunkRatio, cellsPerRoom, defaultShapes, roomTypes, quests,
-        exclusiveGroups);
+    return new FloorPlan(archetypeId, roomCount, trunkRatio, cellsPerRoom, defaultShapes, roomTypes,
+        quests, exclusiveGroups);
   }
 
   public FloorPlan withRoomTypes(List<RoomTypeDefinition> types) {
-    return new FloorPlan(roomCount, trunkRatio, cellsPerRoom, defaultShapes, types, questSettings,
-        exclusiveGroups);
+    return new FloorPlan(archetypeId, roomCount, trunkRatio, cellsPerRoom, defaultShapes, types,
+        questSettings, exclusiveGroups);
   }
 
   public int trunkRooms() {

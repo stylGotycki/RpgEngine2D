@@ -10,6 +10,8 @@ import net.dp.rpg.engine.floor.type.RoomType;
 import net.dp.rpg.engine.tile.room.RoomCell;
 
 public record FloorLayout(
+    String archetypeId,
+    long seed,
     FloorGraph graph,
     RoomNode boss,
     List<RoomNode> criticalPath,

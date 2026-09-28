@@ -1,6 +1,7 @@
 package net.dp.rpg.engine.floor;
 
 import java.util.List;
+
 import net.dp.rpg.engine.floor.graph.DoorType;
 import net.dp.rpg.engine.floor.graph.FloorGraph;
 import net.dp.rpg.engine.floor.graph.RoomNode;
@@ -49,7 +50,8 @@ public final class FloorBuilder {
     RetrospectivePass.Result late = retrospective.apply(graph, context, criticalPath);
     List<QuestBundle> bundles = quests.assign(graph, context);
 
-    return new FloorLayout(graph, boss, criticalPath, walk.rooms(), attached.attached(), holeRooms,
+    return new FloorLayout(context.plan().archetypeId(), context.seed(), graph, boss, criticalPath,
+        walk.rooms(), attached.attached(), holeRooms,
         extraDoors, late.relocated(), context.loadout().unspentMandatory(), walk.path(), bundles,
         walk.reason());
   }
