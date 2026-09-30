@@ -5,6 +5,8 @@ import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
+import com.badlogic.gdx.physics.box2d.Fixture;
+import com.badlogic.gdx.utils.Array;
 import net.dp.rpg.engine.components.*;
 
 public class MovementSystem
@@ -81,18 +83,42 @@ public class MovementSystem
         }
     }
 
-    public void transformToSprite(ComponentStorage<TransformComponent> transforms, ComponentStorage<SpriteComponent> sprites)
+    //todo transform to body conversion only when transform changed between physics update
+    public void transformToBody(ComponentStorage<PhysicalBodyComponent> bodies, ComponentStorage<TransformComponent> transforms)
     {
-        int sSize = sprites.size();
-        for(int i = 0; i < sSize; i++)
+        int bSize = bodies.size();
+        for(int i = 0; i < bSize; i++)
         {
-            int entity = sprites.getEntity(i);
+            int entity = bodies.getEntity(i);
             if(transforms.hasComponent(entity))
             {
-                Sprite sprite = sprites.getByIndex(i).sprite;
                 TransformComponent transform = transforms.getByEntity(entity);
-                sprite.setCenter(transform.position.x, transform.position.y);
-                sprite.setRotation(transform.rotation * MathUtils.radDeg);
+                if(transform.changed)
+                {
+                    Body body = bodies.getByIndex(i).body;
+                    body.setTransform(transform.position, transform.rotation);
+                }
+            }
+        }
+    }
+
+    public void transformToSprite(ComponentStorage<TransformComponent> transforms, ComponentStorage<SpriteComponent> spriteComponents)
+    {
+        int sSize = spriteComponents.size();
+        for(int i = 0; i < sSize; i++)
+        {
+            int entity = spriteComponents.getEntity(i);
+            if(transforms.hasComponent(entity))
+            {
+                SpriteComponent spriteComponent = spriteComponents.getByIndex(i);
+                for(int j = 0; j < spriteComponent.sprites.size; j++)
+                {
+                    Array<Sprite> sprites = spriteComponent.sprites;
+                    TransformComponent transform = transforms.getByEntity(entity);
+                    sprites.get(j).setOriginBasedPosition(transform.position.x, transform.position.y);
+                    if(!(spriteComponent.fixedRotation.size > j && spriteComponent.fixedRotation.get(j)))
+                        sprites.get(j).setRotation(transform.rotation * MathUtils.radDeg);
+                }
             }
         }
     }

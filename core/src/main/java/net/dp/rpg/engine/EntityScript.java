@@ -16,4 +16,8 @@ public abstract class EntityScript extends Script
         this.scene = scene;
         this.entity = entity;
     }
+
+    public void onCollision(int otherEntity, short category, short otherCategory)
+    {
+    }
 }

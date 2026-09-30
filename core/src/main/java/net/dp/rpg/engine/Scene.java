@@ -6,9 +6,9 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.*;
 import com.badlogic.gdx.utils.Array;
 import lombok.Getter;
-import net.dp.rpg.engine.bodyCreator.PhysicalBodyCreator;
 import net.dp.rpg.engine.components.*;
 import net.dp.rpg.engine.components.Component;
+import net.dp.rpg.engine.systems.CollisionDispatcher;
 import net.dp.rpg.engine.systems.MovementSystem;
 import net.dp.rpg.engine.systems.TileConverter;
 import net.dp.rpg.engine.tile.TileMapData;
@@ -33,12 +33,10 @@ public class Scene
     @Getter
     private OrthographicCamera activeCamera = new OrthographicCamera(20, (float) Gdx.graphics.getHeight() / Gdx.graphics.getWidth() * 20);
 
-    @Getter
-    private final PhysicalBodyCreator bodyCreator = new PhysicalBodyCreator();
-
     private int nextEntity = 0;
     private final ArrayList<Integer> freeEntity = new ArrayList<>();
     private final ArrayList<ComponentStorage<? extends Component>> componentStorages = new ArrayList<>();
+    private final ArrayList<Integer> toDeleteEntities = new ArrayList<>();
 
     private SceneScript sceneScript;
 
@@ -52,6 +50,9 @@ public class Scene
         this.engine = engine;
         this.inputAdapter = inputAdapter;
 
+        CollisionDispatcher collisionDispatcher = new CollisionDispatcher(this);
+        physicalWorld.setContactListener(collisionDispatcher);
+
         componentStorages.add(new ComponentStorage<>(MoveComponent.class));
         componentStorages.add(new ComponentStorage<>(TransformComponent.class));
         componentStorages.add(new ComponentStorage<>(PhysicalBodyComponent.class));
@@ -60,6 +61,7 @@ public class Scene
         componentStorages.add(new ComponentStorage<>(CameraComponent.class));
         componentStorages.add(new ComponentStorage<>(FollowComponent.class));
         componentStorages.add(new ComponentStorage<>(BoundingComponent.class));
+        componentStorages.add(new ComponentStorage<>(HealthComponent.class));
     }
 
     public <T extends Component> void addComponent(int entity, T component)
@@ -78,10 +80,6 @@ public class Scene
         {
             addComponent(entity, new TransformComponent(new Vector2(0,0), 0, 1));
         }
-        else if(component instanceof SpriteComponent spriteComponent)
-        {
-            spriteComponent.sprite.setOriginCenter();
-        }
     }
 
     public <T extends Component> void removeComponent(int entity, T component)
@@ -96,19 +94,19 @@ public class Scene
     /**
      * creates Body using parameters set in PhysicalBodyCreator and adds it as Component
      */
-    public Body createBodyComponent(int entity)
+    public Body createBodyComponent(int entity, BodyDef bodyDef)
     {
-        Body body = physicalWorld.createBody(bodyCreator.getBodyDef());
-        body.setUserData(bodyCreator.getBodyDef());
+        Body body = physicalWorld.createBody(bodyDef);
+        body.setUserData(entity);
         addComponent(entity, new PhysicalBodyComponent(body));
         return body;
     }
 
-    public Fixture createFixture(int entity)
+    public Fixture createFixture(int entity, FixtureDef fixtureDef)
     {
         Body body = getComponentStorage(PhysicalBodyComponent.class).getByEntity(entity).body;
-        Fixture fixture = body.createFixture(bodyCreator.getFixtureDef());
-        fixture.setUserData(bodyCreator.getFixtureDef());
+        Fixture fixture = body.createFixture(fixtureDef);
+        fixture.setUserData(entity);
         return fixture;
     }
 
@@ -145,11 +143,30 @@ public class Scene
         return newEntity;
     }
 
-    public void deleteEntity(int entityId)
+    public void setToDelete(int entityId)
+    {
+        toDeleteEntities.add(entityId);
+    }
+
+    private void deleteEntities()
+    {
+        for(int entity : toDeleteEntities)
+        {
+            deleteEntity(entity);
+        }
+        toDeleteEntities.clear();
+    }
+
+    private void deleteEntity(int entityId)
     {
         freeEntity.add(entityId);
         for(ComponentStorage<? extends Component> componentStorage : componentStorages)
         {
+            if(componentStorage.getComponentClass() == PhysicalBodyComponent.class && componentStorage.hasComponent(entityId))
+            {
+                Body body = ((PhysicalBodyComponent)componentStorage.getByEntity(entityId)).body;
+                physicalWorld.destroyBody(body);
+            }
             componentStorage.remove(entityId);
         }
     }
@@ -205,6 +222,7 @@ public class Scene
             scriptsStorage.getByIndex(i).script.update(delta);
         }
 
+        movementSystem.transformToBody(getComponentStorage(PhysicalBodyComponent.class), getComponentStorage(TransformComponent.class));
         //todo make less physics steps on higher refresh rate (fix to const refresh rate)
         physicalWorld.step(delta, 6, 2);
 
@@ -216,6 +234,8 @@ public class Scene
         movementSystem.transformToCamera(getComponentStorage(TransformComponent.class), getComponentStorage(CameraComponent.class));
 
         gui.update(delta);
+
+        deleteEntities();
     }
 
     public void resize(int width, int height)
@@ -227,6 +247,19 @@ public class Scene
 
     public void dispose()
     {
+        if(sceneScript != null && sceneScript instanceof InputListener listener)
+        {
+            inputAdapter.removeListener(listener);
+        }
+        ComponentStorage<ScriptComponent> scriptComponents = getComponentStorage(ScriptComponent.class);
+        for(int i = 0; i < scriptComponents.size(); i++)
+        {
+            ScriptComponent component = scriptComponents.getByIndex(i);
+            if(component.script instanceof InputListener listener)
+            {
+                inputAdapter.removeListener(listener);
+            }
+        }
         gui.dispose();
     }
 }
