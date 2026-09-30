@@ -1,5 +1,6 @@
 package net.dp.rpg.engine;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
@@ -18,6 +19,7 @@ public class Gui
         stage.addActor(mainTable);
         ScreenViewport screenViewport = new ScreenViewport();
         stage.setViewport(screenViewport);
+        stage.getViewport().update(Gdx.graphics.getWidth(), Gdx.graphics.getHeight(), true);
     }
 
     public void update(float delta)

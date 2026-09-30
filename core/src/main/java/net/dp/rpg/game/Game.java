@@ -13,7 +13,10 @@ public class Game extends AbstractGame
     @Override
     public void create()
     {
-        getEngine().getAssetManager().load("eti.png", Texture.class);
+        getEngine().getAssetManager().load("player.png", Texture.class);
+        getEngine().getAssetManager().load("enemy.png", Texture.class);
+        getEngine().getAssetManager().load("box.png", Texture.class);
+        getEngine().getAssetManager().load("attack.png", Texture.class);
         getEngine().getAssetManager().load("skins/default/default.json", Skin.class);
         getEngine().getAssetManager().load("particles/buttonDust.p", ParticleEffect.class);
         getEngine().getAssetManager().load("particles/menuDust.p", ParticleEffect.class);
@@ -30,7 +33,5 @@ public class Game extends AbstractGame
         getEngine().switchScene(scene);
 
         getEngine().setGlobalScript(new GlobalScript());
-
-        getEngine().setPhysicsDebug(true);
     }
 }

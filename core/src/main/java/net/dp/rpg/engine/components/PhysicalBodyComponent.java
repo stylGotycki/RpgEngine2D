@@ -18,8 +18,24 @@ public class PhysicalBodyComponent implements Component
     @Override
     public Component copy()
     {
-        BodyDef newBodyDef = (BodyDef) body.getUserData();
-        Body newBody = body.getWorld().createBody(newBodyDef);
+        BodyDef bodyDef = new BodyDef();
+        bodyDef.type = body.getType();
+        bodyDef.angularDamping = body.getAngularDamping();
+        bodyDef.linearDamping = body.getAngularDamping();
+        bodyDef.fixedRotation = body.isFixedRotation();
+        bodyDef.position.x = body.getPosition().x;
+        bodyDef.position.y = body.getPosition().y;
+        bodyDef.active = body.isActive();
+        bodyDef.allowSleep = body.isSleepingAllowed();
+        bodyDef.angle = body.getAngle();
+        bodyDef.angularVelocity = body.getAngularVelocity();
+        bodyDef.awake = body.isAwake();
+        bodyDef.bullet = body.isBullet();
+        bodyDef.gravityScale = body.getGravityScale();
+        bodyDef.linearVelocity.x = body.getLinearVelocity().x;
+        bodyDef.linearVelocity.y = body.getLinearVelocity().y;
+
+        Body newBody = body.getWorld().createBody(bodyDef);
 
         Array<Fixture> fixtures = body.getFixtureList();
         FixtureDef newFixtureDef = new FixtureDef();

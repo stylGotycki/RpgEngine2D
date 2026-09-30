@@ -1,19 +1,27 @@
 package net.dp.rpg.engine.components;
 
 import com.badlogic.gdx.graphics.g2d.Sprite;
+import com.badlogic.gdx.utils.Array;
 
 public class SpriteComponent implements Component
 {
-    public Sprite sprite;
+    public Array<Sprite> sprites = new Array<>();
+    public Array<Boolean> fixedRotation = new Array<>();
 
-    public SpriteComponent(Sprite sprite)
+    public void add(Sprite sprite, boolean fixedRotation)
     {
-        this.sprite = sprite;
+        sprites.add(sprite);
+        this.fixedRotation.add(fixedRotation);
     }
 
     @Override
     public Component copy()
     {
-        return new SpriteComponent(new Sprite(sprite));
+        SpriteComponent newComponent = new SpriteComponent();
+        for(Sprite sprite : sprites)
+        {
+            newComponent.sprites.add(new Sprite(sprite));
+        }
+        return newComponent;
     }
 }

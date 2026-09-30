@@ -4,53 +4,70 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
-import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.physics.box2d.BodyDef;
-import com.badlogic.gdx.physics.box2d.PolygonShape;
+import com.badlogic.gdx.physics.box2d.*;
 import net.dp.rpg.engine.EngineServices;
 import net.dp.rpg.engine.Scene;
-import net.dp.rpg.engine.bodyCreator.BodyParams;
-import net.dp.rpg.engine.bodyCreator.FixtureParams;
 import net.dp.rpg.engine.components.*;
-import net.dp.rpg.game.scripts.EtiScript;
+import net.dp.rpg.game.scripts.EnemyScript;
+import net.dp.rpg.game.scripts.PlayerScript;
 
 public class LevelBuilder
 {
     public void build(EngineServices engine, Scene scene)
     {
-        //create ETI entity
-        int eti = scene.createEntity();
-        Sprite etiSprite = new Sprite( (Texture) engine.getAssetManager().get("eti.png") );
-        etiSprite.setSize(0.8f,0.8f);
+        //create player entity
+        int player = scene.createEntity();
+        Sprite playerSprite = new Sprite( (Texture) engine.getAssetManager().get("player.png") );
+        Sprite attackSprite = new Sprite( (Texture) engine.getAssetManager().get("attack.png") );
+        playerSprite.setSize(0.8f,0.8f);
+        playerSprite.setOriginCenter();
+        attackSprite.setSize(1.4f, 0.7f);
+        attackSprite.setOriginCenter();
+        attackSprite.setOrigin(attackSprite.getOriginX(), attackSprite.getOriginY()-0.8f);
+        attackSprite.setAlpha(0);
 
-        scene.addComponent(eti, new SpriteComponent(etiSprite));
+        SpriteComponent playerSpriteComponent = new SpriteComponent();
+        playerSpriteComponent.add(playerSprite, false);
+        playerSpriteComponent.add(attackSprite, true);
+        scene.addComponent(player, playerSpriteComponent);
 
-        PolygonShape shape = new PolygonShape();
-        shape.setAsBox(0.4f,0.4f);
+        CircleShape circle = new CircleShape();
+        circle.setRadius(0.4f);
 
-        BodyParams bodyParams = BodyParams.builder()
-            .type(BodyDef.BodyType.DynamicBody)
-            .fixedRotation(true)
-            .linearDamping(10f)
-            .angularDamping(10f).build();
+        BodyDef bodyDef = new BodyDef();
+        bodyDef.type = BodyDef.BodyType.DynamicBody;
+        bodyDef.fixedRotation = true;
+        bodyDef.linearDamping = 10f;
+        bodyDef.angularDamping = 10f;
+        bodyDef.position.x = 10;
+        bodyDef.position.y = 10;
 
-        FixtureParams fixtureParams = FixtureParams.builder()
-            .shape(shape)
-            .restitution(0f)
-            .density(0f)
-            .friction(0f).build();
+        FixtureDef fixtureDef = new FixtureDef();
+        fixtureDef.shape = circle;
+        fixtureDef.restitution = 0f;
+        fixtureDef.density = 1f;
+        fixtureDef.friction = 0f;
+        fixtureDef.filter.categoryBits = FixtureCategory.PLAYER;
+        scene.createBodyComponent(player, bodyDef);
+        scene.createFixture(player, fixtureDef);
+        scene.addComponent(player, new HealthComponent(100, 100));
 
-        bodyParams.position = new Vector2(10,10);
-        scene.getBodyCreator().setBodyDefParams(bodyParams);
-        scene.getBodyCreator().setFixtureDefParams(fixtureParams);
-        scene.createBodyComponent(eti);
-        scene.createFixture(eti);
+        PolygonShape polygon = new PolygonShape();
+        polygon.setAsBox(0.4f, 0.2f);
+        fixtureDef.density = 0f;
+        fixtureDef.isSensor = true;
+        fixtureDef.filter.categoryBits = FixtureCategory.PLAYER_ATTACK;
+        fixtureDef.filter.maskBits = 0;
+        fixtureDef.shape = polygon;
+        scene.createFixture(player, fixtureDef);
 
+        //tilemap
         TileFloor floor = new TileFloor(20260918L, 12);
         floor.loadRoomFromFile();
 
         scene.setTileMap(floor.getActiveRoom().map(), floor.getTileSystem());
 
+        //camera
         float cameraHeight = 13;
         int cameraEntity = scene.createEntity();
         OrthographicCamera camera = new OrthographicCamera((float) Gdx.graphics.getWidth()/Gdx.graphics.getHeight() * cameraHeight, cameraHeight);
@@ -58,30 +75,59 @@ public class LevelBuilder
         scene.addComponent(cameraEntity, new BoundingComponent(0,0,scene.getTileMap().width(), scene.getTileMap().height(), camera.viewportWidth, cameraHeight));
         scene.setActiveCamera(cameraEntity);
 
-        scene.addComponent(eti, new ScriptComponent(new EtiScript()));
-        scene.addComponent(cameraEntity, new FollowComponent(eti, 8));
+        scene.addComponent(player, new ScriptComponent(new PlayerScript()));
+        scene.addComponent(cameraEntity, new FollowComponent(player, 8));
 
-        //chest
-        bodyParams.position.x = 12;
-        bodyParams.position.y = 10;
-        bodyParams.fixedRotation = false;
-        fixtureParams.friction = 10f;
-        fixtureParams.density = 1f;
+        //boxes
+        bodyDef.position.x = 12;
+        bodyDef.position.y = 10;
+        bodyDef.fixedRotation = false;
+        fixtureDef.friction = 10f;
+        fixtureDef.density = 1f;
+        fixtureDef.filter.categoryBits = FixtureCategory.OBSTACLE;
+        fixtureDef.isSensor = false;
+        fixtureDef.shape = polygon;
+        fixtureDef.filter.maskBits = (short) 0xFFFF;
 
-        shape.setAsBox(0.5f, 0.5f);
-        scene.getBodyCreator().setBodyDefParams(bodyParams);
-        scene.getBodyCreator().setFixtureDefParams(fixtureParams);
+        polygon.setAsBox(0.5f, 0.5f);
 
-        int chest1 = scene.createEntity();
-        scene.createBodyComponent(chest1);
-        scene.createFixture(chest1);
-        Sprite chestSprite = new Sprite( (Texture) engine.getAssetManager().get("eti.png"));
-        chestSprite.setSize(1,1);
-        scene.addComponent(chest1, new SpriteComponent(chestSprite));
+        int box1 = scene.createEntity();
+        scene.createBodyComponent(box1, bodyDef);
+        scene.createFixture(box1, fixtureDef);
+        Sprite boxSprite = new Sprite( (Texture) engine.getAssetManager().get("box.png"));
+        boxSprite.setSize(1,1);
+        boxSprite.setOriginCenter();
+        SpriteComponent boxSpriteComponent = new SpriteComponent();
+        boxSpriteComponent.add(boxSprite, false);
+        scene.addComponent(box1, boxSpriteComponent);
 
-        int chest2 = scene.cloneEntity(chest1);
-        scene.getComponentStorage(PhysicalBodyComponent.class).getByEntity(chest2).body.getPosition().x = 14;
+        int box2 = scene.cloneEntity(box1);
+        scene.getComponentStorage(TransformComponent.class).getByEntity(box2).setPosition(14,10);
 
-        shape.dispose();
+        //enemies
+        int enemy1 = scene.createEntity();
+        bodyDef.position.x = 20;
+        bodyDef.position.y = 20;
+        bodyDef.fixedRotation = true;
+        fixtureDef.friction = 0f;
+        fixtureDef.density = 1f;
+        circle.setRadius(0.3f);
+        fixtureDef.shape = circle;
+        fixtureDef.filter.categoryBits = FixtureCategory.ENEMY;
+
+        scene.createBodyComponent(enemy1, bodyDef);
+        scene.createFixture(enemy1, fixtureDef);
+        Sprite enemySprite = new Sprite( (Texture) engine.getAssetManager().get("enemy.png"));
+        enemySprite.setSize(0.6f,0.6f);
+        enemySprite.setOriginCenter();
+        scene.addComponent(enemy1, new HealthComponent(50, 50));
+        SpriteComponent enemySpriteComponent = new SpriteComponent();
+        enemySpriteComponent.sprites.add(enemySprite);
+        scene.addComponent(enemy1, enemySpriteComponent);
+        scene.addComponent(enemy1, new ScriptComponent(new EnemyScript(player)));
+        scene.getComponentStorage(TransformComponent.class).getByEntity(enemy1).setPosition(20,20);
+
+        circle.dispose();
+        polygon.dispose();
     }
 }

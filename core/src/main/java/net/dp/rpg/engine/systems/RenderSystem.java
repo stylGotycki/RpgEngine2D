@@ -1,8 +1,10 @@
 package net.dp.rpg.engine.systems;
 
+import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer;
+import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.ScreenUtils;
 import net.dp.rpg.engine.Scene;
 import net.dp.rpg.engine.components.ComponentStorage;
@@ -30,7 +32,7 @@ public class RenderSystem
 
         Matrix4 projMatrix = scene.getActiveCamera().combined;
 
-        if(tileMapRenderer == null)
+        if(tileMapRenderer == null || scene.getTileSystem() == null)
         {
             TileSystem tileSystem = scene.getTileSystem();
             if(tileSystem != null)
@@ -49,7 +51,9 @@ public class RenderSystem
 
         for(int i = 0; i < size; i++)
         {
-            spriteStorage.getByIndex(i).sprite.draw(batch);
+            Array<Sprite> sprites = spriteStorage.getByIndex(i).sprites;
+            for(Sprite sprite : sprites)
+                sprite.draw(batch);
         }
 
         batch.end();
