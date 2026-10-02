@@ -1,4 +1,4 @@
-package net.dp.rpg.demo.floor;
+package net.dp.rpg.engine.interior.corpus;
 
 import java.util.ArrayList;
 import java.util.List;

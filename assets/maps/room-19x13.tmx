@@ -12,7 +12,8 @@
      nextobjectid="6">
 
  <properties>
-  <property name="roomShape" value="I"/>
+  <property name="roomCells" value="#"/>
+  <property name="roomShape" value="1x1"/>
   <property name="roomType" value="NORMAL"/>
  </properties>
 
