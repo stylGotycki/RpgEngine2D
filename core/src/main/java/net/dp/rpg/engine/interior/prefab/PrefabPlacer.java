@@ -2,7 +2,9 @@ package net.dp.rpg.engine.interior.prefab;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import net.dp.rpg.engine.interior.corpus.CorpusScanner;
 import net.dp.rpg.engine.interior.corpus.PrefabAnchor;
@@ -66,7 +68,7 @@ public final class PrefabPlacer {
   }
 
   private void addWallRunCandidates(RoomCanvas canvas, PrefabOrientation orientation,
-                                    Direction facing, List<Candidate> candidates) {
+      Direction facing, List<Candidate> candidates) {
     int width = canvas.width();
     int height = canvas.height();
 
@@ -82,7 +84,7 @@ public final class PrefabPlacer {
   }
 
   private boolean fitsAgainstWall(RoomCanvas canvas, PrefabOrientation orientation,
-                                  Direction facing, int x, int y) {
+      Direction facing, int x, int y) {
     if (!fitsInInterior(canvas, orientation, x, y)) {
       return false;
     }
@@ -100,7 +102,7 @@ public final class PrefabPlacer {
   }
 
   private boolean backRowTouchesWall(RoomCanvas canvas, int fixedX, int fixedY, int span,
-                                     boolean horizontalSpan) {
+      boolean horizontalSpan) {
     for (int along = 0; along < span; along++) {
       int x = horizontalSpan ? fixedX + along : fixedX;
       int y = horizontalSpan ? fixedY : fixedY + along;
@@ -227,6 +229,27 @@ public final class PrefabPlacer {
           object.x() + candidate.originX(), object.y() + candidate.originY(), object.width(),
           object.height(), object.properties()));
     }
+
+    canvas.addObject(regionOf(candidate));
+  }
+
+  private static TileMapObject regionOf(Candidate candidate) {
+    Prefab prefab = candidate.orientation().prefab();
+    Map<String, Object> properties = new LinkedHashMap<>();
+
+    properties.put(CorpusScanner.PREFAB_GROUP_PROPERTY, prefab.group());
+
+    if (prefab.anchor() == PrefabAnchor.CELL_CENTER) {
+      properties.put(PrefabExtractor.ANCHOR_PROPERTY, prefab.anchor().name());
+    }
+
+    if (!prefab.flippable()) {
+      properties.put(PrefabExtractor.FLIPPABLE_PROPERTY, false);
+    }
+
+    return new TileMapObject(0, prefab.group(), CorpusScanner.PREFAB_TYPE, candidate.originX(),
+        candidate.originY(), candidate.orientation().width(), candidate.orientation().height(),
+        properties);
   }
 
   private record Candidate(PrefabOrientation orientation, int originX, int originY) {

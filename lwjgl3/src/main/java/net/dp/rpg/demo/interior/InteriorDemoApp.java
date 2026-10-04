@@ -7,21 +7,10 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import net.dp.rpg.engine.floor.RoomBlueprint;
-import net.dp.rpg.engine.floor.graph.DoorType;
+import net.dp.rpg.engine.interior.GeneratedRoom;
 import net.dp.rpg.engine.interior.InteriorContext;
-import net.dp.rpg.engine.interior.detail.LearnedDetailPass;
-import net.dp.rpg.engine.interior.pass.PrefabPhase;
-import net.dp.rpg.engine.interior.pass.SkeletonPass;
-import net.dp.rpg.engine.interior.prefab.DefaultInteriorTypes;
-import net.dp.rpg.engine.interior.prefab.PrefabPlacer;
+import net.dp.rpg.engine.interior.InteriorGenerator;
 import net.dp.rpg.engine.tile.TileMapData;
 import net.dp.rpg.engine.tile.TileSystem;
 import net.dp.rpg.engine.tile.debug.GdxTileLogger;
@@ -29,15 +18,15 @@ import net.dp.rpg.engine.tile.debug.TileLogger;
 import net.dp.rpg.engine.tile.exception.TileException;
 import net.dp.rpg.engine.tile.render.TileMapRenderer;
 
+/**
+ * Single-room workbench for the interior generator: reroll a seed, cycle through shapes and room
+ * types, toggle the zone overlay, and see whether the room came out of the normal pipeline or fell
+ * back to the plain emergency room. Everything goes through {@link InteriorGenerator}, the same
+ * entry point the whole-floor demo uses.
+ */
 public final class InteriorDemoApp extends ApplicationAdapter {
 
-  private static final String MOTIF = "placeholder";
-
-  private static final String TILESET_PATH = "tiles/interior-placeholder.tsx";
-
   private static final long FIRST_SEED = 20261004L;
-
-  private static final int MAX_ATTEMPTS = 30;
 
   private static final float MIN_ZOOM = 0.3f;
 
@@ -49,9 +38,7 @@ public final class InteriorDemoApp extends ApplicationAdapter {
 
   private InteriorContext context;
 
-  private SkeletonPass skeletonPass;
-
-  private LearnedDetailPass detailPass;
+  private InteriorGenerator generator;
 
   private TileMapRenderer renderer;
 
@@ -71,7 +58,7 @@ public final class InteriorDemoApp extends ApplicationAdapter {
 
   private boolean showZones;
 
-  private SkeletonPass.Result result;
+  private GeneratedRoom room;
 
   private TileMapData map;
 
@@ -80,84 +67,43 @@ public final class InteriorDemoApp extends ApplicationAdapter {
     logger = new GdxTileLogger("Interior");
 
     tiles = new TileSystem(FIRST_SEED);
-    tiles.loadTilesets(TILESET_PATH);
+    tiles.loadTilesets(PlaceholderMotif.TILESET_PATH);
 
-    context = InteriorContext.load(MOTIF, discoverAssets(), tiles::loadMap, tiles.types(),
-        Map.of("floor.stone_any", List.of("floor.stone", "floor.stone_cracked")),
-        Map.of(DoorType.NORMAL, "door.wood", DoorType.LOCKED, "door.locked"));
-    PrefabPlacer placer = new PrefabPlacer(context.classes());
-    PrefabPhase prefabPhase =
-        new PrefabPhase(DefaultInteriorTypes.catalog(), context.prefabs(), placer);
-
-    skeletonPass = new SkeletonPass(context.model(), context.doors(), context.walkable(),
-        prefabPhase, MAX_ATTEMPTS);
-    detailPass = new LearnedDetailPass(context.details(),
-        runtimeId -> !tiles.types().require(runtimeId).walkable());
+    context = PlaceholderMotif.load(tiles);
+    generator = PlaceholderMotif.generator(context, tiles);
 
     camera = new OrthographicCamera();
     renderer = tiles.createRenderer();
     overlay = new ZoneOverlay();
 
-    logger.log("Loaded corpus '%s': %d samples, %d warnings".formatted(MOTIF,
+    logger.log("Loaded corpus '%s': %d samples, %d warnings".formatted(PlaceholderMotif.MOTIF,
         context.corpus().samples().size(), context.corpus().warnings().size()));
     context.corpus().warnings().forEach(warning -> logger.log("  " + warning));
 
     generate();
   }
 
-  private List<String> discoverAssets() {
-    Path root = Path.of(".");
-
-    try (Stream<Path> walk = Files.walk(root)) {
-      List<String> paths = walk.filter(Files::isRegularFile)
-          .map(path -> root.relativize(path).toString())
-          .collect(Collectors.toList());
-
-      if (paths.stream().noneMatch(path -> path.equals("assets.txt"))) {
-        String cwd = root.toAbsolutePath().normalize().toString();
-
-        throw new IllegalStateException(
-            ("Working directory is '%s', which has no assets.txt; the room corpus would load zero "
-                + "samples. Run the 'runInteriorDemo' Gradle task (it sets the working directory "
-                + "to assets/) instead of starting this class's main() directly from the IDE.")
-                .formatted(cwd));
-      }
-
-      return paths;
-    } catch (java.io.IOException exception) {
-      throw new java.io.UncheckedIOException(exception);
-    }
-  }
-
   private void generate() {
     RoomBlueprint blueprint = RoomPreset.blueprintOf(shapeIndex, typeIndex, seed);
     long started = System.nanoTime();
 
-    result = skeletonPass.generate(blueprint);
+    room = generator.generate(blueprint);
+    map = room.map();
 
     double millis = (System.nanoTime() - started) / 1e6;
-
-    if (!result.isSolved()) {
-      logger.log("FAILED to solve %s/%s seed %d after %d attempts (%s)".formatted(
-          RoomPreset.SHAPES.get(Math.floorMod(shapeIndex, RoomPreset.SHAPES.size())).id(),
-          RoomPreset.TYPES.get(Math.floorMod(typeIndex, RoomPreset.TYPES.size())), seed,
-          result.ground().attempts(), result.ground().status()));
-      updateTitle();
-
-      return;
-    }
-
-    detailPass.apply(result.canvas(), result.ground().state(), new Random(seed * 31 + 7));
-    map = result.canvas().toMapData(result.ground().state(), new Random(seed * 17 + 3));
 
     viewport = new FitViewport(map.width(), map.height(), camera);
     viewport.update(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
     camera.position.set(map.width() / 2f, map.height() / 2f, 0f);
     camera.zoom = 1f;
 
-    logger.log("solved %s/%s seed %d: attempts=%d observations=%d time=%.2fms".formatted(
-        blueprint.variant().id(), blueprint.type(), seed, result.ground().attempts(),
-        result.ground().observations(), millis));
+    if (room.isFallback()) {
+      logger.log("FALLBACK %s/%s seed %d (%s)".formatted(blueprint.variant().id(),
+          blueprint.type(), seed, room.note()));
+    } else {
+      logger.log("generated %s/%s seed %d: room attempts=%d time=%.2fms".formatted(
+          blueprint.variant().id(), blueprint.type(), seed, room.roomAttempts(), millis));
+    }
 
     updateTitle();
   }
@@ -178,7 +124,7 @@ public final class InteriorDemoApp extends ApplicationAdapter {
     renderer.render(map, camera);
 
     if (showZones) {
-      overlay.render(result.canvas().zones(), camera);
+      overlay.render(room.canvas().zones(), camera);
     }
   }
 
@@ -283,11 +229,12 @@ public final class InteriorDemoApp extends ApplicationAdapter {
     }
   }
 
+  /** The exported map carries roomCells and roomType, so it is a valid corpus sample as it is. */
   private void exportRoom() {
     try {
-      tiles.exportMap(map, "interior-placeholder",
-          "export/room-%s-%d.tmx".formatted(RoomPreset.SHAPES.get(
-              Math.floorMod(shapeIndex, RoomPreset.SHAPES.size())).id(), seed));
+      tiles.exportMap(map, PlaceholderMotif.TILESET_ID,
+          "export/interior/room-%s-%d.tmx".formatted(
+              room.blueprint().variant().id(), room.blueprint().seed()));
 
       logger.log("Exported TMX for seed " + seed);
     } catch (TileException exception) {
@@ -296,17 +243,12 @@ public final class InteriorDemoApp extends ApplicationAdapter {
   }
 
   private void updateTitle() {
-    int shapePosition = Math.floorMod(shapeIndex, RoomPreset.SHAPES.size());
-    int typePosition = Math.floorMod(typeIndex, RoomPreset.TYPES.size());
-    String shapeId = RoomPreset.SHAPES.get(shapePosition).id();
-    String type = RoomPreset.TYPES.get(typePosition).toString();
-    String status = result != null && result.isSolved()
-        ? "attempts=%d".formatted(result.ground().attempts())
-        : "UNSOLVED";
+    String status = room.isFallback() ? "FALLBACK" : "attempts=%d".formatted(room.roomAttempts());
 
     Gdx.graphics.setTitle(
-        "Interior %s/%s seed %d - %s - zones %s - zoom %.2f".formatted(shapeId, type, seed,
-            status, showZones ? "ON" : "off", camera.zoom)
+        "Interior %s/%s seed %d - %s - zones %s - zoom %.2f".formatted(
+            room.blueprint().variant().id(), room.blueprint().type(), seed, status,
+            showZones ? "ON" : "off", camera.zoom)
             + " - [LEFT/RIGHT] shape [TAB] type [R] seed [Z] zones [F1/F2] debug [E] export");
   }
 }

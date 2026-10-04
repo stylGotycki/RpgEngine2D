@@ -8,6 +8,7 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import net.dp.rpg.engine.interior.corpus.Zone;
 import net.dp.rpg.engine.interior.corpus.ZoneMap;
 
+
 final class ZoneOverlay {
 
   private static final Color WALL = new Color(0.55f, 0.55f, 0.6f, 0.35f);
@@ -19,6 +20,11 @@ final class ZoneOverlay {
   private final ShapeRenderer shapes = new ShapeRenderer();
 
   void render(ZoneMap zones, OrthographicCamera camera) {
+    render(zones, camera, 0, 0, zones.height());
+  }
+
+  void render(ZoneMap zones, OrthographicCamera camera, int tileOffsetX, int tileOffsetY,
+      int mapHeight) {
     shapes.setProjectionMatrix(camera.combined);
     Gdx.gl.glEnable(GL20.GL_BLEND);
     shapes.begin(ShapeRenderer.ShapeType.Filled);
@@ -29,7 +35,7 @@ final class ZoneOverlay {
 
         if (color != null) {
           shapes.setColor(color);
-          shapes.rect(x, zones.height() - 1 - y, 1f, 1f);
+          shapes.rect(tileOffsetX + x, mapHeight - 1 - (tileOffsetY + y), 1f, 1f);
         }
       }
     }

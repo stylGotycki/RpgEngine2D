@@ -230,3 +230,13 @@ tasks.register('runInteriorDemo', JavaExec) {
     jvmArgs += "--enable-native-access=ALL-UNNAMED"
     if (os.contains('mac')) jvmArgs += "-XstartOnFirstThread"
 }
+
+tasks.register('runFloorInteriorDemo', JavaExec) {
+    group = 'application'
+    description = 'Generates a floor and stitches a WFC interior into every room'
+    mainClass = 'net.dp.rpg.demo.interior.FloorInteriorDemoLauncher'
+    classpath = sourceSets.main.runtimeClasspath
+    workingDir = rootProject.file('assets').path
+    jvmArgs += "--enable-native-access=ALL-UNNAMED"
+    if (os.contains('mac')) jvmArgs += "-XstartOnFirstThread"
+}

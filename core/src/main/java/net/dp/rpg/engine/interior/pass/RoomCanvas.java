@@ -1,11 +1,13 @@
 package net.dp.rpg.engine.interior.pass;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import net.dp.rpg.engine.floor.RoomBlueprint;
 import net.dp.rpg.engine.floor.type.RoomType;
+import net.dp.rpg.engine.interior.corpus.RoomShapes;
 import net.dp.rpg.engine.interior.corpus.Zone;
 import net.dp.rpg.engine.interior.corpus.ZoneMap;
 import net.dp.rpg.engine.interior.model.DoorPalette;
@@ -20,17 +22,7 @@ import net.dp.rpg.engine.wfc.WeightTable;
 import net.dp.rpg.engine.wfc.WfcGrid;
 import net.dp.rpg.engine.wfc.WfcState;
 
-/**
- * The working surface one room is generated on: its zone map and a {@link WfcGrid} description
- * seeded with the weight tables of the room's type, with DOOR cells already fixed to the right door
- * class (the fix overrides any weight, so the WALL weight table assigned to DOOR cells is never
- * actually drawn from — DOOR just needs to belong to some table to be part of the grid at all).
- *
- * <p>This class only describes the problem and assembles the final {@link TileMapData} from a
- * solved {@link WfcState}; solving itself happens in {@link SkeletonPass}. Later passes (prefab
- * stamping, the walkable spine) call {@link #ground()} to restrict cells further before that grid
- * is solved.
- */
+
 public final class RoomCanvas {
 
   private final RoomBlueprint blueprint;
@@ -100,7 +92,6 @@ public final class RoomCanvas {
     return zones.zoneAt(x, y) == Zone.VOID;
   }
 
-  /** The WFC problem description for the GROUND layer; later passes restrict it before solving. */
   public WfcGrid ground() {
     return ground;
   }
@@ -116,10 +107,6 @@ public final class RoomCanvas {
     return details[x + y * zones.width()] - 1;
   }
 
-  /**
-   * Marks a tile as part of a route that must stay walkable (the spine, a door's approach). Later
-   * passes that place blocking content, such as a DETAILS scatter, must leave reserved tiles alone.
-   */
   public void reserve(int x, int y) {
     requireInsideRoom(x, y);
     reserved[x + y * zones.width()] = true;
@@ -139,7 +126,6 @@ public final class RoomCanvas {
     return List.copyOf(objects);
   }
 
-  /** Builds the GROUND and DETAILS layers from a fully collapsed ground state. */
   public TileMapData toMapData(WfcState groundState, Random skinRandom) {
     int width = zones.width();
     int height = zones.height();
@@ -175,7 +161,29 @@ public final class RoomCanvas {
         new TileLayer("Ground", TileLayerKind.GROUND, groundGrid),
         new TileLayer("Details", TileLayerKind.DETAILS, detailsGrid));
 
-    return new TileMapData(layers, objects, Map.of());
+    return new TileMapData(layers, renumbered(objects), mapProperties());
+  }
+
+  private static List<TileMapObject> renumbered(List<TileMapObject> source) {
+    List<TileMapObject> numbered = new ArrayList<>(source.size());
+
+    for (TileMapObject object : source) {
+      numbered.add(new TileMapObject(numbered.size() + 1, object.name(), object.type(), object.x(),
+          object.y(), object.width(), object.height(), object.properties()));
+    }
+
+    return numbered;
+  }
+
+  public Map<String, Object> mapProperties() {
+    Map<String, Object> properties = new LinkedHashMap<>();
+
+    properties.put(RoomShapes.SHAPE_PROPERTY, RoomShapes.encode(blueprint.shape()));
+    properties.put("roomShape", blueprint.variant().id());
+    properties.put("roomType", blueprint.type().name());
+    properties.put("roomSeed", String.valueOf(blueprint.seed()));
+
+    return properties;
   }
 
   private static void fixDoors(RoomBlueprint blueprint, DoorPalette doors, WfcGrid ground) {
@@ -207,8 +215,7 @@ public final class RoomCanvas {
 
   private void requireInsideRoom(int x, int y) {
     if (!zones.isInside(x, y) || isVoid(x, y)) {
-      throw new IllegalArgumentException(
-          "Tile %d,%d is outside the room or in its VOID hole".formatted(x, y));
+      throw new IllegalArgumentException("Tile %d,%d is outside the room or in its VOID hole".formatted(x, y));
     }
   }
 }

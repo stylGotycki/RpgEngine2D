@@ -47,6 +47,11 @@ public record RoomBlueprint(
     return RandomSource.deriveSeed(floorSeed, "room:" + anchor.x() + "," + anchor.y());
   }
 
+  /** The same room with another seed: a retry or a reroll of its interior, nothing else changes. */
+  public RoomBlueprint withSeed(long newSeed) {
+    return new RoomBlueprint(origin, variant, type, doors, questId, depth, newSeed);
+  }
+
   public RoomCell anchor() {
     RoomCell topLeft = variant.shape().topLeftCell();
 
