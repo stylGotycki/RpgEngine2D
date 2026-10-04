@@ -107,6 +107,20 @@ public final class WfcGrid {
     return fixed[index(x, y)] != NOT_FIXED;
   }
 
+  public TokenSet startingDomain(int x, int y) {
+    return startingDomain(index(x, y));
+  }
+
+  public WfcGrid copy() {
+    WfcGrid copy = new WfcGrid(width, height, rules, tables);
+
+    System.arraycopy(tableOfCell, 0, copy.tableOfCell, 0, tableOfCell.length);
+    System.arraycopy(restrictions, 0, copy.restrictions, 0, restrictions.length);
+    System.arraycopy(fixed, 0, copy.fixed, 0, fixed.length);
+
+    return copy;
+  }
+
   public WfcState newState() {
     return new WfcState(this);
   }

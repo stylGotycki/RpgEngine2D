@@ -1,4 +1,16 @@
 package net.dp.rpg.engine.interior.corpus;
 
-public class Zone {
+public enum Zone {
+
+  VOID,
+
+  WALL,
+
+  DOOR,
+
+  INTERIOR;
+
+  public boolean isInsideRoom() {
+    return this != VOID;
+  }
 }

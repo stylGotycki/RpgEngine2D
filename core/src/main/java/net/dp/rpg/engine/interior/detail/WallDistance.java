@@ -5,12 +5,6 @@ import java.util.Arrays;
 import net.dp.rpg.engine.interior.corpus.Zone;
 import net.dp.rpg.engine.interior.corpus.ZoneMap;
 
-/**
- * Chebyshev distance from every tile to the nearest WALL tile, computed once per room by a
- * multi-source BFS from all WALL tiles at once. Shared by {@link DetailLearner} (learning from a
- * corpus sample's own {@link ZoneMap}) and {@link LearnedDetailPass} (scattering onto a generated
- * room's), since both need the same measurement over the same kind of zone map.
- */
 final class WallDistance {
 
   private static final int[] DX = {-1, 0, 1, -1, 1, -1, 0, 1};
