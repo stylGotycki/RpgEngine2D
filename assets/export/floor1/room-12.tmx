@@ -1,23 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10"
-     tiledversion="1.11.2"
-     orientation="orthogonal"
-     renderorder="right-down"
-     width="19"
-     height="13"
-     tilewidth="16"
-     tileheight="16"
-     infinite="0"
-     nextlayerid="4"
-     nextobjectid="6">
-
+<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="19" height="13" tilewidth="16" tileheight="16" infinite="0" nextlayerid="4" nextobjectid="6">
  <properties>
-  <property name="roomCells" value="#"/>
-  <property name="roomShape" value="1x1"/>
+  <property name="roomShape" value="I"/>
   <property name="roomType" value="NORMAL"/>
  </properties>
-
- <tileset firstgid="1" source="../tiles/terrain.tsx"/>
+ <tileset firstgid="1" source="../../tiles/basement.tsx"/>
 
  <layer id="1" name="Ground" width="19" height="13">
   <properties>
@@ -37,7 +24,7 @@
 7,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,7,
 7,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,7,
 7,7,7,7,7,7,7,8,7,16,7,7,7,8,7,7,7,7,7
-</data>
+  </data>
  </layer>
 
  <layer id="2" name="Details" width="19" height="13">
@@ -58,14 +45,22 @@
 0,15,0,12,0,0,0,0,0,0,0,0,0,0,0,12,0,15,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
-</data>
+  </data>
  </layer>
 
  <objectgroup id="3" name="Markers">
-  <object id="1" name="player-start" type="PLAYER_START" x="152" y="104"><point/></object>
-  <object id="2" name="enemy-a" type="ENEMY_SPAWN" x="88" y="64"><point/></object>
-  <object id="3" name="enemy-b" type="ENEMY_SPAWN" x="216" y="144"><point/></object>
-  <object id="4" name="chest" type="CHEST_SPAWN" x="152" y="64"><point/></object>
+  <object id="1" name="player-start" type="PLAYER_START" x="152" y="104">
+   <point/>
+  </object>
+  <object id="2" name="enemy-a" type="ENEMY_SPAWN" x="88" y="64">
+   <point/>
+  </object>
+  <object id="3" name="enemy-b" type="ENEMY_SPAWN" x="216" y="144">
+   <point/>
+  </object>
+  <object id="4" name="chest" type="CHEST_SPAWN" x="152" y="64">
+   <point/>
+  </object>
   <object id="5" name="secret" type="SECRET_TRIGGER" x="32" y="32" width="48" height="32"/>
  </objectgroup>
 </map>

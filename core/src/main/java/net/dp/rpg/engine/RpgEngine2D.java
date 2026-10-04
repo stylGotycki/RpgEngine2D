@@ -15,11 +15,6 @@ import net.dp.rpg.engine.bodyCreator.BodyParams;
 import net.dp.rpg.engine.bodyCreator.FixtureParams;
 import net.dp.rpg.engine.components.PhysicalBodyComponent;
 import net.dp.rpg.engine.components.SpriteComponent;
-import net.dp.rpg.engine.floor.FloorDebug;
-import net.dp.rpg.engine.floor.GridBounds;
-import net.dp.rpg.engine.floor.TrunkPlan;
-import net.dp.rpg.engine.floor.phase.WalkerLayout;
-import net.dp.rpg.engine.floor.phase.WalkerSettings;
 import net.dp.rpg.engine.systems.RenderSystem;
 
 /**

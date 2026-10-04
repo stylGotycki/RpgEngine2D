@@ -1,0 +1,273 @@
+{
+"format": 1,
+"generator": "0.6.0",
+"content": "590e4775",
+"archetype": "caves",
+"seed": 3194393178869819191,
+"descriptor": "61044cf8",
+"preview": [
+	"s-N-M-L . H-G . .",
+	"  |   |   | |",
+	". O . K-J-I-F . .",
+	"  |     J   |",
+	". P-u . J . E-D-v",
+	"  |     |     |",
+	"R-Q . . t . . C .",
+	"|             |",
+	"w . . . . . . B .",
+	"|             |",
+	"x . . . . . . A ."
+],
+"rooms": [
+	{
+		"at": "0,0",
+		"cells": [ "0,0" ],
+		"shape": "1x1",
+		"rot": 0,
+		"type": "PUZZLE",
+		"phase": "APPENDIX"
+	},
+	{
+		"at": "1,0",
+		"cells": [ "1,0" ],
+		"shape": "1x1",
+		"rot": 0,
+		"type": "NORMAL",
+		"phase": "TRUNK"
+	},
+	{
+		"at": "2,0",
+		"cells": [ "2,0" ],
+		"shape": "1x1",
+		"rot": 0,
+		"type": "NORMAL",
+		"phase": "TRUNK",
+		"quest": "q3"
+	},
+	{
+		"at": "3,0",
+		"cells": [ "3,0" ],
+		"shape": "1x1",
+		"rot": 0,
+		"type": "NORMAL",
+		"phase": "TRUNK"
+	},
+	{
+		"at": "5,0",
+		"cells": [ "5,0" ],
+		"shape": "1x1",
+		"rot": 0,
+		"type": "NORMAL",
+		"phase": "TRUNK"
+	},
+	{
+		"at": "6,0",
+		"cells": [ "6,0" ],
+		"shape": "1x1",
+		"rot": 0,
+		"type": "POWER_FIELD",
+		"phase": "TRUNK"
+	},
+	{
+		"at": "1,1",
+		"cells": [ "1,1" ],
+		"shape": "1x1",
+		"rot": 0,
+		"type": "NORMAL",
+		"phase": "TRUNK",
+		"quest": "q1"
+	},
+	{
+		"at": "3,1",
+		"cells": [ "3,1" ],
+		"shape": "1x1",
+		"rot": 0,
+		"type": "NORMAL",
+		"phase": "TRUNK",
+		"quest": "q2"
+	},
+	{
+		"at": "4,1",
+		"cells": [ "4,1", "4,2" ],
+		"shape": "2x1",
+		"rot": 1,
+		"type": "NORMAL",
+		"phase": "TRUNK"
+	},
+	{
+		"at": "5,1",
+		"cells": [ "5,1" ],
+		"shape": "1x1",
+		"rot": 0,
+		"type": "NORMAL",
+		"phase": "TRUNK"
+	},
+	{
+		"at": "6,1",
+		"cells": [ "6,1" ],
+		"shape": "1x1",
+		"rot": 0,
+		"type": "NORMAL",
+		"phase": "TRUNK"
+	},
+	{
+		"at": "1,2",
+		"cells": [ "1,2" ],
+		"shape": "1x1",
+		"rot": 0,
+		"type": "NORMAL",
+		"phase": "TRUNK"
+	},
+	{
+		"at": "2,2",
+		"cells": [ "2,2" ],
+		"shape": "1x1",
+		"rot": 0,
+		"type": "SHOP",
+		"phase": "APPENDIX"
+	},
+	{
+		"at": "6,2",
+		"cells": [ "6,2" ],
+		"shape": "1x1",
+		"rot": 0,
+		"type": "NORMAL",
+		"phase": "TRUNK"
+	},
+	{
+		"at": "7,2",
+		"cells": [ "7,2" ],
+		"shape": "1x1",
+		"rot": 0,
+		"type": "PUZZLE",
+		"phase": "TRUNK"
+	},
+	{
+		"at": "8,2",
+		"cells": [ "8,2" ],
+		"shape": "1x1",
+		"rot": 0,
+		"type": "PUZZLE",
+		"phase": "APPENDIX",
+		"quest": "q4"
+	},
+	{
+		"at": "0,3",
+		"cells": [ "0,3" ],
+		"shape": "1x1",
+		"rot": 0,
+		"type": "COLLECTIBLE",
+		"phase": "TRUNK"
+	},
+	{
+		"at": "1,3",
+		"cells": [ "1,3" ],
+		"shape": "1x1",
+		"rot": 0,
+		"type": "EMPTY",
+		"phase": "TRUNK"
+	},
+	{
+		"at": "4,3",
+		"cells": [ "4,3" ],
+		"shape": "1x1",
+		"rot": 0,
+		"type": "NORMAL",
+		"phase": "APPENDIX"
+	},
+	{
+		"at": "7,3",
+		"cells": [ "7,3" ],
+		"shape": "1x1",
+		"rot": 0,
+		"type": "PUZZLE",
+		"phase": "TRUNK",
+		"quest": "q5"
+	},
+	{
+		"at": "0,4",
+		"cells": [ "0,4" ],
+		"shape": "1x1",
+		"rot": 0,
+		"type": "NORMAL",
+		"phase": "APPENDIX"
+	},
+	{
+		"at": "7,4",
+		"cells": [ "7,4" ],
+		"shape": "1x1",
+		"rot": 0,
+		"type": "COLLECTIBLE",
+		"phase": "TRUNK",
+		"quest": "q6"
+	},
+	{
+		"at": "0,5",
+		"cells": [ "0,5" ],
+		"shape": "1x1",
+		"rot": 0,
+		"type": "BOSS",
+		"phase": "APPENDIX"
+	},
+	{
+		"at": "7,5",
+		"cells": [ "7,5" ],
+		"shape": "1x1",
+		"rot": 0,
+		"type": "START",
+		"phase": "TRUNK"
+	}
+],
+"doors": [
+	{ "at": "0,0", "dir": "EAST", "type": "NORMAL" },
+	{ "at": "1,0", "dir": "EAST", "type": "NORMAL" },
+	{ "at": "1,0", "dir": "SOUTH", "type": "NORMAL" },
+	{ "at": "2,0", "dir": "EAST", "type": "NORMAL" },
+	{ "at": "3,0", "dir": "SOUTH", "type": "NORMAL" },
+	{ "at": "5,0", "dir": "EAST", "type": "NORMAL" },
+	{ "at": "5,0", "dir": "SOUTH", "type": "NORMAL" },
+	{ "at": "6,0", "dir": "SOUTH", "type": "NORMAL" },
+	{ "at": "1,1", "dir": "SOUTH", "type": "NORMAL" },
+	{ "at": "3,1", "dir": "EAST", "type": "NORMAL" },
+	{ "at": "4,1", "dir": "EAST", "type": "NORMAL" },
+	{ "at": "5,1", "dir": "EAST", "type": "NORMAL" },
+	{ "at": "6,1", "dir": "SOUTH", "type": "NORMAL" },
+	{ "at": "1,2", "dir": "EAST", "type": "NORMAL" },
+	{ "at": "1,2", "dir": "SOUTH", "type": "NORMAL" },
+	{ "at": "4,2", "dir": "SOUTH", "type": "NORMAL" },
+	{ "at": "6,2", "dir": "EAST", "type": "NORMAL" },
+	{ "at": "7,2", "dir": "EAST", "type": "NORMAL" },
+	{ "at": "7,2", "dir": "SOUTH", "type": "NORMAL" },
+	{ "at": "0,3", "dir": "EAST", "type": "NORMAL" },
+	{ "at": "0,3", "dir": "SOUTH", "type": "NORMAL" },
+	{ "at": "7,3", "dir": "SOUTH", "type": "NORMAL" },
+	{ "at": "0,4", "dir": "SOUTH", "type": "NORMAL" },
+	{ "at": "7,4", "dir": "SOUTH", "type": "NORMAL" }
+],
+"quests": [
+	{
+		"id": "q1",
+		"rooms": [ "1,1" ]
+	},
+	{
+		"id": "q2",
+		"rooms": [ "3,1" ]
+	},
+	{
+		"id": "q3",
+		"rooms": [ "2,0" ]
+	},
+	{
+		"id": "q4",
+		"rooms": [ "8,2" ]
+	},
+	{
+		"id": "q5",
+		"rooms": [ "7,3" ]
+	},
+	{
+		"id": "q6",
+		"rooms": [ "7,4" ]
+	}
+]
+}
