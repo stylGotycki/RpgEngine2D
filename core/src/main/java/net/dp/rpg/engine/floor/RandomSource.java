@@ -14,7 +14,11 @@ public final class RandomSource {
   }
 
   public static Random derive(long seed, String label) {
-    return new Random(mix(seed ^ hash(label)));
+    return new Random(deriveSeed(seed, label));
+  }
+
+  public static long deriveSeed(long seed, String label) {
+    return mix(seed ^ hash(label));
   }
 
   public static long mix(long value) {

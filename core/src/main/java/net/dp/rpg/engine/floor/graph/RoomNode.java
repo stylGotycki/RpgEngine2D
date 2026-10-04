@@ -2,8 +2,10 @@ package net.dp.rpg.engine.floor.graph;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import lombok.Setter;
@@ -100,22 +102,14 @@ public final class RoomNode {
     return edges;
   }
 
-  public Set<RoomEdge> localDoorEdges() {
-    Set<RoomEdge> edges = new LinkedHashSet<>();
+  public Map<RoomEdge, DoorType> localDoors() {
+    Map<RoomEdge, DoorType> doors = new LinkedHashMap<>();
 
     for (RoomLink link : links) {
-      RoomEdge edge = link.edge();
-
-      if (contains(edge.cell())) {
-        edges.add(new RoomEdge(toLocalCell(edge.cell()), edge.direction()));
-      } else {
-        RoomCell ownCell = edge.cell().neighbour(edge.direction());
-
-        edges.add(new RoomEdge(toLocalCell(ownCell), edge.direction().opposite()));
-      }
+      doors.put(toLocalEdge(link.edge()), link.doorType());
     }
 
-    return edges;
+    return doors;
   }
 
   public List<RoomLink> links() {
@@ -163,9 +157,20 @@ public final class RoomNode {
     linkedIndices.add(link.other(this).index);
   }
 
+  private RoomEdge toLocalEdge(RoomEdge floorEdge) {
+    if (contains(floorEdge.cell())) {
+      return new RoomEdge(toLocalCell(floorEdge.cell()), floorEdge.direction());
+    }
+
+    RoomCell ownCell = floorEdge.cell().neighbour(floorEdge.direction());
+
+    return new RoomEdge(toLocalCell(ownCell), floorEdge.direction().opposite());
+  }
+
   @Override
   public String toString() {
-    return "room[%d] %s %s at %d,%d".formatted(index, type, variant.id(), anchor().x(), anchor().y());
+    return "room[%d] %s %s at %d,%d".formatted(index, type, variant.id(), anchor().x(),
+        anchor().y());
   }
 
   private static Set<RoomCell> toFloorCells(RoomShape shape, RoomCell origin) {

@@ -1,5 +1,6 @@
 package net.dp.rpg.engine.floor;
 
+import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
@@ -50,6 +51,17 @@ public record FloorLayout(
     graph.rooms().forEach(room -> counts.merge(room.type(), 1, Integer::sum));
 
     return counts;
+  }
+
+  public RoomBlueprint blueprintOf(RoomNode room) {
+    return RoomBlueprint.of(room, seed);
+  }
+
+  public List<RoomBlueprint> blueprints() {
+    return graph.rooms().stream()
+        .map(this::blueprintOf)
+        .sorted(Comparator.comparing(RoomBlueprint::anchor, RoomBlueprint.CELL_ORDER))
+        .toList();
   }
 
   public int questRooms() {
