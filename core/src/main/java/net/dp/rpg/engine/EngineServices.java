@@ -2,6 +2,8 @@ package net.dp.rpg.engine;
 
 import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.utils.PoolManager;
+import net.dp.rpg.engine.systems.gameEvent.GameEventBus;
 
 public interface EngineServices
 {
@@ -11,6 +13,8 @@ public interface EngineServices
     void setGuiDebug(boolean enabled);
     void setTextureFilters(Texture.TextureFilter minFilter, Texture.TextureFilter magFilter);
     AssetManager getAssetManager();
+    GameEventBus getEventBus();
+    PoolManager getPoolManager();
     Scene createScene();
     void exit();
 }

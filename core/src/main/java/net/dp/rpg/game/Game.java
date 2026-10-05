@@ -5,6 +5,7 @@ import com.badlogic.gdx.graphics.g2d.ParticleEffect;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import net.dp.rpg.engine.AbstractGame;
 import net.dp.rpg.engine.Scene;
+import net.dp.rpg.game.level.HealthChangeEvent;
 import net.dp.rpg.game.menu.MenuBuilder;
 import net.dp.rpg.game.scripts.GlobalScript;
 
@@ -20,6 +21,8 @@ public class Game extends AbstractGame
         getEngine().getAssetManager().load("skins/default/default.json", Skin.class);
         getEngine().getAssetManager().load("particles/buttonDust.p", ParticleEffect.class);
         getEngine().getAssetManager().load("particles/menuDust.p", ParticleEffect.class);
+
+        getEngine().getPoolManager().addPool(HealthChangeEvent.class, HealthChangeEvent::new);
 
         getEngine().getAssetManager().finishLoading();
 

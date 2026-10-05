@@ -9,7 +9,7 @@ import com.badlogic.gdx.utils.Array;
 import lombok.Getter;
 import net.dp.rpg.engine.EngineServices;
 import net.dp.rpg.engine.Scene;
-import net.dp.rpg.game.LevelBuilder;
+import net.dp.rpg.game.level.LevelBuilder;
 
 public class ButtonTable extends Table implements ButtonStateListener
 {

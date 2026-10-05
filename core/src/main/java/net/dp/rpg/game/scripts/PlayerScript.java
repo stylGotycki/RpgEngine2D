@@ -7,6 +7,9 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.Fixture;
 import com.badlogic.gdx.physics.box2d.PolygonShape;
+import com.badlogic.gdx.utils.Pool;
+import com.badlogic.gdx.utils.PoolManager;
+import com.badlogic.gdx.utils.Pools;
 import net.dp.rpg.engine.EntityScript;
 import net.dp.rpg.engine.InputListener;
 import net.dp.rpg.engine.Scene;
@@ -16,6 +19,7 @@ import net.dp.rpg.engine.components.SpriteComponent;
 import net.dp.rpg.engine.components.TransformComponent;
 import net.dp.rpg.engine.tile.room.Direction;
 import net.dp.rpg.game.FixtureCategory;
+import net.dp.rpg.game.level.HealthChangeEvent;
 import net.dp.rpg.game.menu.MenuBuilder;
 
 public class PlayerScript extends EntityScript implements InputListener
@@ -73,6 +77,10 @@ public class PlayerScript extends EntityScript implements InputListener
         {
             HealthComponent health = getScene().getComponentStorage(HealthComponent.class).getByEntity(getEntity());
             health.dealDamage(20);
+            HealthChangeEvent event = getEngine().getPoolManager().obtain(HealthChangeEvent.class);
+            event.currentHealth = health.health;
+            getEngine().getEventBus().publish(event);
+            getEngine().getPoolManager().free(event);
             Body body = getScene().getComponentStorage(PhysicalBodyComponent.class).getByEntity(getEntity()).body;
             Vector2 otherPosition = getScene().getComponentStorage(TransformComponent.class).getByEntity(otherEntity).position;
             Vector2 push = direction.set(body.getPosition()).sub(otherPosition).scl(24);
@@ -127,7 +135,6 @@ public class PlayerScript extends EntityScript implements InputListener
         Sprite sprite = getScene().getComponentStorage(SpriteComponent.class).getByEntity(getEntity()).sprites.get(1);
         sprite.setAlpha(1);
         sprite.setOriginCenter();
-        //sprite.setOrigin(sprite.getOriginX() + attackOffset.x*-1, sprite.getOriginY() + attackOffset.y*-1);
         sprite.setOrigin(sprite.getOriginX(), sprite.getOriginY() - 1);
         switch(direction)
         {
