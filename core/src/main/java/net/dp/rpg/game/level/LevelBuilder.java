@@ -1,18 +1,25 @@
-package net.dp.rpg.game;
+package net.dp.rpg.game.level;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.physics.box2d.*;
+import com.badlogic.gdx.scenes.scene2d.ui.ProgressBar;
+import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import net.dp.rpg.engine.EngineServices;
+import net.dp.rpg.engine.Gui;
 import net.dp.rpg.engine.Scene;
 import net.dp.rpg.engine.components.*;
+import net.dp.rpg.game.FixtureCategory;
+import net.dp.rpg.game.TileFloor;
 import net.dp.rpg.game.scripts.EnemyScript;
 import net.dp.rpg.game.scripts.PlayerScript;
 
 public class LevelBuilder
 {
+    private final float playerMaxHealth = 100;
+
     public void build(EngineServices engine, Scene scene)
     {
         //create player entity
@@ -50,7 +57,7 @@ public class LevelBuilder
         fixtureDef.filter.categoryBits = FixtureCategory.PLAYER;
         scene.createBodyComponent(player, bodyDef);
         scene.createFixture(player, fixtureDef);
-        scene.addComponent(player, new HealthComponent(100, 100));
+        scene.addComponent(player, new HealthComponent(playerMaxHealth, playerMaxHealth));
 
         PolygonShape polygon = new PolygonShape();
         polygon.setAsBox(0.4f, 0.2f);
@@ -129,5 +136,13 @@ public class LevelBuilder
 
         circle.dispose();
         polygon.dispose();
+
+        //gui
+        Gui gui = scene.getGui();
+        Table mainTable = gui.getMainTable();
+        mainTable.top().left();
+        HealthBar healthBar = new HealthBar(playerMaxHealth, engine.getAssetManager().get("skins/default/default.json"));
+        engine.getEventBus().subscribe(healthBar, HealthChangeEvent.class);
+        mainTable.add(healthBar).pad(16).width(playerMaxHealth*4);
     }
 }
