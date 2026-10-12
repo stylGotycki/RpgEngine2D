@@ -1,23 +1,39 @@
 package net.dp.rpg.engine.systems;
 
+import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.ChainShape;
 import com.badlogic.gdx.physics.box2d.FixtureDef;
+import com.badlogic.gdx.physics.box2d.PolygonShape;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.FloatArray;
 import net.dp.rpg.engine.tile.*;
 import net.dp.rpg.engine.tile.room.Direction;
+import net.dp.rpg.game.FixtureCategory;
 
 import java.util.Arrays;
 import java.util.Optional;
 
 public class TileConverter
 {
-    private final float fieldSize = 1;
+    private float fieldSize = 1;
     private int tempWidth;
     private int tempHeight;
     TileTypeRegistry tempTypeRegistry;
-    boolean[] visited;
+    private boolean[] visited;
 
+    public void setTileMapParams(float fieldSize, int width, int height)
+    {
+        this.fieldSize = fieldSize;
+        this.tempWidth = width;
+        this.tempHeight = height;
+    }
+
+    public float convertToWorldY(float y)
+    {
+        return (tempHeight-y)*fieldSize;
+    }
+
+    //todo check interior and set visited
     public Array<FixtureDef> creatFixtureDefsOnNotWalkable(TileMapData tileMap, TileSystem tileSystem)
     {
         Optional<TileLayer> optLayer = tileMap.findLayer(TileLayerKind.GROUND);
@@ -56,6 +72,11 @@ public class TileConverter
         }
 
         return fixtureDefs;
+    }
+
+    public static void convertToWorldCoords(Vector2 coords, float fieldSize, int tilemapHeight)
+    {
+        coords.set(coords.x*fieldSize, (tilemapHeight-coords.y)*fieldSize);
     }
 
     private FixtureDef createFixtureFrom(TileGrid grid, int x, int y, Direction direction)
@@ -153,11 +174,18 @@ public class TileConverter
             return true;
         visited[getArrayIndex(x,y)] = true;
         int runtimeId = grid.get(x, y);
-        return runtimeId != TileGrid.EMPTY && tempTypeRegistry.require(runtimeId).walkable();
+        if(runtimeId == TileGrid.EMPTY)
+            return true;
+        return tempTypeRegistry.require(runtimeId).walkable();
     }
 
     private int getArrayIndex(int x, int y)
     {
         return y * tempWidth + x;
+    }
+
+    private void convertToWorldCoords(Vector2 coords)
+    {
+        coords.set(coords.x*fieldSize, (tempHeight-coords.y)*fieldSize);
     }
 }

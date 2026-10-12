@@ -1,44 +1,66 @@
 package net.dp.rpg.game;
 
 import lombok.Getter;
+import net.dp.rpg.engine.Scene;
+import net.dp.rpg.engine.floor.*;
+import net.dp.rpg.engine.systems.gameEvent.GameEvent;
+import net.dp.rpg.engine.systems.gameEvent.GameEventListener;
 import net.dp.rpg.engine.tile.TileMapData;
 import net.dp.rpg.engine.tile.TileSystem;
 import net.dp.rpg.engine.tile.debug.GdxTileLogger;
 import net.dp.rpg.engine.tile.debug.TileLogger;
 import net.dp.rpg.engine.tile.exception.TileException;
-import net.dp.rpg.engine.tile.room.RoomCell;
-import net.dp.rpg.engine.tile.room.RoomEdge;
-import net.dp.rpg.engine.tile.room.RoomShape;
+import net.dp.rpg.engine.tile.render.TileMapRenderer;
+import net.dp.rpg.engine.tile.room.*;
+import net.dp.rpg.game.level.EnterRoomEvent;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-public class TileFloor
+public class TileFloor implements GameEventListener
 {
     private static final String[] TILESET_PATHS = {"tiles/terrain.tsx", "tiles/basement.tsx"};
-    private static final String MAP_PATH = "export/floor1/room-01.tmx";
+    private static final String MAP_PATH = "export/floor1/room-00.tmx";
 
-    private final long seed;
+    @Getter
+    private final int gridWidth = 9;
+    @Getter
+    private final int gridHeight = 7;
+
     private final int roomCount;
 
+    @Getter
     private final List<TileRoom> rooms = new ArrayList<>();
+
+    private int activeRoom = 0;
+
+    private boolean mapLoaded;
+
+    private final FloorGenerator generator = new FloorGenerator();
 
     @Getter
     private TileSystem tileSystem;
 
     private List<String> tilesetIds;
 
+    private TileMapRenderer renderer;
+
     private TileLogger logger;
 
-    private int activeRoom;
+    private FloorArchetype archetype = FloorArchetypes.CAVES;
 
-    private int activeTileset;
+    private FloorLayout layout;
 
-    private boolean mapLoaded;
+    private TileMapData map;
 
-    public TileFloor(long seed, int roomCount)
+    private Scene scene;
+
+    private long seed;
+
+    public TileFloor(long seed, int roomCount, Scene scene)
     {
+        this.scene = scene;
         this.seed = seed;
         this.roomCount = roomCount;
 
@@ -48,11 +70,11 @@ public class TileFloor
         tileSystem.loadTilesets(TILESET_PATHS);
         tilesetIds = tileSystem.tilesetIds();
 
-        generateFloor();
+        generate(seed);
 
         logger.log(tileSystem.debug().describeCatalog());
 
-        activeRoom = 0;
+        scene.setTileMap(getActiveRoom().map(), getTileSystem(), getActiveRoom().origin().x(), getActiveRoom().origin().y(), this.gridHeight);
     }
 
     public TileRoom getActiveRoom()
@@ -60,21 +82,35 @@ public class TileFloor
         return rooms.get(activeRoom);
     }
 
-    public void nextRoomActive()
+    public void nextRoomActive(Direction direction)
     {
-        activeRoom = (activeRoom + 1) % rooms.size();
+        TileRoom currentRoom = rooms.get(activeRoom);
+        RoomCell currentCell = currentRoom.origin();
+        for(TileRoom room : rooms)
+        {
+            if(room.containsCell(currentCell.neighbour(direction)))
+            {
+                this.activeRoom = room.id();
+                break;
+            }
+        }
+        scene.setTileMap(getActiveRoom().map(), getTileSystem(), getActiveRoom().origin().x(), getActiveRoom().origin().y(), this.gridHeight);
     }
 
-    public void previousRoomActive()
+    public void setRoomActive(TileRoom room)
     {
-        activeRoom = (activeRoom - 1 + rooms.size()) % rooms.size();
+        this.activeRoom = room.id();
+        scene.setTileMap(getActiveRoom().map(), getTileSystem(), getActiveRoom().origin().x(), getActiveRoom().origin().y(), this.getGridHeight());
     }
 
-    private void generateFloor()
+    private void generate(long newSeed)
     {
+        seed = newSeed;
+        layout = generator.generate(archetype, seed);
+
         TileRoomPainter painter = new TileRoomPainter(tileSystem.types());
 
-        new TileFloorGenerator(9, 7).generate(seed, roomCount)
+        new TileFloorGenerator(gridWidth, gridHeight).generate(seed, roomCount)
             .forEach(draft -> rooms.add(painter.paint(draft, seed)));
 
         logger.log("Generated floor: %d rooms, %d cells total".formatted(rooms.size(),
@@ -113,5 +149,14 @@ public class TileFloor
             rooms.size() - 1, map.width(), map.height(), TileRoomShapes.encode(shape)));
 
         activeRoom = (rooms.size() - 1);
+    }
+
+    @Override
+    public void onEvent(GameEvent event)
+    {
+        if(event instanceof EnterRoomEvent doorEvent)
+        {
+            setRoomActive(doorEvent.room);
+        }
     }
 }

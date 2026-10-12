@@ -13,6 +13,16 @@ public record TileRoom(int id, RoomShape shape, RoomCell origin, Set<RoomEdge> d
         return "room-%02d".formatted(id);
     }
 
+    public boolean containsCell(RoomCell cell)
+    {
+        for(RoomCell roomCell : shape.cells())
+        {
+            if(origin.x() + roomCell.x() == cell.x() && origin.y() + roomCell.y() == cell.y())
+                return true;
+        }
+        return false;
+    }
+
     public RoomCell toFloorCell(RoomCell localCell) {
         return localCell.translated(origin.x(), origin.y());
     }

@@ -17,6 +17,8 @@ public class RenderSystem
     private final SpriteBatch batch;
     private final Box2DDebugRenderer b2dDebugRenderer = new Box2DDebugRenderer();
     private TileMapRenderer tileMapRenderer;
+    private final Matrix4 tileTransformMatrix = new Matrix4();
+    private final Matrix4 transformMatrix = new Matrix4();
 
     public RenderSystem()
     {
@@ -32,17 +34,28 @@ public class RenderSystem
 
         Matrix4 projMatrix = scene.getActiveCamera().combined;
 
+        batch.setProjectionMatrix(projMatrix);
+
         if(tileMapRenderer == null || scene.getTileSystem() == null)
         {
             TileSystem tileSystem = scene.getTileSystem();
             if(tileSystem != null)
+            {
                 tileMapRenderer = scene.getTileSystem().createRenderer();
+                tileMapRenderer.setBatch(batch);
+            }
         }
         else
         {
+            scene.getActiveCamera().position.sub(scene.getTileTransformX(), scene.getTileTransformY(), 0);
+            tileMapRenderer.setBatch(batch);
+            tileTransformMatrix.set(batch.getTransformMatrix());
+            tileTransformMatrix.translate(scene.getTileTransformX(), scene.getTileTransformY(), 0);
+            batch.setTransformMatrix(tileTransformMatrix);
             tileMapRenderer.render(scene.getTileMap(), scene.getActiveCamera());
+            scene.getActiveCamera().position.add(scene.getTileTransformX(), scene.getTileTransformY(), 0);
         }
-
+        batch.setTransformMatrix(transformMatrix);
         batch.setProjectionMatrix(projMatrix);
         batch.begin();
         ComponentStorage<SpriteComponent> spriteStorage = scene.getComponentStorage(SpriteComponent.class);

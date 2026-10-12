@@ -18,17 +18,18 @@ public class CollisionDispatcher implements ContactListener
     {
         Fixture fixtureA = contact.getFixtureA();
         Fixture fixtureB = contact.getFixtureB();
-        if(fixtureA.getUserData() instanceof Integer && fixtureB.getUserData() instanceof Integer)
-        {
-            int entityA = (int)fixtureA.getUserData();
-            int entityB = (int)fixtureB.getUserData();
-            ScriptComponent scriptComponent = scene.getComponentStorage(ScriptComponent.class).getByEntity(entityA);
-            if(scriptComponent != null)
-                scriptComponent.script.onCollision(entityB, fixtureA.getFilterData().categoryBits, fixtureB.getFilterData().categoryBits);
-            scriptComponent = scene.getComponentStorage(ScriptComponent.class).getByEntity(entityB);
-            if(scriptComponent != null)
-                scriptComponent.script.onCollision(entityA, fixtureB.getFilterData().categoryBits, fixtureA.getFilterData().categoryBits);
-        }
+        int entityA = -1;
+        int entityB = -1;
+        if(fixtureA.getBody().getUserData() instanceof Integer)
+            entityA = (int)fixtureA.getBody().getUserData();
+        if(fixtureB.getBody().getUserData() instanceof Integer)
+            entityB = (int)fixtureB.getBody().getUserData();
+        ScriptComponent scriptComponent = scene.getComponentStorage(ScriptComponent.class).getByEntity(entityA);
+        if(scriptComponent != null)
+            scriptComponent.script.onCollision(entityB, fixtureA.getFilterData().categoryBits, fixtureB.getFilterData().categoryBits);
+        scriptComponent = scene.getComponentStorage(ScriptComponent.class).getByEntity(entityB);
+        if(scriptComponent != null)
+            scriptComponent.script.onCollision(entityA, fixtureB.getFilterData().categoryBits, fixtureA.getFilterData().categoryBits);
     }
 
     @Override

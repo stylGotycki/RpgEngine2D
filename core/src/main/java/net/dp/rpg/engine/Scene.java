@@ -4,7 +4,6 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.*;
-import com.badlogic.gdx.utils.Array;
 import lombok.Getter;
 import net.dp.rpg.engine.components.*;
 import net.dp.rpg.engine.components.Component;
@@ -13,6 +12,7 @@ import net.dp.rpg.engine.systems.MovementSystem;
 import net.dp.rpg.engine.systems.TileConverter;
 import net.dp.rpg.engine.tile.TileMapData;
 import net.dp.rpg.engine.tile.TileSystem;
+import net.dp.rpg.engine.tile.room.RoomGeometry;
 
 import java.util.ArrayList;
 
@@ -26,6 +26,10 @@ public class Scene
     private TileSystem tileSystem;
     @Getter
     private TileMapData tileMap;
+    @Getter
+    private float tileTransformX;
+    @Getter
+    private float tileTransformY;
 
     @Getter
     private final Gui gui = new Gui();
@@ -105,9 +109,7 @@ public class Scene
     public Fixture createFixture(int entity, FixtureDef fixtureDef)
     {
         Body body = getComponentStorage(PhysicalBodyComponent.class).getByEntity(entity).body;
-        Fixture fixture = body.createFixture(fixtureDef);
-        fixture.setUserData(entity);
-        return fixture;
+        return body.createFixture(fixtureDef);
     }
 
     public <T extends Component> ComponentStorage<T> getComponentStorage(Class<T> componentClass)
@@ -188,24 +190,14 @@ public class Scene
             this.activeCamera = component.camera;
     }
 
-    public void setTileMap(TileMapData tileMap, TileSystem tileSystem)
+    public void setTileMap(TileMapData tileMap, TileSystem tileSystem, float xPos, float yPos, int gridHeight)
     {
-        if(this.tileMap == null && tileMap != null && this.tileSystem == null && tileSystem != null)
+        if(tileMap != null && tileSystem != null)
         {
             this.tileSystem = tileSystem;
             this.tileMap = tileMap;
-
-            BodyDef bodyDef = new BodyDef();
-            bodyDef.type = BodyDef.BodyType.StaticBody;
-            Body tileMapBody = physicalWorld.createBody(bodyDef);
-
-            Array<FixtureDef> fixtureDefs = tileConverter.creatFixtureDefsOnNotWalkable(tileMap, tileSystem);
-
-            if(!fixtureDefs.isEmpty())
-            {
-                for(FixtureDef fixtureDef : fixtureDefs)
-                    tileMapBody.createFixture(fixtureDef);
-            }
+            this.tileTransformX = xPos * RoomGeometry.CELL_WIDTH;
+            this.tileTransformY = (gridHeight - yPos) * RoomGeometry.CELL_HEIGHT - tileMap.height();
         }
     }
 
@@ -229,7 +221,7 @@ public class Scene
         movementSystem.updatePositions(getComponentStorage(TransformComponent.class), getComponentStorage(MoveComponent.class), delta);
         movementSystem.bodyToTransform(getComponentStorage(PhysicalBodyComponent.class), getComponentStorage(TransformComponent.class));
         movementSystem.follow(getComponentStorage(FollowComponent.class), getComponentStorage(TransformComponent.class), getComponentStorage(BoundingComponent.class), delta);
-        movementSystem.boundPositions(getComponentStorage(BoundingComponent.class), getComponentStorage(TransformComponent.class));
+        movementSystem.boundPositions(getComponentStorage(BoundingComponent.class), getComponentStorage(TransformComponent.class), delta);
         movementSystem.transformToSprite(getComponentStorage(TransformComponent.class), getComponentStorage(SpriteComponent.class));
         movementSystem.transformToCamera(getComponentStorage(TransformComponent.class), getComponentStorage(CameraComponent.class));
 

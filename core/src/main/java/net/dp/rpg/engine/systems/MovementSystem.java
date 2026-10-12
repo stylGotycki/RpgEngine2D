@@ -11,6 +11,8 @@ import net.dp.rpg.engine.components.*;
 
 public class MovementSystem
 {
+    private final Vector2 tempTargetPos = new Vector2();
+
     public void updatePositions(ComponentStorage<TransformComponent> transforms, ComponentStorage<MoveComponent> velocities, float delta)
     {
         int vSize = velocities.size();
@@ -37,21 +39,19 @@ public class MovementSystem
             {
                 Vector2 position = transformComponents.getByEntity(following).position;
                 Vector2 targetPosition = transformComponents.getByEntity(target).position;
-                float targetPositionX = targetPosition.x;
-                float targetPositionY = targetPosition.y;
+                tempTargetPos.set(targetPosition);
                 if(bounds.hasComponent(following))
                 {
                     BoundingComponent bound = bounds.getByIndex(i);
-                    targetPositionX = MathUtils.clamp(targetPositionX, bound.minX, bound.maxX);
-                    targetPositionY = MathUtils.clamp(targetPositionY, bound.minY, bound.maxY);
+                    tempTargetPos.x = MathUtils.clamp(tempTargetPos.x, bound.minX, bound.maxX);
+                    tempTargetPos.y = MathUtils.clamp(tempTargetPos.y, bound.minY, bound.maxY);
                 }
-                position.x += followComponent.lerp * delta * (targetPositionX - position.x);
-                position.y += followComponent.lerp * delta * (targetPositionY - position.y);
+                lerp(position, followComponent.lerp, delta, tempTargetPos);
             }
         }
     }
 
-    public void boundPositions(ComponentStorage<BoundingComponent> bounds, ComponentStorage<TransformComponent> transforms)
+    public void boundPositions(ComponentStorage<BoundingComponent> bounds, ComponentStorage<TransformComponent> transforms, float delta)
     {
         int bSize = bounds.size();
         for(int i = 0; i < bSize; i++)
@@ -61,8 +61,16 @@ public class MovementSystem
             {
                 BoundingComponent bound = bounds.getByIndex(i);
                 Vector2 position = transforms.getByEntity(entity).position;
-                position.x = MathUtils.clamp(position.x, bound.minX, bound.maxX);
-                position.y = MathUtils.clamp(position.y, bound.minY, bound.maxY);
+                tempTargetPos.x = MathUtils.clamp(position.x, bound.minX, bound.maxX);
+                tempTargetPos.y = MathUtils.clamp(position.y, bound.minY, bound.maxY);
+                if(bound.smoothCorrection)
+                {
+                    lerp(position, bound.lerp, delta, tempTargetPos);
+                }
+                else
+                {
+                    position.set(tempTargetPos);
+                }
             }
         }
     }
@@ -83,7 +91,6 @@ public class MovementSystem
         }
     }
 
-    //todo transform to body conversion only when transform changed between physics update
     public void transformToBody(ComponentStorage<PhysicalBodyComponent> bodies, ComponentStorage<TransformComponent> transforms)
     {
         int bSize = bodies.size();
@@ -138,5 +145,11 @@ public class MovementSystem
                 camera.update();
             }
         }
+    }
+
+    private void lerp(Vector2 position, float lerp, float delta, Vector2 target)
+    {
+        position.x += lerp * delta * (target.x - position.x);
+        position.y += lerp * delta * (target.y - position.y);
     }
 }
