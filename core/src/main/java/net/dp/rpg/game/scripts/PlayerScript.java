@@ -7,18 +7,15 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.Fixture;
 import com.badlogic.gdx.physics.box2d.PolygonShape;
-import com.badlogic.gdx.utils.Pool;
-import com.badlogic.gdx.utils.PoolManager;
-import com.badlogic.gdx.utils.Pools;
 import net.dp.rpg.engine.EntityScript;
 import net.dp.rpg.engine.InputListener;
 import net.dp.rpg.engine.Scene;
-import net.dp.rpg.engine.components.HealthComponent;
-import net.dp.rpg.engine.components.PhysicalBodyComponent;
-import net.dp.rpg.engine.components.SpriteComponent;
-import net.dp.rpg.engine.components.TransformComponent;
+import net.dp.rpg.engine.Script;
+import net.dp.rpg.engine.components.*;
 import net.dp.rpg.engine.tile.room.Direction;
 import net.dp.rpg.game.FixtureCategory;
+import net.dp.rpg.game.TileRoom;
+import net.dp.rpg.game.level.EnterRoomEvent;
 import net.dp.rpg.game.level.HealthChangeEvent;
 import net.dp.rpg.game.menu.MenuBuilder;
 
@@ -29,6 +26,7 @@ public class PlayerScript extends EntityScript implements InputListener
     private final float attackFadeTime = 0.2f;
     private float remainingAttackFade = 0;
     boolean isAttacking = false;
+    TileRoom roomEntered = null;
 
     @Override
     public void update(float delta)
@@ -68,6 +66,14 @@ public class PlayerScript extends EntityScript implements InputListener
             getScene().getComponentStorage(SpriteComponent.class).getByEntity(getEntity()).sprites.get(1).setAlpha(remainingAttackFade/attackFadeTime);
         }
 
+        if(roomEntered != null)
+        {
+            EnterRoomEvent event = getEngine().getPoolManager().obtain(EnterRoomEvent.class);
+            event.room = roomEntered;
+            getEngine().getEventBus().publish(event);
+            getEngine().getPoolManager().free(event);
+            roomEntered = null;
+        }
     }
 
     @Override
@@ -96,6 +102,14 @@ public class PlayerScript extends EntityScript implements InputListener
         if((otherCategory & FixtureCategory.ENEMY) > 0 && (category & FixtureCategory.PLAYER_ATTACK) > 0)
         {
             stopAttack();
+        }
+        if((otherCategory & FixtureCategory.SENSOR) > 0 && (category & FixtureCategory.PLAYER) > 0)
+        {
+            Script script = getScene().getComponentStorage(ScriptComponent.class).getByEntity(otherEntity).script;
+            if(script instanceof DoorScript doorScript)
+            {
+                roomEntered = doorScript.getRoom();
+            }
         }
     }
 

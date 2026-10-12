@@ -7,21 +7,40 @@ public class BoundingComponent implements Component
     public float maxX;
     public float maxY;
 
+    public boolean smoothCorrection = true;
+    public float lerp = 8f;
+
     // todo what if object changes its size?
     public BoundingComponent(float minX, float minY, float maxX, float maxY, float objectWidth, float objectHeight)
     {
-        this.minX = minX + objectWidth/2;
-        this.minY = minY + objectHeight/2;
-        this.maxX = maxX - objectWidth/2;
-        this.maxY = maxY - objectHeight/2;
+        set(minX + objectWidth/2, minY + objectHeight/2, maxX - objectWidth/2, maxY - objectHeight/2);
     }
 
     public BoundingComponent(float minX, float minY, float maxX, float maxY)
+    {
+        set(minX,minY,maxX,maxY);
+    }
+
+    public void set(float minX, float minY, float maxX, float maxY)
     {
         this.minX = minX;
         this.minY = minY;
         this.maxX = maxX;
         this.maxY = maxY;
+
+        if(minX > maxX)
+        {
+            this.minX = this.maxX = (minX+maxX)/2;
+        }
+        if(minY > maxY)
+        {
+            this.minY = this.maxY = (minY+maxY)/2;
+        }
+    }
+
+    public void set(float minX, float minY, float maxX, float maxY, float objectWidth, float objectHeight)
+    {
+        set(minX + objectWidth/2, minY + objectHeight/2, maxX - objectWidth/2, maxY - objectHeight/2);
     }
 
     @Override

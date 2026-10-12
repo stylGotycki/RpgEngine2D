@@ -1,26 +1,40 @@
 package net.dp.rpg.game.scripts;
 
 import com.badlogic.gdx.graphics.OrthographicCamera;
-import com.badlogic.gdx.math.Vector2;
 import net.dp.rpg.engine.EntityScript;
+import net.dp.rpg.engine.components.BoundingComponent;
 import net.dp.rpg.engine.components.CameraComponent;
-import net.dp.rpg.engine.components.PhysicalBodyComponent;
+import net.dp.rpg.engine.systems.TileConverter;
+import net.dp.rpg.engine.systems.gameEvent.GameEvent;
+import net.dp.rpg.engine.systems.gameEvent.GameEventListener;
+import net.dp.rpg.engine.tile.room.RoomGeometry;
+import net.dp.rpg.game.TileRoom;
+import net.dp.rpg.game.level.EnterRoomEvent;
 
-public class CameraScript extends EntityScript
+public class CameraScript extends EntityScript implements GameEventListener
 {
-    private int etiEntity;
-
-    public CameraScript(int etiEntity)
+    public CameraScript()
     {
-        this.etiEntity = etiEntity;
     }
 
     public void update(float delta)
     {
-        OrthographicCamera camera = getScene().getComponentStorage(CameraComponent.class).getByEntity(getEntity()).camera;
-        Vector2 etiPosition = getScene().getComponentStorage(PhysicalBodyComponent.class).getByEntity(etiEntity).body.getPosition();
+    }
 
-        camera.position.x = etiPosition.x;
-        camera.position.y = etiPosition.y;
+    @Override
+    public void onEvent(GameEvent event)
+    {
+        if(event instanceof EnterRoomEvent roomEvent)
+        {
+            OrthographicCamera camera = getScene().getComponentStorage(CameraComponent.class).getByEntity(getEntity()).camera;
+
+            TileRoom room = roomEvent.room;
+
+            BoundingComponent bounds = getScene().getComponentStorage(BoundingComponent.class).getByEntity(getEntity());
+            float minX = room.origin().x() * RoomGeometry.CELL_WIDTH;
+            float minY = (7 - room.origin().y()) * RoomGeometry.CELL_HEIGHT - room.shape().tileHeight();
+
+            bounds.set(minX, minY, minX + getScene().getTileMap().width(), minY + getScene().getTileMap().height(), camera.viewportWidth, camera.viewportHeight);
+        }
     }
 }
