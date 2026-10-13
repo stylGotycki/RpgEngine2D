@@ -38,6 +38,9 @@ public class LevelBuilder
         TileFloor floor = new TileFloor(random.nextLong(), 12, scene);
         engine.getEventBus().subscribe(floor, EnterRoomEvent.class);
 
+        DoorManager doorManager = new DoorManager();
+        engine.getEventBus().subscribe(doorManager, EnterRoomEvent.class);
+
         for(TileRoom room : floor.getRooms())
         {
             BodyDef tileBodyDef = new BodyDef();
@@ -61,8 +64,7 @@ public class LevelBuilder
                 int x = door.doorTileX();
                 int y = door.doorTileY();
                 FixtureDef fixtureDef = new FixtureDef();
-                fixtureDef.isSensor = true;
-                fixtureDef.filter.categoryBits = FixtureCategory.SENSOR;
+                fixtureDef.filter.categoryBits = FixtureCategory.OBSTACLE;
                 position.set(x+fieldSize/2,y+fieldSize/2);
                 TileConverter.convertToWorldCoords(position, fieldSize, room.map().height());
                 PolygonShape shape = new PolygonShape();
@@ -70,12 +72,16 @@ public class LevelBuilder
                 fixtureDef.shape = shape;
                 int doorId = scene.createEntity();
                 scene.createBodyComponent(doorId, tileBodyDef);
-                scene.createFixture(doorId, fixtureDef);
-                scene.addComponent(doorId, new ScriptComponent(new DoorScript(room)));
+                Fixture doorFixture = scene.createFixture(doorId, fixtureDef);
+
+                DoorScript script = new DoorScript(room, door.direction(), doorFixture);
+                scene.addComponent(doorId, new ScriptComponent(script));
+                doorManager.addDoor(room.id(), script);
             }
         }
 
         //create player entity
+        float playerSize = 0.4f;
         int player = scene.createEntity();
         Sprite playerSprite = new Sprite( (Texture) engine.getAssetManager().get("player.png") );
         Sprite attackSprite = new Sprite( (Texture) engine.getAssetManager().get("attack.png") );
@@ -92,7 +98,7 @@ public class LevelBuilder
         scene.addComponent(player, playerSpriteComponent);
 
         CircleShape circle = new CircleShape();
-        circle.setRadius(0.4f);
+        circle.setRadius(playerSize);
 
         BodyDef bodyDef = new BodyDef();
         bodyDef.type = BodyDef.BodyType.DynamicBody;
@@ -109,9 +115,18 @@ public class LevelBuilder
         fixtureDef.friction = 0f;
         fixtureDef.filter.categoryBits = FixtureCategory.PLAYER;
         scene.createBodyComponent(player, bodyDef);
-        scene.createFixture(player, fixtureDef);
+        Fixture playerFixture = scene.createFixture(player, fixtureDef);
+
+        //player reach sensor (to interact with other objects)
+        fixtureDef.isSensor = true;
+        fixtureDef.density = 0f;
+        fixtureDef.filter.categoryBits = FixtureCategory.SENSOR;
+        circle.setRadius(playerSize * 3f);
+        Fixture playerSensorFixture = scene.createFixture(player, fixtureDef);
+
         scene.addComponent(player, new HealthComponent(playerMaxHealth, playerMaxHealth));
 
+        //player attack box
         PolygonShape polygon = new PolygonShape();
         polygon.setAsBox(0.4f, 0.2f);
         fixtureDef.density = 0f;
@@ -119,9 +134,9 @@ public class LevelBuilder
         fixtureDef.filter.categoryBits = FixtureCategory.PLAYER_ATTACK;
         fixtureDef.filter.maskBits = 0;
         fixtureDef.shape = polygon;
-        scene.createFixture(player, fixtureDef);
+        Fixture playerAttackFixture = scene.createFixture(player, fixtureDef);
 
-        scene.addComponent(player, new ScriptComponent(new PlayerScript()));
+        scene.addComponent(player, new ScriptComponent(new PlayerScript(playerFixture, playerAttackFixture, playerSensorFixture)));
 
         //camera
         float cameraHeight = 13;
@@ -185,9 +200,9 @@ public class LevelBuilder
 //        scene.addComponent(enemy1, enemySpriteComponent);
 //        scene.addComponent(enemy1, new ScriptComponent(new EnemyScript(player)));
 //        scene.getComponentStorage(TransformComponent.class).getByEntity(enemy1).setPosition(20,20);
-//
-//        circle.dispose();
-//        polygon.dispose();
+
+        circle.dispose();
+        polygon.dispose();
 
         //gui
         Gui gui = scene.getGui();
