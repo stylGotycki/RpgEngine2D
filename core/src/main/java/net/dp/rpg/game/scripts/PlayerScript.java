@@ -7,10 +7,7 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.Fixture;
 import com.badlogic.gdx.physics.box2d.PolygonShape;
-import net.dp.rpg.engine.EntityScript;
-import net.dp.rpg.engine.InputListener;
-import net.dp.rpg.engine.Scene;
-import net.dp.rpg.engine.Script;
+import net.dp.rpg.engine.*;
 import net.dp.rpg.engine.components.*;
 import net.dp.rpg.engine.tile.room.Direction;
 import net.dp.rpg.game.FixtureCategory;
@@ -21,39 +18,52 @@ import net.dp.rpg.game.menu.MenuBuilder;
 
 public class PlayerScript extends EntityScript implements InputListener
 {
-    private final Vector2 direction = new Vector2();
+    private final Fixture playerFixture;
+    private final Fixture attackFixture;
+    private final Fixture sensorFixture;
+
+    private final Vector2 tempVector2 = new Vector2();
     private final Vector2 attackOffset = new Vector2();
     private final float attackFadeTime = 0.2f;
     private float remainingAttackFade = 0;
     boolean isAttacking = false;
     TileRoom roomEntered = null;
+    TileRoom currentRoom = null;
+    DoorScript doorReached = null;
+
+    public PlayerScript(Fixture playerFixture, Fixture attackFixture, Fixture sensorFixture)
+    {
+        this.playerFixture = playerFixture;
+        this.attackFixture = attackFixture;
+        this.sensorFixture = sensorFixture;
+    }
 
     @Override
     public void update(float delta)
     {
         float speed = 60f;
-        direction.set(0,0);
+        tempVector2.set(0,0);
         if(Gdx.input.isKeyPressed(Input.Keys.A))
         {
-            direction.x -= 1;
+            tempVector2.x -= 1;
         }
         if(Gdx.input.isKeyPressed(Input.Keys.D))
         {
-            direction.x += 1;
+            tempVector2.x += 1;
         }
         if(Gdx.input.isKeyPressed(Input.Keys.W))
         {
-            direction.y += 1;
+            tempVector2.y += 1;
         }
         if(Gdx.input.isKeyPressed(Input.Keys.S))
         {
-            direction.y -= 1;
+            tempVector2.y -= 1;
         }
 
-        direction.setLength(1);
+        tempVector2.setLength(1);
 
-        Body etiBody = getScene().getComponentStorage(PhysicalBodyComponent.class).getByEntity(getEntity()).body;
-        etiBody.applyForce(direction.scl(speed), etiBody.getPosition(), true);
+        Body playerBody = getComponent(PhysicalBodyComponent.class).body;
+        playerBody.applyForce(tempVector2.scl(speed), playerBody.getPosition(), true);
 
         if(remainingAttackFade > 0)
         {
@@ -63,7 +73,7 @@ public class PlayerScript extends EntityScript implements InputListener
                 remainingAttackFade = 0;
                 stopAttack();
             }
-            getScene().getComponentStorage(SpriteComponent.class).getByEntity(getEntity()).sprites.get(1).setAlpha(remainingAttackFade/attackFadeTime);
+            getComponent(SpriteComponent.class).sprites.get(1).setAlpha(remainingAttackFade/attackFadeTime);
         }
 
         if(roomEntered != null)
@@ -72,6 +82,7 @@ public class PlayerScript extends EntityScript implements InputListener
             event.room = roomEntered;
             getEngine().getEventBus().publish(event);
             getEngine().getPoolManager().free(event);
+            currentRoom = roomEntered;
             roomEntered = null;
         }
     }
@@ -81,15 +92,15 @@ public class PlayerScript extends EntityScript implements InputListener
     {
         if((otherCategory & FixtureCategory.ENEMY) > 0 && (category & FixtureCategory.PLAYER) > 0)
         {
-            HealthComponent health = getScene().getComponentStorage(HealthComponent.class).getByEntity(getEntity());
+            HealthComponent health = getComponent(HealthComponent.class);
             health.dealDamage(20);
             HealthChangeEvent event = getEngine().getPoolManager().obtain(HealthChangeEvent.class);
             event.currentHealth = health.health;
             getEngine().getEventBus().publish(event);
             getEngine().getPoolManager().free(event);
-            Body body = getScene().getComponentStorage(PhysicalBodyComponent.class).getByEntity(getEntity()).body;
-            Vector2 otherPosition = getScene().getComponentStorage(TransformComponent.class).getByEntity(otherEntity).position;
-            Vector2 push = direction.set(body.getPosition()).sub(otherPosition).scl(24);
+            Body body = getComponent(PhysicalBodyComponent.class).body;
+            Vector2 otherPosition = getComponent(TransformComponent.class).position;
+            Vector2 push = tempVector2.set(body.getPosition()).sub(otherPosition).scl(24);
             body.applyLinearImpulse(push, body.getPosition(), true);
             if(health.health <= 0)
             {
@@ -103,12 +114,48 @@ public class PlayerScript extends EntityScript implements InputListener
         {
             stopAttack();
         }
-        if((otherCategory & FixtureCategory.SENSOR) > 0 && (category & FixtureCategory.PLAYER) > 0)
+        if((otherCategory & FixtureCategory.OBSTACLE) > 0 && (category & FixtureCategory.PLAYER) > 0)
         {
             Script script = getScene().getComponentStorage(ScriptComponent.class).getByEntity(otherEntity).script;
             if(script instanceof DoorScript doorScript)
             {
-                roomEntered = doorScript.getRoom();
+                if(currentRoom == null)
+                    currentRoom = doorScript.getRoom();
+                if(doorScript.getRoom() != currentRoom)
+                {
+                    roomEntered = doorScript.getRoom();
+                }
+                else
+                    return;
+                TransformComponent transformComponent = getComponent(TransformComponent.class);
+                Direction doorDirection = doorScript.getRoomEdge().opposite();
+                if(doorDirection == Direction.NORTH || doorDirection == Direction.SOUTH)
+                    doorDirection = doorDirection.opposite();
+                transformComponent.setPosition( transformComponent.position.add(Utils.directionToVector2(doorDirection, tempVector2)));
+            }
+        }
+        if((otherCategory & FixtureCategory.OBSTACLE) > 0 && (category & FixtureCategory.SENSOR) > 0)
+        {
+            System.out.println("Enter");
+            Script script = getScene().getComponentStorage(ScriptComponent.class).getByEntity(otherEntity).script;
+            if(script instanceof DoorScript doorScript)
+            {
+                doorReached = doorScript;
+            }
+        }
+    }
+
+    @Override
+    public void onEndCollision(int otherEntity, short category, short otherCategory)
+    {
+        if((otherCategory & FixtureCategory.OBSTACLE) > 0 && (category & FixtureCategory.SENSOR) > 0)
+        {
+            System.out.println("Exit");
+            Script script = getScene().getComponentStorage(ScriptComponent.class).getByEntity(otherEntity).script;
+            if(script instanceof DoorScript doorScript)
+            {
+                if(doorScript == doorReached)
+                    doorReached = null;
             }
         }
     }
@@ -124,6 +171,11 @@ public class PlayerScript extends EntityScript implements InputListener
             attack(Direction.SOUTH);
         else if(keycode == Input.Keys.LEFT)
             attack(Direction.WEST);
+        else if(keycode == Input.Keys.E)
+        {
+            if(doorReached != null)
+                doorReached.open();
+        }
         else
             return false;
         return true;
@@ -140,13 +192,13 @@ public class PlayerScript extends EntityScript implements InputListener
         if(isAttacking)
             return;
         attackOffset.set(direction.getDeltaX(), -1 * direction.getDeltaY());
-        Fixture fixture = getScene().getComponentStorage(PhysicalBodyComponent.class).getByEntity(getEntity()).body.getFixtureList().get(1);
-        PolygonShape shape = (PolygonShape) fixture.getShape();
+
+        PolygonShape shape = (PolygonShape) attackFixture.getShape();
         shape.setAsBox(Math.abs(direction.getDeltaY())*0.3f + 0.3f, Math.abs(direction.getDeltaX())*0.3f + 0.3f, attackOffset, 0);
-        fixture.getFilterData().maskBits = (short)0xFFFF;
+        attackFixture.getFilterData().maskBits = (short)0xFFFF;
         isAttacking = true;
         remainingAttackFade = attackFadeTime;
-        Sprite sprite = getScene().getComponentStorage(SpriteComponent.class).getByEntity(getEntity()).sprites.get(1);
+        Sprite sprite = getComponent(SpriteComponent.class).sprites.get(1);
         sprite.setAlpha(1);
         sprite.setOriginCenter();
         sprite.setOrigin(sprite.getOriginX(), sprite.getOriginY() - 1);
@@ -161,8 +213,7 @@ public class PlayerScript extends EntityScript implements InputListener
 
     private void stopAttack()
     {
-        Fixture fixture = getScene().getComponentStorage(PhysicalBodyComponent.class).getByEntity(getEntity()).body.getFixtureList().get(1);
-        fixture.getFilterData().maskBits = 0;
+        attackFixture.getFilterData().maskBits = 0;
         isAttacking = false;
     }
 }

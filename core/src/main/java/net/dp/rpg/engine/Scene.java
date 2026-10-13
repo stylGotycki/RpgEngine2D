@@ -21,6 +21,7 @@ public class Scene
     private final EngineServices engine;
     @Getter
     private final World physicalWorld = new World(new Vector2(0, 0), true);
+    CollisionDispatcher collisionDispatcher = new CollisionDispatcher(this);
 
     @Getter
     private TileSystem tileSystem;
@@ -54,7 +55,6 @@ public class Scene
         this.engine = engine;
         this.inputAdapter = inputAdapter;
 
-        CollisionDispatcher collisionDispatcher = new CollisionDispatcher(this);
         physicalWorld.setContactListener(collisionDispatcher);
 
         componentStorages.add(new ComponentStorage<>(MoveComponent.class));
@@ -217,6 +217,7 @@ public class Scene
         movementSystem.transformToBody(getComponentStorage(PhysicalBodyComponent.class), getComponentStorage(TransformComponent.class));
         //todo make less physics steps on higher refresh rate (fix to const refresh rate)
         physicalWorld.step(delta, 6, 2);
+        collisionDispatcher.dispatchContacts();
 
         movementSystem.updatePositions(getComponentStorage(TransformComponent.class), getComponentStorage(MoveComponent.class), delta);
         movementSystem.bodyToTransform(getComponentStorage(PhysicalBodyComponent.class), getComponentStorage(TransformComponent.class));

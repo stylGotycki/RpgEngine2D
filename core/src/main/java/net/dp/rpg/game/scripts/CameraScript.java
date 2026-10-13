@@ -4,7 +4,6 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import net.dp.rpg.engine.EntityScript;
 import net.dp.rpg.engine.components.BoundingComponent;
 import net.dp.rpg.engine.components.CameraComponent;
-import net.dp.rpg.engine.systems.TileConverter;
 import net.dp.rpg.engine.systems.gameEvent.GameEvent;
 import net.dp.rpg.engine.systems.gameEvent.GameEventListener;
 import net.dp.rpg.engine.tile.room.RoomGeometry;
@@ -26,11 +25,11 @@ public class CameraScript extends EntityScript implements GameEventListener
     {
         if(event instanceof EnterRoomEvent roomEvent)
         {
-            OrthographicCamera camera = getScene().getComponentStorage(CameraComponent.class).getByEntity(getEntity()).camera;
+            OrthographicCamera camera = getComponent(CameraComponent.class).camera;
 
             TileRoom room = roomEvent.room;
 
-            BoundingComponent bounds = getScene().getComponentStorage(BoundingComponent.class).getByEntity(getEntity());
+            BoundingComponent bounds = getComponent(BoundingComponent.class);
             float minX = room.origin().x() * RoomGeometry.CELL_WIDTH;
             float minY = (7 - room.origin().y()) * RoomGeometry.CELL_HEIGHT - room.shape().tileHeight();
 

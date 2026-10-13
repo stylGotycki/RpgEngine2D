@@ -85,8 +85,11 @@ public class MovementSystem
             {
                 Body body = bodies.getByIndex(i).body;
                 TransformComponent transform = transforms.getByEntity(entity);
-                transform.position.set(body.getPosition());
-                transform.rotation = body.getTransform().getRotation();
+                if(!transform.changed)
+                {
+                    transform.position.set(body.getPosition());
+                    transform.rotation = body.getTransform().getRotation();
+                }
             }
         }
     }
@@ -104,6 +107,7 @@ public class MovementSystem
                 {
                     Body body = bodies.getByIndex(i).body;
                     body.setTransform(transform.position, transform.rotation);
+                    transform.changed = false;
                 }
             }
         }
