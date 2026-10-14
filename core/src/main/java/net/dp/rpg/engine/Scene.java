@@ -217,7 +217,6 @@ public class Scene
         movementSystem.transformToBody(getComponentStorage(PhysicalBodyComponent.class), getComponentStorage(TransformComponent.class));
         //todo make less physics steps on higher refresh rate (fix to const refresh rate)
         physicalWorld.step(delta, 6, 2);
-        collisionDispatcher.dispatchContacts();
 
         movementSystem.updatePositions(getComponentStorage(TransformComponent.class), getComponentStorage(MoveComponent.class), delta);
         movementSystem.bodyToTransform(getComponentStorage(PhysicalBodyComponent.class), getComponentStorage(TransformComponent.class));
