@@ -7,8 +7,6 @@ import net.dp.rpg.engine.components.ScriptComponent;
 
 public class CollisionDispatcher implements ContactListener
 {
-    private Array<Contact> latestBeginContacts = new Array<>();
-    private Array<Contact> latestEndContacts = new Array<>();
     private final Scene scene;
 
     public CollisionDispatcher(Scene scene)
@@ -19,13 +17,13 @@ public class CollisionDispatcher implements ContactListener
     @Override
     public void beginContact(Contact contact)
     {
-        latestBeginContacts.add(contact);
+        disptatch(contact, true);
     }
 
     @Override
     public void endContact(Contact contact)
     {
-        latestEndContacts.add(contact);
+        disptatch(contact, false);
     }
 
     @Override
@@ -38,20 +36,6 @@ public class CollisionDispatcher implements ContactListener
     public void postSolve(Contact contact, ContactImpulse impulse)
     {
 
-    }
-
-    public void dispatchContacts()
-    {
-        for(Contact contact : latestBeginContacts)
-        {
-            disptatch(contact, true);
-        }
-        latestBeginContacts.clear();
-        for(Contact contact : latestEndContacts)
-        {
-            disptatch(contact, false);
-        }
-        latestEndContacts.clear();
     }
 
     private void disptatch(Contact contact, boolean begin)
