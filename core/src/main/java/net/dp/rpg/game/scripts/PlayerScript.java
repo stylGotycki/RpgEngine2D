@@ -9,18 +9,21 @@ import com.badlogic.gdx.physics.box2d.Fixture;
 import com.badlogic.gdx.physics.box2d.PolygonShape;
 import net.dp.rpg.engine.*;
 import net.dp.rpg.engine.components.*;
+import net.dp.rpg.engine.systems.gameEvent.GameEvent;
+import net.dp.rpg.engine.systems.gameEvent.GameEventListener;
 import net.dp.rpg.engine.tile.room.Direction;
 import net.dp.rpg.game.FixtureCategory;
 import net.dp.rpg.game.TileRoom;
-import net.dp.rpg.game.level.EnterRoomEvent;
-import net.dp.rpg.game.level.HealthChangeEvent;
+import net.dp.rpg.game.events.*;
 import net.dp.rpg.game.menu.MenuBuilder;
 
-public class PlayerScript extends EntityScript implements InputListener
+public class PlayerScript extends EntityScript implements InputListener, GameEventListener
 {
     private final Fixture playerFixture;
     private final Fixture attackFixture;
     private final Fixture sensorFixture;
+
+    private boolean isSkillWindowOpen = false;
 
     private final Vector2 tempVector2 = new Vector2();
     private final Vector2 attackOffset = new Vector2();
@@ -31,11 +34,15 @@ public class PlayerScript extends EntityScript implements InputListener
     TileRoom currentRoom = null;
     DoorScript doorReached = null;
 
+    int availableSkillPoints = 0;
+
     public PlayerScript(Fixture playerFixture, Fixture attackFixture, Fixture sensorFixture)
     {
         this.playerFixture = playerFixture;
         this.attackFixture = attackFixture;
         this.sensorFixture = sensorFixture;
+
+        Engine.eventBus.subscribe(this, SkillPointUsedEvent.class);
     }
 
     @Override
@@ -78,10 +85,10 @@ public class PlayerScript extends EntityScript implements InputListener
 
         if(roomEntered != null)
         {
-            EnterRoomEvent event = getEngine().getPoolManager().obtain(EnterRoomEvent.class);
+            EnterRoomEvent event = Engine.poolManager.obtain(EnterRoomEvent.class);
             event.room = roomEntered;
-            getEngine().getEventBus().publish(event);
-            getEngine().getPoolManager().free(event);
+            Engine.eventBus.publish(event);
+            Engine.poolManager.free(event);
             currentRoom = roomEntered;
             roomEntered = null;
         }
@@ -94,12 +101,12 @@ public class PlayerScript extends EntityScript implements InputListener
         {
             HealthComponent health = getComponent(HealthComponent.class);
             health.dealDamage(20);
-            HealthChangeEvent event = getEngine().getPoolManager().obtain(HealthChangeEvent.class);
+            HealthChangeEvent event = Engine.poolManager.obtain(HealthChangeEvent.class);
             event.currentHealth = health.health;
-            getEngine().getEventBus().publish(event);
-            getEngine().getPoolManager().free(event);
+            Engine.eventBus.publish(event);
+            Engine.poolManager.free(event);
             Body body = getComponent(PhysicalBodyComponent.class).body;
-            Vector2 otherPosition = getComponent(TransformComponent.class).position;
+            Vector2 otherPosition = getScene().getComponentStorage(TransformComponent.class).getByEntity(otherEntity).position;
             Vector2 push = tempVector2.set(body.getPosition()).sub(otherPosition).scl(24);
             body.applyLinearImpulse(push, body.getPosition(), true);
             if(health.health <= 0)
@@ -116,7 +123,10 @@ public class PlayerScript extends EntityScript implements InputListener
         }
         if((otherCategory & FixtureCategory.OBSTACLE) > 0 && (category & FixtureCategory.PLAYER) > 0)
         {
-            Script script = getScene().getComponentStorage(ScriptComponent.class).getByEntity(otherEntity).script;
+            ScriptComponent scriptComponent = getScene().getComponentStorage(ScriptComponent.class).getByEntity(otherEntity);
+            if(scriptComponent == null)
+                return;
+            Script script = scriptComponent.script;
             if(script instanceof DoorScript doorScript)
             {
                 if(currentRoom == null)
@@ -136,8 +146,10 @@ public class PlayerScript extends EntityScript implements InputListener
         }
         if((otherCategory & FixtureCategory.OBSTACLE) > 0 && (category & FixtureCategory.SENSOR) > 0)
         {
-            System.out.println("Enter");
-            Script script = getScene().getComponentStorage(ScriptComponent.class).getByEntity(otherEntity).script;
+            ScriptComponent scriptComponent = getScene().getComponentStorage(ScriptComponent.class).getByEntity(otherEntity);
+            if(scriptComponent == null)
+                return;
+            Script script = scriptComponent.script;
             if(script instanceof DoorScript doorScript)
             {
                 doorReached = doorScript;
@@ -150,8 +162,10 @@ public class PlayerScript extends EntityScript implements InputListener
     {
         if((otherCategory & FixtureCategory.OBSTACLE) > 0 && (category & FixtureCategory.SENSOR) > 0)
         {
-            System.out.println("Exit");
-            Script script = getScene().getComponentStorage(ScriptComponent.class).getByEntity(otherEntity).script;
+            ScriptComponent scriptComponent = getScene().getComponentStorage(ScriptComponent.class).getByEntity(otherEntity);
+            if(scriptComponent == null)
+                return;
+            Script script = scriptComponent.script;
             if(script instanceof DoorScript doorScript)
             {
                 if(doorScript == doorReached)
@@ -176,6 +190,18 @@ public class PlayerScript extends EntityScript implements InputListener
             if(doorReached != null)
                 doorReached.open();
         }
+        else if(keycode == Input.Keys.X)
+        {
+            SkillWindowToggleEvent event = Engine.poolManager.obtain(SkillWindowToggleEvent.class);
+            event.show = !isSkillWindowOpen;
+            isSkillWindowOpen = !isSkillWindowOpen;
+            Engine.eventBus.publish(event);
+            Engine.poolManager.free(event);
+        }
+        else if(keycode == Input.Keys.Z)
+        {
+            addSkillPoint();
+        }
         else
             return false;
         return true;
@@ -185,6 +211,15 @@ public class PlayerScript extends EntityScript implements InputListener
     public boolean keyUp(int keycode)
     {
         return false;
+    }
+
+    public void addSkillPoint()
+    {
+        availableSkillPoints++;
+        SkillPointsAvailableEvent event = Engine.poolManager.obtain(SkillPointsAvailableEvent.class);
+        event.skillPoints = availableSkillPoints;
+        Engine.eventBus.publish(event);
+        Engine.poolManager.free(event);
     }
 
     private void attack(Direction direction)
@@ -215,5 +250,18 @@ public class PlayerScript extends EntityScript implements InputListener
     {
         attackFixture.getFilterData().maskBits = 0;
         isAttacking = false;
+    }
+
+    @Override
+    public void onEvent(GameEvent event)
+    {
+        if(event instanceof SkillPointUsedEvent skillPointEvent)
+        {
+            availableSkillPoints--;
+            SkillPointsAvailableEvent pointsAvailableEvent = Engine.poolManager.obtain(SkillPointsAvailableEvent.class);
+            pointsAvailableEvent.skillPoints = availableSkillPoints;
+            Engine.eventBus.publish(pointsAvailableEvent);
+            Engine.poolManager.free(pointsAvailableEvent);
+        }
     }
 }

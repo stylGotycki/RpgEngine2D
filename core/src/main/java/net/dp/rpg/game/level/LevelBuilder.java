@@ -1,16 +1,14 @@
 package net.dp.rpg.game.level;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.*;
-import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.utils.Array;
+import net.dp.rpg.engine.Engine;
 import net.dp.rpg.engine.EngineServices;
-import net.dp.rpg.engine.Gui;
 import net.dp.rpg.engine.Scene;
 import net.dp.rpg.engine.components.*;
 import net.dp.rpg.engine.systems.TileConverter;
@@ -19,6 +17,8 @@ import net.dp.rpg.engine.tile.room.RoomGeometry;
 import net.dp.rpg.game.FixtureCategory;
 import net.dp.rpg.game.TileFloor;
 import net.dp.rpg.game.TileRoom;
+import net.dp.rpg.game.events.EnterRoomEvent;
+import net.dp.rpg.game.level.gui.LevelGui;
 import net.dp.rpg.game.scripts.CameraScript;
 import net.dp.rpg.game.scripts.DoorScript;
 import net.dp.rpg.game.scripts.EnemyScript;
@@ -36,10 +36,10 @@ public class LevelBuilder
         Random random = new Random();
         TileConverter tileConverter = new TileConverter();
         TileFloor floor = new TileFloor(random.nextLong(), 12, scene);
-        engine.getEventBus().subscribe(floor, EnterRoomEvent.class);
+        Engine.eventBus.subscribe(floor, EnterRoomEvent.class);
 
         DoorManager doorManager = new DoorManager();
-        engine.getEventBus().subscribe(doorManager, EnterRoomEvent.class);
+        Engine.eventBus.subscribe(doorManager, EnterRoomEvent.class);
 
         for(TileRoom room : floor.getRooms())
         {
@@ -150,72 +150,67 @@ public class LevelBuilder
         scene.addComponent(cameraEntity, new FollowComponent(player, 8f));
         CameraScript cameraScript = new CameraScript();
         scene.addComponent(cameraEntity, new ScriptComponent(cameraScript));
-        engine.getEventBus().subscribe(cameraScript, EnterRoomEvent.class);
+        Engine.eventBus.subscribe(cameraScript, EnterRoomEvent.class);
 
         //boxes
-//        bodyDef.position.x = 12;
-//        bodyDef.position.y = 10;
-//        bodyDef.fixedRotation = false;
-//        fixtureDef.friction = 10f;
-//        fixtureDef.density = 1f;
-//        fixtureDef.filter.categoryBits = FixtureCategory.OBSTACLE;
-//        fixtureDef.isSensor = false;
-//        fixtureDef.shape = polygon;
-//        fixtureDef.filter.maskBits = (short) 0xFFFF;
-//
-//        polygon.setAsBox(0.5f, 0.5f);
-//
-//        int box1 = scene.createEntity();
-//        scene.createBodyComponent(box1, bodyDef);
-//        scene.createFixture(box1, fixtureDef);
-//        Sprite boxSprite = new Sprite( (Texture) engine.getAssetManager().get("box.png"));
-//        boxSprite.setSize(1,1);
-//        boxSprite.setOriginCenter();
-//        SpriteComponent boxSpriteComponent = new SpriteComponent();
-//        boxSpriteComponent.add(boxSprite, false);
-//        scene.addComponent(box1, boxSpriteComponent);
-//
-//        int box2 = scene.cloneEntity(box1);
-//        scene.getComponentStorage(TransformComponent.class).getByEntity(box2).setPosition(14,10);
+        bodyDef.position.x = 30;
+        bodyDef.position.y = 30;
+        bodyDef.fixedRotation = false;
+        fixtureDef.friction = 10f;
+        fixtureDef.density = 1f;
+        fixtureDef.filter.categoryBits = FixtureCategory.OBSTACLE;
+        fixtureDef.isSensor = false;
+        fixtureDef.shape = polygon;
+        fixtureDef.filter.maskBits = (short) 0xFFFF;
+
+        polygon.setAsBox(0.5f, 0.5f);
+
+        int box1 = scene.createEntity();
+        scene.createBodyComponent(box1, bodyDef);
+        scene.createFixture(box1, fixtureDef);
+        Sprite boxSprite = new Sprite( (Texture) engine.getAssetManager().get("box.png"));
+        boxSprite.setSize(1,1);
+        boxSprite.setOriginCenter();
+        SpriteComponent boxSpriteComponent = new SpriteComponent();
+        boxSpriteComponent.add(boxSprite, false);
+        scene.addComponent(box1, boxSpriteComponent);
+
+        int box2 = scene.cloneEntity(box1);
+        scene.getComponentStorage(TransformComponent.class).getByEntity(box2).setPosition(14,10);
 
         //enemies
-//        int enemy1 = scene.createEntity();
-//        bodyDef.position.x = 20;
-//        bodyDef.position.y = 20;
-//        bodyDef.fixedRotation = true;
-//        fixtureDef.friction = 0f;
-//        fixtureDef.density = 1f;
-//        circle.setRadius(0.3f);
-//        fixtureDef.shape = circle;
-//        fixtureDef.filter.categoryBits = FixtureCategory.ENEMY;
-//
-//        scene.createBodyComponent(enemy1, bodyDef);
-//        scene.createFixture(enemy1, fixtureDef);
-//        Sprite enemySprite = new Sprite( (Texture) engine.getAssetManager().get("enemy.png"));
-//        enemySprite.setSize(0.6f,0.6f);
-//        enemySprite.setOriginCenter();
-//        scene.addComponent(enemy1, new HealthComponent(50, 50));
-//        SpriteComponent enemySpriteComponent = new SpriteComponent();
-//        enemySpriteComponent.sprites.add(enemySprite);
-//        scene.addComponent(enemy1, enemySpriteComponent);
-//        scene.addComponent(enemy1, new ScriptComponent(new EnemyScript(player)));
-//        scene.getComponentStorage(TransformComponent.class).getByEntity(enemy1).setPosition(20,20);
+        int enemy1 = scene.createEntity();
+        bodyDef.position.x = 100;
+        bodyDef.position.y = 80;
+        bodyDef.fixedRotation = true;
+        fixtureDef.friction = 0f;
+        fixtureDef.density = 1f;
+        circle.setRadius(0.3f);
+        fixtureDef.shape = circle;
+        fixtureDef.filter.categoryBits = FixtureCategory.ENEMY;
+
+        scene.createBodyComponent(enemy1, bodyDef);
+        scene.createFixture(enemy1, fixtureDef);
+        Sprite enemySprite = new Sprite( (Texture) engine.getAssetManager().get("enemy.png"));
+        enemySprite.setSize(0.6f,0.6f);
+        enemySprite.setOriginCenter();
+        scene.addComponent(enemy1, new HealthComponent(50, 50));
+        SpriteComponent enemySpriteComponent = new SpriteComponent();
+        enemySpriteComponent.sprites.add(enemySprite);
+        scene.addComponent(enemy1, enemySpriteComponent);
+        scene.addComponent(enemy1, new ScriptComponent(new EnemyScript(player)));
+        scene.getComponentStorage(TransformComponent.class).getByEntity(enemy1).setPosition(50,50);
 
         circle.dispose();
         polygon.dispose();
 
         //gui
-        Gui gui = scene.getGui();
-        Table mainTable = gui.getMainTable();
-        mainTable.top().left();
-        HealthBar healthBar = new HealthBar(playerMaxHealth, engine.getAssetManager().get("skins/default/default.json"));
-        engine.getEventBus().subscribe(healthBar, HealthChangeEvent.class);
-        mainTable.add(healthBar).pad(16).width(playerMaxHealth*4);
+        LevelGui levelGui = new LevelGui(engine, scene, player);
 
         //inform about first room
-        EnterRoomEvent roomEvent = engine.getPoolManager().obtain(EnterRoomEvent.class);
+        EnterRoomEvent roomEvent = Engine.poolManager.obtain(EnterRoomEvent.class);
         roomEvent.room = floor.getActiveRoom();
-        engine.getEventBus().publish(roomEvent);
-        engine.getPoolManager().free(roomEvent);
+        Engine.eventBus.publish(roomEvent);
+        Engine.poolManager.free(roomEvent);
     }
 }

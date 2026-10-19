@@ -4,9 +4,9 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.ParticleEffect;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import net.dp.rpg.engine.AbstractGame;
+import net.dp.rpg.engine.Engine;
 import net.dp.rpg.engine.Scene;
-import net.dp.rpg.game.level.EnterRoomEvent;
-import net.dp.rpg.game.level.HealthChangeEvent;
+import net.dp.rpg.game.events.*;
 import net.dp.rpg.game.menu.MenuBuilder;
 import net.dp.rpg.game.scripts.GlobalScript;
 
@@ -23,8 +23,11 @@ public class Game extends AbstractGame
         getEngine().getAssetManager().load("particles/buttonDust.p", ParticleEffect.class);
         getEngine().getAssetManager().load("particles/menuDust.p", ParticleEffect.class);
 
-        getEngine().getPoolManager().addPool(HealthChangeEvent.class, HealthChangeEvent::new);
-        getEngine().getPoolManager().addPool(EnterRoomEvent.class, EnterRoomEvent::new);
+        Engine.poolManager.addPool(HealthChangeEvent.class, HealthChangeEvent::new);
+        Engine.poolManager.addPool(EnterRoomEvent.class, EnterRoomEvent::new);
+        Engine.poolManager.addPool(SkillWindowToggleEvent.class, SkillWindowToggleEvent::new);
+        Engine.poolManager.addPool(SkillPointsAvailableEvent.class, SkillPointsAvailableEvent::new);
+        Engine.poolManager.addPool(SkillPointUsedEvent.class, SkillPointUsedEvent::new);
 
         getEngine().getAssetManager().finishLoading();
 

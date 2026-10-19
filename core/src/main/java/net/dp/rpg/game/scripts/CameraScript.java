@@ -8,7 +8,7 @@ import net.dp.rpg.engine.systems.gameEvent.GameEvent;
 import net.dp.rpg.engine.systems.gameEvent.GameEventListener;
 import net.dp.rpg.engine.tile.room.RoomGeometry;
 import net.dp.rpg.game.TileRoom;
-import net.dp.rpg.game.level.EnterRoomEvent;
+import net.dp.rpg.game.events.EnterRoomEvent;
 
 public class CameraScript extends EntityScript implements GameEventListener
 {

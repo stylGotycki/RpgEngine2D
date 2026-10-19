@@ -13,8 +13,7 @@ public interface EngineServices
     void setGuiDebug(boolean enabled);
     void setTextureFilters(Texture.TextureFilter minFilter, Texture.TextureFilter magFilter);
     AssetManager getAssetManager();
-    GameEventBus getEventBus();
-    PoolManager getPoolManager();
+    Scene getActiveScene();
     Scene createScene();
     void exit();
 }

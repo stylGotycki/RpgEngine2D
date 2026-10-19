@@ -4,6 +4,7 @@ import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.IntMap;
 import net.dp.rpg.engine.systems.gameEvent.GameEvent;
 import net.dp.rpg.engine.systems.gameEvent.GameEventListener;
+import net.dp.rpg.game.events.EnterRoomEvent;
 import net.dp.rpg.game.scripts.DoorScript;
 
 public class DoorManager implements GameEventListener

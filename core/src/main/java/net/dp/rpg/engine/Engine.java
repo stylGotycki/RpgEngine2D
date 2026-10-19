@@ -16,16 +16,17 @@ import net.dp.rpg.game.Game;
 /** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
 public class Engine extends ApplicationAdapter implements EngineServices
 {
+    public static final GameEventBus eventBus = new GameEventBus();
+    public static final PoolManager poolManager = new PoolManager();
+
     private RenderSystem renderSystem;
 
     @Getter
     private final AssetManager assetManager = new AssetManager();
-    @Getter
-    private final GameEventBus eventBus = new GameEventBus();
-    @Getter
-    private final PoolManager poolManager = new PoolManager();
 
     private final AbstractGame game = new Game();
+
+    @Getter
     private Scene activeScene;
 
     private final EngineInputAdapter inputAdapter = new EngineInputAdapter();

@@ -12,7 +12,7 @@ import net.dp.rpg.engine.tile.debug.TileLogger;
 import net.dp.rpg.engine.tile.exception.TileException;
 import net.dp.rpg.engine.tile.render.TileMapRenderer;
 import net.dp.rpg.engine.tile.room.*;
-import net.dp.rpg.game.level.EnterRoomEvent;
+import net.dp.rpg.game.events.EnterRoomEvent;
 
 import java.util.ArrayList;
 import java.util.List;

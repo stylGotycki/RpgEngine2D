@@ -67,6 +67,33 @@ com.badlogic.gdx.scenes.scene2d.ui.Skin$TintedDrawable: {
 			a: 0.45
 		}
 	}
+	activeSkillRed: {
+		name: activeSkill
+		color: {
+			r: 1
+			g: 0
+			b: 0
+			a: 1
+		}
+	}
+	activeSkillBlue: {
+		name: activeSkill
+		color: {
+			r: 0
+			g: 0
+			b: 1
+			a: 1
+		}
+	}
+	activeSkillGreen: {
+		name: activeSkill
+		color: {
+			r: 0
+			g: 1
+			b: 0
+			a: 1
+		}
+	}
 }
 com.badlogic.gdx.scenes.scene2d.ui.Button$ButtonStyle: {
 	default: {
@@ -90,6 +117,26 @@ com.badlogic.gdx.scenes.scene2d.ui.CheckBox$CheckBoxStyle: {
 		checkboxOff: check-off
 		font: default-font
 		fontColor: white
+	}
+}
+com.badlogic.gdx.scenes.scene2d.ui.ImageButton$ImageButtonStyle: {
+	skill: {
+		imageOver: skillFieldHover
+		imageDisabled: skillField
+		imageChecked: activeSkill
+		up: skillField
+	}
+	skill-red: {
+		parent: skill
+		imageChecked: activeSkillRed
+	}
+	skill-blue: {
+		parent: skill
+		imageChecked: activeSkillBlue
+	}
+	skill-green: {
+		parent: skill
+		imageChecked: activeSkillGreen
 	}
 }
 com.badlogic.gdx.scenes.scene2d.ui.Label$LabelStyle: {
