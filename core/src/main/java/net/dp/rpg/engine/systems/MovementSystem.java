@@ -151,6 +151,21 @@ public class MovementSystem
         }
     }
 
+    public void transformToLight(ComponentStorage<TransformComponent> transforms, ComponentStorage<LightComponent> lights)
+    {
+        int lSize = lights.size();
+        for(int i = 0; i < lSize; i++)
+        {
+            int entity = lights.getEntity(i);
+            LightComponent lightComponent = lights.getByEntity(entity);
+            if (lightComponent.light.getBody() == null && transforms.hasComponent(entity))
+            {
+                TransformComponent transform = transforms.getByEntity(entity);
+                lightComponent.light.setPosition(transform.position);
+            }
+        }
+    }
+
     private void lerp(Vector2 position, float lerp, float delta, Vector2 target)
     {
         position.x += lerp * delta * (target.x - position.x);

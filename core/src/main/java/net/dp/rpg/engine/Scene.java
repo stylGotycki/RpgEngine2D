@@ -1,6 +1,10 @@
 package net.dp.rpg.engine;
 
+import box2dLight.Light;
+import box2dLight.PointLight;
+import box2dLight.RayHandler;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.*;
@@ -50,6 +54,9 @@ public class Scene
     private final MovementSystem movementSystem = new MovementSystem();
     private final TileConverter tileConverter = new TileConverter();
 
+    @Getter
+    private final RayHandler rayHandler = new RayHandler(physicalWorld);
+
     Scene(EngineServices engine, EngineInputAdapter inputAdapter)
     {
         this.engine = engine;
@@ -66,6 +73,9 @@ public class Scene
         componentStorages.add(new ComponentStorage<>(FollowComponent.class));
         componentStorages.add(new ComponentStorage<>(BoundingComponent.class));
         componentStorages.add(new ComponentStorage<>(HealthComponent.class));
+        componentStorages.add(new ComponentStorage<>(LightComponent.class));
+
+        RayHandler.useDiffuseLight(true);
     }
 
     public <T extends Component> void addComponent(int entity, T component)
@@ -79,7 +89,8 @@ public class Scene
         }
         else if ((component instanceof SpriteComponent
             || component instanceof PhysicalBodyComponent
-            || component instanceof CameraComponent)
+            || component instanceof CameraComponent
+            || component instanceof LightComponent)
             && !getComponentStorage(TransformComponent.class).hasComponent(entity))
         {
             addComponent(entity, new TransformComponent(new Vector2(0,0), 0, 1));
@@ -104,6 +115,24 @@ public class Scene
         body.setUserData(entity);
         addComponent(entity, new PhysicalBodyComponent(body));
         return body;
+    }
+
+    public PointLight createPointLightComponent(int entity, int rays, Color color, float distance, boolean xRay)
+    {
+        PointLight light = new PointLight(rayHandler, rays, color, distance, 0, 0);
+        if(getComponentStorage(PhysicalBodyComponent.class).hasComponent(entity))
+        {
+            Body body = getComponentStorage(PhysicalBodyComponent.class).getByEntity(entity).body;
+            light.attachToBody(body);
+            light.setPosition(body.getPosition());
+        }
+        else if(getComponentStorage(TransformComponent.class).hasComponent(entity))
+        {
+            light.setPosition(getComponentStorage(TransformComponent.class).getByEntity(entity).position);
+        }
+        addComponent(entity, new LightComponent(light));
+        light.setXray(xRay);
+        return light;
     }
 
     public Fixture createFixture(int entity, FixtureDef fixtureDef)
@@ -201,6 +230,11 @@ public class Scene
         }
     }
 
+    public void setAmbientLight(Color light)
+    {
+        rayHandler.setAmbientLight(light);
+    }
+
     public void update(float delta)
     {
         if(sceneScript != null)
@@ -224,6 +258,7 @@ public class Scene
         movementSystem.boundPositions(getComponentStorage(BoundingComponent.class), getComponentStorage(TransformComponent.class), delta);
         movementSystem.transformToSprite(getComponentStorage(TransformComponent.class), getComponentStorage(SpriteComponent.class));
         movementSystem.transformToCamera(getComponentStorage(TransformComponent.class), getComponentStorage(CameraComponent.class));
+        movementSystem.transformToLight(getComponentStorage(TransformComponent.class), getComponentStorage(LightComponent.class));
 
         gui.update(delta);
 
@@ -252,6 +287,7 @@ public class Scene
                 inputAdapter.removeListener(listener);
             }
         }
+        rayHandler.dispose();
         gui.dispose();
     }
 }

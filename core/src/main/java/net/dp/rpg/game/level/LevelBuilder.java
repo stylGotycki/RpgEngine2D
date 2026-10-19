@@ -1,6 +1,9 @@
 package net.dp.rpg.game.level;
 
+import box2dLight.Light;
+import box2dLight.PointLight;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
@@ -35,7 +38,7 @@ public class LevelBuilder
         //tilemap
         Random random = new Random();
         TileConverter tileConverter = new TileConverter();
-        TileFloor floor = new TileFloor(random.nextLong(), 12, scene);
+        TileFloor floor = new TileFloor(3, 12, scene);
         Engine.eventBus.subscribe(floor, EnterRoomEvent.class);
 
         DoorManager doorManager = new DoorManager();
@@ -118,13 +121,21 @@ public class LevelBuilder
         Fixture playerFixture = scene.createFixture(player, fixtureDef);
 
         //player reach sensor (to interact with other objects)
+        float playerReach = playerSize * 3f;
         fixtureDef.isSensor = true;
         fixtureDef.density = 0f;
         fixtureDef.filter.categoryBits = FixtureCategory.SENSOR;
-        circle.setRadius(playerSize * 3f);
+        circle.setRadius(playerReach);
         Fixture playerSensorFixture = scene.createFixture(player, fixtureDef);
 
         scene.addComponent(player, new HealthComponent(playerMaxHealth, playerMaxHealth));
+
+        //player light
+        Filter contactFilter = new Filter();
+        contactFilter.categoryBits = FixtureCategory.LIGHT;
+        contactFilter.maskBits = (short)(FixtureCategory.OBSTACLE | FixtureCategory.WALL);
+        Light playerLight = scene.createPointLightComponent(player, 64, new Color(1f, 0.6f, 0.1f, 0.8f), playerSize * 32, false);
+        playerLight.setContactFilter(contactFilter);
 
         //player attack box
         PolygonShape polygon = new PolygonShape();
@@ -151,6 +162,7 @@ public class LevelBuilder
         CameraScript cameraScript = new CameraScript();
         scene.addComponent(cameraEntity, new ScriptComponent(cameraScript));
         Engine.eventBus.subscribe(cameraScript, EnterRoomEvent.class);
+        scene.createPointLightComponent(cameraEntity, 64, new Color(0.3f,0.3f,0.6f,1f), camera.viewportWidth, true);
 
         //boxes
         bodyDef.position.x = 30;
@@ -176,7 +188,7 @@ public class LevelBuilder
         scene.addComponent(box1, boxSpriteComponent);
 
         int box2 = scene.cloneEntity(box1);
-        scene.getComponentStorage(TransformComponent.class).getByEntity(box2).setPosition(14,10);
+        scene.getComponentStorage(TransformComponent.class).getByEntity(box2).setPosition(100,80);
 
         //enemies
         int enemy1 = scene.createEntity();
@@ -212,5 +224,8 @@ public class LevelBuilder
         roomEvent.room = floor.getActiveRoom();
         Engine.eventBus.publish(roomEvent);
         Engine.poolManager.free(roomEvent);
+
+        //scene.setAmbientLight(new Color(0.2f,0.2f,0.3f,0.4f)); // ambient light color when no camera light
+        scene.setAmbientLight(new Color(0,0,0,0));
     }
 }

@@ -71,6 +71,10 @@ public class RenderSystem
 
         batch.end();
 
+        // lights
+        scene.getRayHandler().setCombinedMatrix(scene.getActiveCamera());
+        scene.getRayHandler().updateAndRender();
+
         scene.getGui().getStage().draw();
 
         if(physicsDebug)
