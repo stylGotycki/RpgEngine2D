@@ -23,6 +23,8 @@ public class DoorManager implements GameEventListener
     {
         if(event instanceof EnterRoomEvent roomEvent)
         {
+            if(roomDoors.get(roomEvent.room.id()) == null)
+                return;
             for(DoorScript door : roomDoors.get(roomEvent.room.id()))
             {
                 door.close();

@@ -39,6 +39,7 @@ public class LevelBuilder
         Random random = new Random();
         TileConverter tileConverter = new TileConverter();
         TileFloor floor = new TileFloor(3, 12, scene);
+        //floor.loadRoomFromFile();
         Engine.eventBus.subscribe(floor, EnterRoomEvent.class);
 
         DoorManager doorManager = new DoorManager();
