@@ -8,7 +8,12 @@ public class BoundingComponent implements Component
     public float maxY;
 
     public boolean smoothCorrection = true;
+    public boolean useLerp = true;
+    public float speed = 8f;
     public float lerp = 8f;
+
+    public boolean isInside;
+    public float insideTolerance = 0.0001f;
 
     // todo what if object changes its size?
     public BoundingComponent(float minX, float minY, float maxX, float maxY, float objectWidth, float objectHeight)

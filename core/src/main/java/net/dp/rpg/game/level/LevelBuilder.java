@@ -1,18 +1,20 @@
 package net.dp.rpg.game.level;
 
 import box2dLight.Light;
-import box2dLight.PointLight;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
-import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.Sprite;
+import com.badlogic.gdx.graphics.g2d.TextureAtlas;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.*;
 import com.badlogic.gdx.utils.Array;
 import net.dp.rpg.engine.Engine;
 import net.dp.rpg.engine.EngineServices;
 import net.dp.rpg.engine.Scene;
+import net.dp.rpg.engine.animation.AnimationSet;
 import net.dp.rpg.engine.components.*;
 import net.dp.rpg.engine.systems.TileConverter;
 import net.dp.rpg.engine.tile.room.RoomEdge;
@@ -20,6 +22,7 @@ import net.dp.rpg.engine.tile.room.RoomGeometry;
 import net.dp.rpg.game.FixtureCategory;
 import net.dp.rpg.game.TileFloor;
 import net.dp.rpg.game.TileRoom;
+import net.dp.rpg.game.animations.PlayerAnimationId;
 import net.dp.rpg.game.events.EnterRoomEvent;
 import net.dp.rpg.game.level.gui.LevelGui;
 import net.dp.rpg.game.scripts.CameraScript;
@@ -35,6 +38,8 @@ public class LevelBuilder
 
     public void build(EngineServices engine, Scene scene)
     {
+        TextureAtlas atlas = engine.getAssetManager().get("atlases/textures.atlas");
+
         //tilemap
         Random random = new Random();
         TileConverter tileConverter = new TileConverter();
@@ -58,7 +63,10 @@ public class LevelBuilder
             if (!fixtureDefs.isEmpty())
             {
                 for (FixtureDef tileFixtureDef : fixtureDefs)
+                {
                     tileMapBody.createFixture(tileFixtureDef);
+                    tileFixtureDef.shape.dispose();
+                }
             }
 
             float fieldSize = 1f;
@@ -87,19 +95,27 @@ public class LevelBuilder
         //create player entity
         float playerSize = 0.4f;
         int player = scene.createEntity();
-        Sprite playerSprite = new Sprite( (Texture) engine.getAssetManager().get("player.png") );
-        Sprite attackSprite = new Sprite( (Texture) engine.getAssetManager().get("attack.png") );
-        playerSprite.setSize(0.8f,0.8f);
+        Sprite playerSprite = atlas.createSprite("player");
+        Sprite attackSprite = atlas.createSprite("attack");
+        playerSprite.setSize(1f,1f);
         playerSprite.setOriginCenter();
         attackSprite.setSize(1.4f, 0.7f);
         attackSprite.setOriginCenter();
         attackSprite.setOrigin(attackSprite.getOriginX(), attackSprite.getOriginY()-0.8f);
         attackSprite.setAlpha(0);
 
-        SpriteComponent playerSpriteComponent = new SpriteComponent();
+        MultiSpriteComponent playerSpriteComponent = new MultiSpriteComponent();
         playerSpriteComponent.add(playerSprite, false);
         playerSpriteComponent.add(attackSprite, true);
         scene.addComponent(player, playerSpriteComponent);
+
+        //player animation
+        Animation<TextureRegion> playerIdleAnimation = new Animation<>(1, atlas.findRegions("player/idle"), Animation.PlayMode.LOOP);
+        AnimationSet<PlayerAnimationId> playerAnimationSet = new AnimationSet<>();
+        playerAnimationSet.addAnimation(playerIdleAnimation, PlayerAnimationId.IDLE);
+        MultiAnimationComponent<PlayerAnimationId> playerAnimations = new MultiAnimationComponent<>();
+        scene.addComponent(player, playerAnimations);
+        playerAnimations.add(playerAnimationSet);
 
         CircleShape circle = new CircleShape();
         circle.setRadius(playerSize);
@@ -135,7 +151,7 @@ public class LevelBuilder
         Filter contactFilter = new Filter();
         contactFilter.categoryBits = FixtureCategory.LIGHT;
         contactFilter.maskBits = (short)(FixtureCategory.OBSTACLE | FixtureCategory.WALL);
-        Light playerLight = scene.createPointLightComponent(player, 64, new Color(1f, 0.6f, 0.1f, 0.8f), playerSize * 32, false);
+        Light playerLight = scene.createPointLightComponent(player, 128, new Color(1f, 0.6f, 0.1f, 0.8f), playerSize * 32, false);
         playerLight.setContactFilter(contactFilter);
 
         //player attack box
@@ -156,11 +172,14 @@ public class LevelBuilder
         OrthographicCamera camera = new OrthographicCamera((float) Gdx.graphics.getWidth()/Gdx.graphics.getHeight() * cameraHeight, cameraHeight);
         scene.addComponent(cameraEntity, new CameraComponent(camera));
         BoundingComponent bounds = new BoundingComponent(0,0,scene.getTileMap().width(), scene.getTileMap().height(), camera.viewportWidth, cameraHeight);
-        bounds.lerp = 0.1f;
+        bounds.lerp = 12f;
+        bounds.insideTolerance = 1f;
+        bounds.useLerp = false;
+        bounds.speed = 16;
         scene.addComponent(cameraEntity, bounds);
         scene.setActiveCamera(cameraEntity);
         scene.addComponent(cameraEntity, new FollowComponent(player, 8f));
-        CameraScript cameraScript = new CameraScript();
+        CameraScript cameraScript = new CameraScript(player);
         scene.addComponent(cameraEntity, new ScriptComponent(cameraScript));
         Engine.eventBus.subscribe(cameraScript, EnterRoomEvent.class);
         scene.createPointLightComponent(cameraEntity, 64, new Color(0.3f,0.3f,0.6f,1f), camera.viewportWidth, true);
@@ -181,10 +200,10 @@ public class LevelBuilder
         int box1 = scene.createEntity();
         scene.createBodyComponent(box1, bodyDef);
         scene.createFixture(box1, fixtureDef);
-        Sprite boxSprite = new Sprite( (Texture) engine.getAssetManager().get("box.png"));
+        Sprite boxSprite = atlas.createSprite("box");
         boxSprite.setSize(1,1);
         boxSprite.setOriginCenter();
-        SpriteComponent boxSpriteComponent = new SpriteComponent();
+        MultiSpriteComponent boxSpriteComponent = new MultiSpriteComponent();
         boxSpriteComponent.add(boxSprite, false);
         scene.addComponent(box1, boxSpriteComponent);
 
@@ -204,11 +223,11 @@ public class LevelBuilder
 
         scene.createBodyComponent(enemy1, bodyDef);
         scene.createFixture(enemy1, fixtureDef);
-        Sprite enemySprite = new Sprite( (Texture) engine.getAssetManager().get("enemy.png"));
+        Sprite enemySprite = atlas.createSprite("enemy");
         enemySprite.setSize(0.6f,0.6f);
         enemySprite.setOriginCenter();
         scene.addComponent(enemy1, new HealthComponent(50, 50));
-        SpriteComponent enemySpriteComponent = new SpriteComponent();
+        MultiSpriteComponent enemySpriteComponent = new MultiSpriteComponent();
         enemySpriteComponent.sprites.add(enemySprite);
         scene.addComponent(enemy1, enemySpriteComponent);
         scene.addComponent(enemy1, new ScriptComponent(new EnemyScript(player)));

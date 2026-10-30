@@ -1,7 +1,9 @@
 package net.dp.rpg.game;
 
+import com.badlogic.gdx.assets.loaders.ParticleEffectLoader;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.ParticleEffect;
+import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import net.dp.rpg.engine.AbstractGame;
 import net.dp.rpg.engine.Engine;
@@ -15,13 +17,14 @@ public class Game extends AbstractGame
     @Override
     public void create()
     {
-        getEngine().getAssetManager().load("player.png", Texture.class);
-        getEngine().getAssetManager().load("enemy.png", Texture.class);
-        getEngine().getAssetManager().load("box.png", Texture.class);
-        getEngine().getAssetManager().load("attack.png", Texture.class);
+        String atlasFile = "atlases/textures.atlas";
+        getEngine().getAssetManager().load(atlasFile, TextureAtlas.class);
         getEngine().getAssetManager().load("skins/default/default.json", Skin.class);
-        getEngine().getAssetManager().load("particles/buttonDust.p", ParticleEffect.class);
-        getEngine().getAssetManager().load("particles/menuDust.p", ParticleEffect.class);
+
+        ParticleEffectLoader.ParticleEffectParameter param = new ParticleEffectLoader.ParticleEffectParameter();
+        param.atlasFile = atlasFile;
+        getEngine().getAssetManager().load("particles/button_dust.p", ParticleEffect.class, param);
+        getEngine().getAssetManager().load("particles/menu_dust.p", ParticleEffect.class, param);
 
         Engine.poolManager.addPool(HealthChangeEvent.class, HealthChangeEvent::new);
         Engine.poolManager.addPool(EnterRoomEvent.class, EnterRoomEvent::new);
@@ -42,6 +45,6 @@ public class Game extends AbstractGame
 
         getEngine().setGlobalScript(new GlobalScript());
 
-        //getEngine().setPhysicsDebug(true);
+        getEngine().setPhysicsDebug(true);
     }
 }

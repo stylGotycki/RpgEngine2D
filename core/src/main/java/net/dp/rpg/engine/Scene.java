@@ -1,6 +1,5 @@
 package net.dp.rpg.engine;
 
-import box2dLight.Light;
 import box2dLight.PointLight;
 import box2dLight.RayHandler;
 import com.badlogic.gdx.Gdx;
@@ -11,6 +10,7 @@ import com.badlogic.gdx.physics.box2d.*;
 import lombok.Getter;
 import net.dp.rpg.engine.components.*;
 import net.dp.rpg.engine.components.Component;
+import net.dp.rpg.engine.systems.AnimationSystem;
 import net.dp.rpg.engine.systems.CollisionDispatcher;
 import net.dp.rpg.engine.systems.MovementSystem;
 import net.dp.rpg.engine.systems.TileConverter;
@@ -52,6 +52,7 @@ public class Scene
     private final EngineInputAdapter inputAdapter;
 
     private final MovementSystem movementSystem = new MovementSystem();
+    private final AnimationSystem animationSystem = new AnimationSystem();
     private final TileConverter tileConverter = new TileConverter();
 
     @Getter
@@ -67,13 +68,15 @@ public class Scene
         componentStorages.add(new ComponentStorage<>(MoveComponent.class));
         componentStorages.add(new ComponentStorage<>(TransformComponent.class));
         componentStorages.add(new ComponentStorage<>(PhysicalBodyComponent.class));
-        componentStorages.add(new ComponentStorage<>(SpriteComponent.class));
+        componentStorages.add(new ComponentStorage<>(MultiSpriteComponent.class));
         componentStorages.add(new ComponentStorage<>(ScriptComponent.class));
         componentStorages.add(new ComponentStorage<>(CameraComponent.class));
         componentStorages.add(new ComponentStorage<>(FollowComponent.class));
         componentStorages.add(new ComponentStorage<>(BoundingComponent.class));
         componentStorages.add(new ComponentStorage<>(HealthComponent.class));
         componentStorages.add(new ComponentStorage<>(LightComponent.class));
+        componentStorages.add(new ComponentStorage<>(MultiAnimationComponent.class));
+        componentStorages.add(new ComponentStorage<>(SpriteComponent.class));
 
         RayHandler.useDiffuseLight(true);
     }
@@ -87,13 +90,17 @@ public class Scene
             if(scriptComp.script instanceof InputListener)
                 inputAdapter.addListener((InputListener) scriptComp.script);
         }
-        else if ((component instanceof SpriteComponent
+        else if ((component instanceof MultiSpriteComponent
             || component instanceof PhysicalBodyComponent
             || component instanceof CameraComponent
             || component instanceof LightComponent)
             && !getComponentStorage(TransformComponent.class).hasComponent(entity))
         {
             addComponent(entity, new TransformComponent(new Vector2(0,0), 0, 1));
+        }
+        else if(component instanceof MultiAnimationComponent && !getComponentStorage(MultiSpriteComponent.class).hasComponent(entity))
+        {
+            addComponent(entity, new MultiSpriteComponent());
         }
     }
 
@@ -132,6 +139,7 @@ public class Scene
         }
         addComponent(entity, new LightComponent(light));
         light.setXray(xRay);
+        light.setSoftnessLength(4f);
         return light;
     }
 
@@ -256,9 +264,11 @@ public class Scene
         movementSystem.bodyToTransform(getComponentStorage(PhysicalBodyComponent.class), getComponentStorage(TransformComponent.class));
         movementSystem.follow(getComponentStorage(FollowComponent.class), getComponentStorage(TransformComponent.class), getComponentStorage(BoundingComponent.class), delta);
         movementSystem.boundPositions(getComponentStorage(BoundingComponent.class), getComponentStorage(TransformComponent.class), delta);
-        movementSystem.transformToSprite(getComponentStorage(TransformComponent.class), getComponentStorage(SpriteComponent.class));
+        movementSystem.transformToSprite(getComponentStorage(TransformComponent.class), getComponentStorage(MultiSpriteComponent.class), getComponentStorage(SpriteComponent.class));
         movementSystem.transformToCamera(getComponentStorage(TransformComponent.class), getComponentStorage(CameraComponent.class));
         movementSystem.transformToLight(getComponentStorage(TransformComponent.class), getComponentStorage(LightComponent.class));
+
+        animationSystem.updateSprites(getComponentStorage(MultiSpriteComponent.class), getComponentStorage(MultiAnimationComponent.class), delta);
 
         gui.update(delta);
 

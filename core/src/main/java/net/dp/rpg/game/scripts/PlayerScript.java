@@ -80,7 +80,7 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
                 remainingAttackFade = 0;
                 stopAttack();
             }
-            getComponent(SpriteComponent.class).sprites.get(1).setAlpha(remainingAttackFade/attackFadeTime);
+            getComponent(MultiSpriteComponent.class).sprites.get(1).setAlpha(remainingAttackFade/attackFadeTime);
         }
 
         if(roomEntered != null)
@@ -233,7 +233,7 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
         attackFixture.getFilterData().maskBits = (short)0xFFFF;
         isAttacking = true;
         remainingAttackFade = attackFadeTime;
-        Sprite sprite = getComponent(SpriteComponent.class).sprites.get(1);
+        Sprite sprite = getComponent(MultiSpriteComponent.class).sprites.get(1);
         sprite.setAlpha(1);
         sprite.setOriginCenter();
         sprite.setOrigin(sprite.getOriginX(), sprite.getOriginY() - 1);

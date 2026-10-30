@@ -8,7 +8,7 @@ import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.ScreenUtils;
 import net.dp.rpg.engine.Scene;
 import net.dp.rpg.engine.components.ComponentStorage;
-import net.dp.rpg.engine.components.SpriteComponent;
+import net.dp.rpg.engine.components.MultiSpriteComponent;
 import net.dp.rpg.engine.tile.TileSystem;
 import net.dp.rpg.engine.tile.render.TileMapRenderer;
 
@@ -58,7 +58,7 @@ public class RenderSystem
         batch.setTransformMatrix(transformMatrix);
         batch.setProjectionMatrix(projMatrix);
         batch.begin();
-        ComponentStorage<SpriteComponent> spriteStorage = scene.getComponentStorage(SpriteComponent.class);
+        ComponentStorage<MultiSpriteComponent> spriteStorage = scene.getComponentStorage(MultiSpriteComponent.class);
 
         int size = spriteStorage.size();
 

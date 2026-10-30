@@ -5,7 +5,6 @@ import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
-import com.badlogic.gdx.physics.box2d.Fixture;
 import com.badlogic.gdx.utils.Array;
 import net.dp.rpg.engine.components.*;
 
@@ -38,7 +37,10 @@ public class MovementSystem
             if(transformComponents.hasComponent(following))
             {
                 Vector2 position = transformComponents.getByEntity(following).position;
-                Vector2 targetPosition = transformComponents.getByEntity(target).position;
+                TransformComponent targetTransform = transformComponents.getByEntity(target);
+                if(targetTransform == null)
+                    continue;
+                Vector2 targetPosition = targetTransform.position;
                 tempTargetPos.set(targetPosition);
                 if(bounds.hasComponent(following))
                 {
@@ -63,9 +65,16 @@ public class MovementSystem
                 Vector2 position = transforms.getByEntity(entity).position;
                 tempTargetPos.x = MathUtils.clamp(position.x, bound.minX, bound.maxX);
                 tempTargetPos.y = MathUtils.clamp(position.y, bound.minY, bound.maxY);
+                bound.isInside = position.epsilonEquals(tempTargetPos, bound.insideTolerance);
                 if(bound.smoothCorrection)
                 {
-                    lerp(position, bound.lerp, delta, tempTargetPos);
+                    if(bound.useLerp)
+                        lerp(position, bound.lerp, delta, tempTargetPos);
+                    else
+                    {
+                        position.x += (tempTargetPos.x - position.x) * delta * bound.speed;
+                        position.y += (tempTargetPos.y - position.y) * delta * bound.speed;
+                    }
                 }
                 else
                 {
@@ -113,15 +122,15 @@ public class MovementSystem
         }
     }
 
-    public void transformToSprite(ComponentStorage<TransformComponent> transforms, ComponentStorage<SpriteComponent> spriteComponents)
+    public void transformToSprite(ComponentStorage<TransformComponent> transforms, ComponentStorage<MultiSpriteComponent> multiSpriteComponents, ComponentStorage<SpriteComponent> spriteComponents)
     {
-        int sSize = spriteComponents.size();
+        int sSize = multiSpriteComponents.size();
         for(int i = 0; i < sSize; i++)
         {
-            int entity = spriteComponents.getEntity(i);
+            int entity = multiSpriteComponents.getEntity(i);
             if(transforms.hasComponent(entity))
             {
-                SpriteComponent spriteComponent = spriteComponents.getByIndex(i);
+                MultiSpriteComponent spriteComponent = multiSpriteComponents.getByIndex(i);
                 for(int j = 0; j < spriteComponent.sprites.size; j++)
                 {
                     Array<Sprite> sprites = spriteComponent.sprites;
@@ -130,6 +139,20 @@ public class MovementSystem
                     if(!(spriteComponent.fixedRotation.size > j && spriteComponent.fixedRotation.get(j)))
                         sprites.get(j).setRotation(transform.rotation * MathUtils.radDeg);
                 }
+            }
+        }
+
+        sSize = spriteComponents.size();
+        for(int i = 0; i < sSize; i++)
+        {
+            int entity = spriteComponents.getEntity(i);
+            if(transforms.hasComponent(entity))
+            {
+                SpriteComponent spriteComponent = spriteComponents.getByIndex(i);
+                TransformComponent transform = transforms.getByEntity(entity);
+                spriteComponent.sprite.setOriginBasedPosition(transform.position.x, transform.position.y);
+                if(!(spriteComponent.fixedRotation))
+                    spriteComponent.sprite.setRotation(transform.rotation * MathUtils.radDeg);
             }
         }
     }
