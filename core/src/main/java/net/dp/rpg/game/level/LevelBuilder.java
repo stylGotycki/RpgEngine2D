@@ -22,6 +22,7 @@ import net.dp.rpg.engine.tile.room.RoomGeometry;
 import net.dp.rpg.game.FixtureCategory;
 import net.dp.rpg.game.TileFloor;
 import net.dp.rpg.game.TileRoom;
+import net.dp.rpg.game.animations.EnemyAnimationId;
 import net.dp.rpg.game.animations.PlayerAnimationId;
 import net.dp.rpg.game.events.EnterRoomEvent;
 import net.dp.rpg.game.level.gui.LevelGui;
@@ -95,7 +96,7 @@ public class LevelBuilder
         //create player entity
         float playerSize = 0.4f;
         int player = scene.createEntity();
-        Sprite playerSprite = atlas.createSprite("player");
+        Sprite playerSprite = new Sprite();
         Sprite attackSprite = atlas.createSprite("attack");
         playerSprite.setSize(1f,1f);
         playerSprite.setOriginCenter();
@@ -105,7 +106,7 @@ public class LevelBuilder
         attackSprite.setAlpha(0);
 
         MultiSpriteComponent playerSpriteComponent = new MultiSpriteComponent();
-        playerSpriteComponent.add(playerSprite, false);
+        playerSpriteComponent.add(playerSprite, true);
         playerSpriteComponent.add(attackSprite, true);
         scene.addComponent(player, playerSpriteComponent);
 
@@ -113,9 +114,9 @@ public class LevelBuilder
         Animation<TextureRegion> playerIdleAnimation = new Animation<>(1, atlas.findRegions("player/idle"), Animation.PlayMode.LOOP);
         AnimationSet<PlayerAnimationId> playerAnimationSet = new AnimationSet<>();
         playerAnimationSet.addAnimation(playerIdleAnimation, PlayerAnimationId.IDLE);
-        MultiAnimationComponent<PlayerAnimationId> playerAnimations = new MultiAnimationComponent<>();
-        scene.addComponent(player, playerAnimations);
+        MultiAnimationComponent playerAnimations = new MultiAnimationComponent();
         playerAnimations.add(playerAnimationSet);
+        scene.addComponent(player, playerAnimations);
 
         CircleShape circle = new CircleShape();
         circle.setRadius(playerSize);
@@ -220,15 +221,18 @@ public class LevelBuilder
 
         scene.createBodyComponent(enemy1, bodyDef);
         scene.createFixture(enemy1, fixtureDef);
-        Sprite enemySprite = atlas.createSprite("enemy");
-        enemySprite.setSize(0.6f,0.6f);
+        Sprite enemySprite = new Sprite();
+        enemySprite.setSize(1f,1f);
         enemySprite.setOriginCenter();
         scene.addComponent(enemy1, new HealthComponent(50, 50));
-        MultiSpriteComponent enemySpriteComponent = new MultiSpriteComponent();
-        enemySpriteComponent.sprites.add(enemySprite);
+        SpriteComponent enemySpriteComponent = new SpriteComponent(enemySprite, false);
         scene.addComponent(enemy1, enemySpriteComponent);
         scene.addComponent(enemy1, new ScriptComponent(new EnemyScript(player)));
         scene.getComponentStorage(TransformComponent.class).getByEntity(enemy1).setPosition(50,50);
+
+        AnimationSet<EnemyAnimationId> enemyAnimationSet = new AnimationSet<>();
+        enemyAnimationSet.addAnimation(new Animation<>(0.1f, atlas.findRegions("enemy/walk"), Animation.PlayMode.LOOP), EnemyAnimationId.WALK);
+        scene.addComponent(enemy1, new AnimationComponent(enemyAnimationSet));
 
         circle.dispose();
         polygon.dispose();

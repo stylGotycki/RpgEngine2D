@@ -5,6 +5,7 @@ import box2dLight.RayHandler;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.*;
 import lombok.Getter;
@@ -13,7 +14,6 @@ import net.dp.rpg.engine.components.Component;
 import net.dp.rpg.engine.systems.AnimationSystem;
 import net.dp.rpg.engine.systems.CollisionDispatcher;
 import net.dp.rpg.engine.systems.MovementSystem;
-import net.dp.rpg.engine.systems.TileConverter;
 import net.dp.rpg.engine.tile.TileMapData;
 import net.dp.rpg.engine.tile.TileSystem;
 import net.dp.rpg.engine.tile.room.RoomGeometry;
@@ -53,7 +53,6 @@ public class Scene
 
     private final MovementSystem movementSystem = new MovementSystem();
     private final AnimationSystem animationSystem = new AnimationSystem();
-    private final TileConverter tileConverter = new TileConverter();
 
     @Getter
     private final RayHandler rayHandler = new RayHandler(physicalWorld);
@@ -77,12 +76,29 @@ public class Scene
         componentStorages.add(new ComponentStorage<>(LightComponent.class));
         componentStorages.add(new ComponentStorage<>(MultiAnimationComponent.class));
         componentStorages.add(new ComponentStorage<>(SpriteComponent.class));
+        componentStorages.add(new ComponentStorage<>(AnimationComponent.class));
 
         RayHandler.useDiffuseLight(true);
     }
 
     public <T extends Component> void addComponent(int entity, T component)
     {
+        if(component instanceof MultiAnimationComponent && (getComponentStorage(AnimationComponent.class).hasComponent(entity) || getComponentStorage(SpriteComponent.class).hasComponent(entity)))
+        {
+            throw new IllegalStateException("Cannot add MultiAnimationComponent: entity already has AnimationComponent or SpriteComponent.");
+        }
+        else if(component instanceof AnimationComponent && (getComponentStorage(MultiAnimationComponent.class).hasComponent(entity) || getComponentStorage(MultiSpriteComponent.class).hasComponent(entity)))
+        {
+            throw new IllegalStateException("Cannot add AnimationComponent: entity already has MultiAnimationComponent or MultiSpriteComponent.");
+        }
+        else if(component instanceof MultiSpriteComponent && getComponentStorage(SpriteComponent.class).hasComponent(entity))
+        {
+            throw new IllegalStateException("Cannot add MultiSpriteComponent: entity already has SpriteComponent.");
+        }
+        else if(component instanceof SpriteComponent && getComponentStorage(MultiSpriteComponent.class).hasComponent(entity))
+        {
+            throw new IllegalStateException("Cannot add SpriteComponent: entity already has MultiSpriteComponent.");
+        }
         getComponentStorage((Class<T>) component.getClass()).add(entity, component);
         if (component instanceof ScriptComponent scriptComp)
         {
@@ -91,6 +107,7 @@ public class Scene
                 inputAdapter.addListener((InputListener) scriptComp.script);
         }
         else if ((component instanceof MultiSpriteComponent
+            || component instanceof SpriteComponent
             || component instanceof PhysicalBodyComponent
             || component instanceof CameraComponent
             || component instanceof LightComponent)
@@ -98,9 +115,19 @@ public class Scene
         {
             addComponent(entity, new TransformComponent(new Vector2(0,0), 0, 1));
         }
-        else if(component instanceof MultiAnimationComponent && !getComponentStorage(MultiSpriteComponent.class).hasComponent(entity))
+        else if(component instanceof MultiAnimationComponent animationComponent && !getComponentStorage(MultiSpriteComponent.class).hasComponent(entity))
         {
-            addComponent(entity, new MultiSpriteComponent());
+            MultiSpriteComponent spriteComponent = new MultiSpriteComponent();
+            spriteComponent.add(new Sprite(), false);
+            if(animationComponent.animationSets.size > 0)
+                spriteComponent.sprites.get(0).setRegion(animationComponent.animationSets.get(0).getKeyFrame(0));
+            addComponent(entity, spriteComponent);
+        }
+        else if(component instanceof AnimationComponent animationComponent && !getComponentStorage(SpriteComponent.class).hasComponent(entity))
+        {
+            SpriteComponent spriteComponent = new SpriteComponent(new Sprite(), false);
+            spriteComponent.sprite.setRegion(animationComponent.animationSet.getKeyFrame(0));
+            addComponent(entity, spriteComponent);
         }
     }
 
@@ -114,7 +141,7 @@ public class Scene
     }
 
     /**
-     * creates Body using parameters set in PhysicalBodyCreator and adds it as Component
+     * creates Body using parameters set in bodyDef and adds it as Component
      */
     public Body createBodyComponent(int entity, BodyDef bodyDef)
     {
@@ -253,7 +280,8 @@ public class Scene
         movementSystem.transformToCamera(getComponentStorage(TransformComponent.class), getComponentStorage(CameraComponent.class));
         movementSystem.transformToLight(getComponentStorage(TransformComponent.class), getComponentStorage(LightComponent.class));
 
-        animationSystem.updateSprites(getComponentStorage(MultiSpriteComponent.class), getComponentStorage(MultiAnimationComponent.class), delta);
+        animationSystem.updateAnimations(getComponentStorage(SpriteComponent.class), getComponentStorage(AnimationComponent.class), delta);
+        animationSystem.updateMultiAnimations(getComponentStorage(MultiSpriteComponent.class), getComponentStorage(MultiAnimationComponent.class), delta);
 
         gui.update(delta);
 

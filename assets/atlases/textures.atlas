@@ -1,6 +1,6 @@
 
 textures.png
-size: 256, 128
+size: 256, 64
 format: RGBA8888
 filter: Nearest, Nearest
 repeat: none
@@ -18,51 +18,51 @@ box
   orig: 32, 32
   offset: 0, 0
   index: -1
-enemy
+enemy/walk
   rotate: false
-  xy: 2, 54
-  size: 64, 64
-  orig: 64, 64
+  xy: 172, 20
+  size: 32, 32
+  orig: 32, 32
   offset: 0, 0
-  index: -1
+  index: 1
+enemy/walk
+  rotate: false
+  xy: 206, 20
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: 2
 pixel_particle
   rotate: false
-  xy: 36, 51
+  xy: 240, 51
   size: 1, 1
   orig: 1, 1
   offset: 0, 0
   index: -1
-player
-  rotate: false
-  xy: 204, 86
-  size: 32, 32
-  orig: 32, 32
-  offset: 0, 0
-  index: -1
 player/idle
   rotate: false
-  xy: 68, 86
+  xy: 36, 20
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
   index: 1
 player/idle
   rotate: false
-  xy: 102, 86
+  xy: 70, 20
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
   index: 2
 player/idle
   rotate: false
-  xy: 136, 86
+  xy: 104, 20
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
   index: 3
 player/idle
   rotate: false
-  xy: 170, 86
+  xy: 138, 20
   size: 32, 32
   orig: 32, 32
   offset: 0, 0

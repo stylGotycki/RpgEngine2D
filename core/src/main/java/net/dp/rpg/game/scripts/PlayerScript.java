@@ -67,7 +67,11 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
             tempVector2.y -= 1;
         }
 
-        tempVector2.setLength(1);
+        if(!tempVector2.isZero())
+        {
+            tempVector2.setLength(1);
+            rotateSprite(tempVector2);
+        }
 
         Body playerBody = getComponent(PhysicalBodyComponent.class).body;
         playerBody.applyForce(tempVector2.scl(speed), playerBody.getPosition(), true);
@@ -246,12 +250,6 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
         }
     }
 
-    private void stopAttack()
-    {
-        attackFixture.getFilterData().maskBits = 0;
-        isAttacking = false;
-    }
-
     @Override
     public void onEvent(GameEvent event)
     {
@@ -263,5 +261,18 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
             Engine.eventBus.publish(pointsAvailableEvent);
             Engine.poolManager.free(pointsAvailableEvent);
         }
+    }
+
+    private void stopAttack()
+    {
+        attackFixture.getFilterData().maskBits = 0;
+        isAttacking = false;
+    }
+
+    private void rotateSprite(Vector2 vector)
+    {
+        Sprite playerSprite = getComponent(MultiSpriteComponent.class).sprites.get(0);
+        float degrees = vector.angleDeg();
+        playerSprite.setRotation(degrees);
     }
 }
