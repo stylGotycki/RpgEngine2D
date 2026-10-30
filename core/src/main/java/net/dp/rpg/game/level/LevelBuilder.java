@@ -207,9 +207,6 @@ public class LevelBuilder
         boxSpriteComponent.add(boxSprite, false);
         scene.addComponent(box1, boxSpriteComponent);
 
-        int box2 = scene.cloneEntity(box1);
-        scene.getComponentStorage(TransformComponent.class).getByEntity(box2).setPosition(100,80);
-
         //enemies
         int enemy1 = scene.createEntity();
         bodyDef.position.x = 100;

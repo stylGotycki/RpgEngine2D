@@ -12,10 +12,4 @@ public class SpriteComponent implements Component
         this.sprite = sprite;
         this.fixedRotation = fixedRotation;
     }
-
-    @Override
-    public Component copy()
-    {
-        return new SpriteComponent(new Sprite(sprite), fixedRotation);
-    }
 }

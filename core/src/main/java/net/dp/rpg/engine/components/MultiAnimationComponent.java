@@ -12,10 +12,4 @@ public class MultiAnimationComponent<T extends AnimationId> implements Component
     {
         animationSets.add(animationSet);
     }
-
-    @Override
-    public Component copy()
-    {
-        return null;
-    }
 }

@@ -10,11 +10,4 @@ public class LightComponent implements Component
     {
         this.light = light;
     }
-
-    @Override
-    public Component copy()
-    {
-        //todo
-        return null;
-    }
 }

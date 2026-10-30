@@ -11,12 +11,6 @@ public class HealthComponent implements Component
         this.maxHealth = maxHealth;
     }
 
-    @Override
-    public Component copy()
-    {
-        return new HealthComponent(health, maxHealth);
-    }
-
     public void addHealth(float value)
     {
         health += value;

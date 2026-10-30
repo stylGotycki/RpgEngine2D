@@ -10,10 +10,4 @@ public class MoveComponent implements Component
     {
         this.velocity = velocity;
     }
-
-    @Override
-    public Component copy()
-    {
-        return new MoveComponent(velocity);
-    }
 }

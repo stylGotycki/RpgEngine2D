@@ -47,10 +47,4 @@ public class BoundingComponent implements Component
     {
         set(minX + objectWidth/2, minY + objectHeight/2, maxX - objectWidth/2, maxY - objectHeight/2);
     }
-
-    @Override
-    public Component copy()
-    {
-        return new BoundingComponent(minX, minY, maxX, maxY);
-    }
 }

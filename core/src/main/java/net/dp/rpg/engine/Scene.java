@@ -167,21 +167,6 @@ public class Scene
         return nextEntity++;
     }
 
-    public int cloneEntity(int entity)
-    {
-        if(entity < nextEntity && freeEntity.contains(entity))
-            throw new IllegalArgumentException("Entity " + entity + " does not exist.");
-        int newEntity = createEntity();
-        for(ComponentStorage<? extends Component> storage : componentStorages)
-        {
-            if(storage.hasComponent(entity))
-            {
-                addComponent(newEntity, storage.getByEntity(entity).copy());
-            }
-        }
-        return newEntity;
-    }
-
     public void setToDelete(int entityId)
     {
         toDeleteEntities.add(entityId);

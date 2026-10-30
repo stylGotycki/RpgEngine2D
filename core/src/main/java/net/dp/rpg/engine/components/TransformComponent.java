@@ -40,10 +40,4 @@ public class TransformComponent implements Component
         this.rotation = rotation;
         changed = true;
     }
-
-    @Override
-    public Component copy()
-    {
-        return new TransformComponent(new Vector2(position.x, position.y), rotation, scale);
-    }
 }

@@ -13,15 +13,4 @@ public class MultiSpriteComponent implements Component
         sprites.add(sprite);
         this.fixedRotation.add(fixedRotation);
     }
-
-    @Override
-    public Component copy()
-    {
-        MultiSpriteComponent newComponent = new MultiSpriteComponent();
-        for(Sprite sprite : sprites)
-        {
-            newComponent.sprites.add(new Sprite(sprite));
-        }
-        return newComponent;
-    }
 }
