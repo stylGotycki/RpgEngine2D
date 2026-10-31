@@ -14,6 +14,8 @@ import net.dp.rpg.engine.components.Component;
 import net.dp.rpg.engine.systems.AnimationSystem;
 import net.dp.rpg.engine.systems.CollisionDispatcher;
 import net.dp.rpg.engine.systems.MovementSystem;
+import net.dp.rpg.engine.systems.input.EngineInputAdapter;
+import net.dp.rpg.engine.systems.input.InputListener;
 import net.dp.rpg.engine.tile.TileMapData;
 import net.dp.rpg.engine.tile.TileSystem;
 import net.dp.rpg.engine.tile.room.RoomGeometry;

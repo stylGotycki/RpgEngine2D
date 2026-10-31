@@ -1,7 +1,7 @@
 package net.dp.rpg.game.menu;
 
 import com.badlogic.gdx.Input;
-import net.dp.rpg.engine.InputListener;
+import net.dp.rpg.engine.systems.input.InputListener;
 import net.dp.rpg.engine.SceneScript;
 
 public class MenuScript extends SceneScript implements InputListener

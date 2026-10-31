@@ -11,13 +11,15 @@ import lombok.Getter;
 import lombok.Setter;
 import net.dp.rpg.engine.systems.RenderSystem;
 import net.dp.rpg.engine.systems.gameEvent.GameEventBus;
+import net.dp.rpg.engine.systems.input.EngineInputAdapter;
+import net.dp.rpg.engine.systems.input.InputListener;
 import net.dp.rpg.game.Game;
 
 /** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
 public class Engine extends ApplicationAdapter implements EngineServices
 {
-    public static final GameEventBus eventBus = new GameEventBus();
     public static final PoolManager poolManager = new PoolManager();
+    public static final GameEventBus eventBus = new GameEventBus(poolManager);
 
     private RenderSystem renderSystem;
 

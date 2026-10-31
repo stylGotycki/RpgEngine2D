@@ -31,11 +31,11 @@ public class SkillField extends ImageButton
             public void changed(ChangeEvent event, Actor actor)
             {
                 actor.setTouchable(Touchable.disabled);
-                SkillPointUsedEvent skillPointEvent = Engine.poolManager.obtain(SkillPointUsedEvent.class);
-                skillPointEvent.level = skillLevel;
-                skillPointEvent.skillType = skillType;
-                Engine.eventBus.publish(skillPointEvent);
-                Engine.poolManager.free(skillPointEvent);
+                Engine.eventBus.publish(SkillPointUsedEvent.class, e ->
+                {
+                    e.level = skillLevel;
+                    e.skillType = skillType;
+                });
             }
         });
     }

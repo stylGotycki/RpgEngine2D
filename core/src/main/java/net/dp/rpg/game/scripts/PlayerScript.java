@@ -4,6 +4,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.Fixture;
 import com.badlogic.gdx.physics.box2d.PolygonShape;
@@ -11,9 +12,11 @@ import net.dp.rpg.engine.*;
 import net.dp.rpg.engine.components.*;
 import net.dp.rpg.engine.systems.gameEvent.GameEvent;
 import net.dp.rpg.engine.systems.gameEvent.GameEventListener;
+import net.dp.rpg.engine.systems.input.InputListener;
 import net.dp.rpg.engine.tile.room.Direction;
 import net.dp.rpg.game.FixtureCategory;
 import net.dp.rpg.game.TileRoom;
+import net.dp.rpg.game.animations.PlayerAnimationId;
 import net.dp.rpg.game.events.*;
 import net.dp.rpg.game.menu.MenuBuilder;
 
@@ -26,10 +29,13 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
     private boolean isSkillWindowOpen = false;
 
     private final Vector2 tempVector2 = new Vector2();
+    private final Vector3 tempVector3 = new Vector3();
+
     private final Vector2 attackOffset = new Vector2();
     private final float attackFadeTime = 0.2f;
     private float remainingAttackFade = 0;
     boolean isAttacking = false;
+    boolean isWalking = false;
     TileRoom roomEntered = null;
     TileRoom currentRoom = null;
     DoorScript doorReached = null;
@@ -71,6 +77,21 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
         {
             tempVector2.setLength(1);
             rotateSprite(tempVector2);
+            if(!isWalking)
+            {
+                getComponent(MultiAnimationComponent.class).animationSets.get(0).play(PlayerAnimationId.WALK);
+                if(isSkillWindowOpen)
+                {
+                    isSkillWindowOpen = false;
+                    Engine.eventBus.publish(SkillWindowToggleEvent.class, e -> e.show = false);
+                }
+                isWalking = true;
+            }
+        }
+        else if(isWalking)
+        {
+            getComponent(MultiAnimationComponent.class).animationSets.get(0).play(PlayerAnimationId.IDLE);
+            isWalking = false;
         }
 
         Body playerBody = getComponent(PhysicalBodyComponent.class).body;
@@ -89,10 +110,7 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
 
         if(roomEntered != null)
         {
-            EnterRoomEvent event = Engine.poolManager.obtain(EnterRoomEvent.class);
-            event.room = roomEntered;
-            Engine.eventBus.publish(event);
-            Engine.poolManager.free(event);
+            Engine.eventBus.publish(EnterRoomEvent.class, e -> e.room = roomEntered);
             currentRoom = roomEntered;
             roomEntered = null;
         }
@@ -105,10 +123,7 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
         {
             HealthComponent health = getComponent(HealthComponent.class);
             health.dealDamage(20);
-            HealthChangeEvent event = Engine.poolManager.obtain(HealthChangeEvent.class);
-            event.currentHealth = health.health;
-            Engine.eventBus.publish(event);
-            Engine.poolManager.free(event);
+            Engine.eventBus.publish(HealthChangeEvent.class, e -> e.currentHealth = health.health);
             Body body = getComponent(PhysicalBodyComponent.class).body;
             Vector2 otherPosition = getScene().getComponentStorage(TransformComponent.class).getByEntity(otherEntity).position;
             Vector2 push = tempVector2.set(body.getPosition()).sub(otherPosition).scl(24);
@@ -194,13 +209,17 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
             if(doorReached != null)
                 doorReached.open();
         }
-        else if(keycode == Input.Keys.X)
+        else if(keycode == Input.Keys.X && !isWalking)
         {
-            SkillWindowToggleEvent event = Engine.poolManager.obtain(SkillWindowToggleEvent.class);
-            event.show = !isSkillWindowOpen;
+            tempVector3.set(getComponent(TransformComponent.class).position, 0);
+            getScene().getActiveCamera().project(tempVector3);
+            Engine.eventBus.publish(SkillWindowToggleEvent.class, e ->
+            {
+                e.show = !isSkillWindowOpen;
+                e.xPos = tempVector3.x;
+                e.yPos = tempVector3.y;
+            });
             isSkillWindowOpen = !isSkillWindowOpen;
-            Engine.eventBus.publish(event);
-            Engine.poolManager.free(event);
         }
         else if(keycode == Input.Keys.Z)
         {
@@ -220,10 +239,7 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
     public void addSkillPoint()
     {
         availableSkillPoints++;
-        SkillPointsAvailableEvent event = Engine.poolManager.obtain(SkillPointsAvailableEvent.class);
-        event.skillPoints = availableSkillPoints;
-        Engine.eventBus.publish(event);
-        Engine.poolManager.free(event);
+        Engine.eventBus.publish(SkillPointsAvailableEvent.class, e -> e.skillPoints = availableSkillPoints);
     }
 
     private void attack(Direction direction)
@@ -258,7 +274,7 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
             availableSkillPoints--;
             SkillPointsAvailableEvent pointsAvailableEvent = Engine.poolManager.obtain(SkillPointsAvailableEvent.class);
             pointsAvailableEvent.skillPoints = availableSkillPoints;
-            Engine.eventBus.publish(pointsAvailableEvent);
+            Engine.eventBus.publish(SkillPointsAvailableEvent.class, e -> e.skillPoints = availableSkillPoints);
             Engine.poolManager.free(pointsAvailableEvent);
         }
     }

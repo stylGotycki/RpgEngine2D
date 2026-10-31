@@ -111,9 +111,13 @@ public class LevelBuilder
         scene.addComponent(player, playerSpriteComponent);
 
         //player animation
-        Animation<TextureRegion> playerIdleAnimation = new Animation<>(1, atlas.findRegions("player/idle"), Animation.PlayMode.LOOP);
         AnimationSet<PlayerAnimationId> playerAnimationSet = new AnimationSet<>();
+
+        Animation<TextureRegion> playerIdleAnimation = new Animation<>(1, atlas.findRegions("player/idle"), Animation.PlayMode.LOOP);
         playerAnimationSet.addAnimation(playerIdleAnimation, PlayerAnimationId.IDLE);
+        Animation<TextureRegion> playerWalkAnimation = new Animation<>(0.1f, atlas.findRegions("player/walk"), Animation.PlayMode.LOOP);
+        playerAnimationSet.addAnimation(playerWalkAnimation, PlayerAnimationId.WALK);
+
         MultiAnimationComponent playerAnimations = new MultiAnimationComponent();
         playerAnimations.add(playerAnimationSet);
         scene.addComponent(player, playerAnimations);
@@ -241,10 +245,7 @@ public class LevelBuilder
         LevelGui levelGui = new LevelGui(engine, scene, player);
 
         //inform about first room
-        EnterRoomEvent roomEvent = Engine.poolManager.obtain(EnterRoomEvent.class);
-        roomEvent.room = floor.getActiveRoom();
-        Engine.eventBus.publish(roomEvent);
-        Engine.poolManager.free(roomEvent);
+        Engine.eventBus.publish(EnterRoomEvent.class, e -> e.room = floor.getActiveRoom());
 
         //scene.setAmbientLight(new Color(0.2f,0.2f,0.3f,0.4f)); // ambient light color when no camera light
         scene.setAmbientLight(new Color(0,0,0,0));

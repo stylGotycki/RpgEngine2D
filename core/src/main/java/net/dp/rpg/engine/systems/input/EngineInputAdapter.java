@@ -1,4 +1,4 @@
-package net.dp.rpg.engine;
+package net.dp.rpg.engine.systems.input;
 
 import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.utils.Array;

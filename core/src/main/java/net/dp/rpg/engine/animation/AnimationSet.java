@@ -20,7 +20,7 @@ public class AnimationSet<T extends AnimationId>
         return null;
     }
 
-    public void play(T animationId)
+    public <T extends AnimationId> void play(T animationId)
     {
         currentTime = 0;
         if(animationMap.containsKey(animationId))
