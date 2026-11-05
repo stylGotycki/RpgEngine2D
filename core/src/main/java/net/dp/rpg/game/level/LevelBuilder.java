@@ -22,13 +22,12 @@ import net.dp.rpg.engine.tile.room.RoomGeometry;
 import net.dp.rpg.game.FixtureCategory;
 import net.dp.rpg.game.TileFloor;
 import net.dp.rpg.game.TileRoom;
-import net.dp.rpg.game.animations.EnemyAnimationId;
 import net.dp.rpg.game.animations.PlayerAnimationId;
 import net.dp.rpg.game.events.EnterRoomEvent;
+import net.dp.rpg.game.level.entities.SpiderEntityCreator;
 import net.dp.rpg.game.level.gui.LevelGui;
 import net.dp.rpg.game.scripts.CameraScript;
 import net.dp.rpg.game.scripts.DoorScript;
-import net.dp.rpg.game.scripts.EnemyScript;
 import net.dp.rpg.game.scripts.PlayerScript;
 
 import java.util.Random;
@@ -213,30 +212,11 @@ public class LevelBuilder
         scene.addComponent(box1, boxSpriteComponent);
 
         //enemies
-        int enemy1 = scene.createEntity();
-        bodyDef.position.x = 100;
-        bodyDef.position.y = 80;
-        bodyDef.fixedRotation = true;
-        fixtureDef.friction = 0f;
-        fixtureDef.density = 1f;
-        circle.setRadius(0.3f);
-        fixtureDef.shape = circle;
-        fixtureDef.filter.categoryBits = FixtureCategory.ENEMY;
-
-        scene.createBodyComponent(enemy1, bodyDef);
-        scene.createFixture(enemy1, fixtureDef);
-        Sprite enemySprite = new Sprite();
-        enemySprite.setSize(1f,1f);
-        enemySprite.setOriginCenter();
-        scene.addComponent(enemy1, new HealthComponent(50, 50));
-        SpriteComponent enemySpriteComponent = new SpriteComponent(enemySprite, false);
-        scene.addComponent(enemy1, enemySpriteComponent);
-        scene.addComponent(enemy1, new ScriptComponent(new EnemyScript(player)));
-        scene.getComponentStorage(TransformComponent.class).getByEntity(enemy1).setPosition(50,50);
-
-        AnimationSet<EnemyAnimationId> enemyAnimationSet = new AnimationSet<>();
-        enemyAnimationSet.addAnimation(new Animation<>(0.1f, atlas.findRegions("enemy/walk"), Animation.PlayMode.LOOP), EnemyAnimationId.WALK);
-        scene.addComponent(enemy1, new AnimationComponent(enemyAnimationSet));
+        SpiderEntityCreator spiderBuilder = new SpiderEntityCreator(scene, atlas, player);
+        for(int i = 0; i < 100; i++)
+        {
+            spiderBuilder.create(45+i,60);
+        }
 
         circle.dispose();
         polygon.dispose();

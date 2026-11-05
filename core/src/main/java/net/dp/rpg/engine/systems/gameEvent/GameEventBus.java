@@ -4,7 +4,6 @@ import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.ObjectMap;
 import com.badlogic.gdx.utils.PoolManager;
 import net.dp.rpg.engine.Engine;
-import net.dp.rpg.game.events.EnterRoomEvent;
 
 import java.util.function.Consumer;
 

@@ -8,6 +8,7 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.*;
+import com.badlogic.gdx.utils.Disposable;
 import lombok.Getter;
 import net.dp.rpg.engine.components.*;
 import net.dp.rpg.engine.components.Component;
@@ -22,7 +23,7 @@ import net.dp.rpg.engine.tile.room.RoomGeometry;
 
 import java.util.ArrayList;
 
-public class Scene
+public class Scene implements Disposable
 {
     private final EngineServices engine;
     @Getter
@@ -110,12 +111,15 @@ public class Scene
         }
         else if ((component instanceof MultiSpriteComponent
             || component instanceof SpriteComponent
-            || component instanceof PhysicalBodyComponent
             || component instanceof CameraComponent
             || component instanceof LightComponent)
             && !getComponentStorage(TransformComponent.class).hasComponent(entity))
         {
             addComponent(entity, new TransformComponent(new Vector2(0,0), 0, 1));
+        }
+        else if(component instanceof PhysicalBodyComponent bodyComponent && !getComponentStorage(TransformComponent.class).hasComponent(entity))
+        {
+            addComponent(entity, new TransformComponent(new Vector2(bodyComponent.body.getPosition().x,bodyComponent.body.getPosition().y), 0, 1));
         }
         else if(component instanceof MultiAnimationComponent animationComponent && !getComponentStorage(MultiSpriteComponent.class).hasComponent(entity))
         {

@@ -3,10 +3,11 @@ package net.dp.rpg.engine;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
+import com.badlogic.gdx.utils.Disposable;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import lombok.Getter;
 
-public class Gui
+public class Gui implements Disposable
 {
     @Getter
     private final Stage stage = new Stage();

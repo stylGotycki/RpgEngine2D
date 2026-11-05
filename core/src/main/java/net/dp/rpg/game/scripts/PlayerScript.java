@@ -122,7 +122,7 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
         if((otherCategory & FixtureCategory.ENEMY) > 0 && (category & FixtureCategory.PLAYER) > 0)
         {
             HealthComponent health = getComponent(HealthComponent.class);
-            health.dealDamage(20);
+            health.dealDamage(1);
             Engine.eventBus.publish(HealthChangeEvent.class, e -> e.currentHealth = health.health);
             Body body = getComponent(PhysicalBodyComponent.class).body;
             Vector2 otherPosition = getScene().getComponentStorage(TransformComponent.class).getByEntity(otherEntity).position;

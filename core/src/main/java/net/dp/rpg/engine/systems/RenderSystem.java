@@ -5,6 +5,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer;
 import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.utils.Disposable;
 import com.badlogic.gdx.utils.ScreenUtils;
 import net.dp.rpg.engine.Scene;
 import net.dp.rpg.engine.components.ComponentStorage;
@@ -13,7 +14,7 @@ import net.dp.rpg.engine.components.SpriteComponent;
 import net.dp.rpg.engine.tile.TileSystem;
 import net.dp.rpg.engine.tile.render.TileMapRenderer;
 
-public class RenderSystem
+public class RenderSystem implements Disposable
 {
     private final SpriteBatch batch;
     private final Box2DDebugRenderer b2dDebugRenderer = new Box2DDebugRenderer();
