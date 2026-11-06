@@ -6,7 +6,7 @@ import net.dp.rpg.engine.EntityScript;
 import net.dp.rpg.engine.components.HealthComponent;
 import net.dp.rpg.engine.components.PhysicalBodyComponent;
 import net.dp.rpg.engine.components.TransformComponent;
-import net.dp.rpg.game.FixtureCategory;
+import static net.dp.rpg.game.FixtureCategory.*;
 
 public class EnemyScript extends EntityScript
 {
@@ -34,7 +34,7 @@ public class EnemyScript extends EntityScript
     @Override
     public void onCollision(int otherEntity, short category, short otherCategory)
     {
-        if((otherCategory & FixtureCategory.PLAYER_ATTACK) > 0)
+        if(isCategory(otherCategory, PLAYER_ATTACK))
         {
             HealthComponent health = getComponent(HealthComponent.class);
             health.dealDamage(20);

@@ -17,13 +17,13 @@ public class CollisionDispatcher implements ContactListener
     @Override
     public void beginContact(Contact contact)
     {
-        disptatch(contact, true);
+        dispatch(contact, true);
     }
 
     @Override
     public void endContact(Contact contact)
     {
-        disptatch(contact, false);
+        dispatch(contact, false);
     }
 
     @Override
@@ -38,7 +38,7 @@ public class CollisionDispatcher implements ContactListener
 
     }
 
-    private void disptatch(Contact contact, boolean begin)
+    private void dispatch(Contact contact, boolean begin)
     {
         Fixture fixtureA = contact.getFixtureA();
         Fixture fixtureB = contact.getFixtureB();

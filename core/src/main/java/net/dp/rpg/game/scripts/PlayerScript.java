@@ -7,6 +7,7 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.Fixture;
+import com.badlogic.gdx.physics.box2d.FixtureDef;
 import com.badlogic.gdx.physics.box2d.PolygonShape;
 import net.dp.rpg.engine.*;
 import net.dp.rpg.engine.components.*;
@@ -14,7 +15,7 @@ import net.dp.rpg.engine.systems.gameEvent.GameEvent;
 import net.dp.rpg.engine.systems.gameEvent.GameEventListener;
 import net.dp.rpg.engine.systems.input.InputListener;
 import net.dp.rpg.engine.tile.room.Direction;
-import net.dp.rpg.game.FixtureCategory;
+import static net.dp.rpg.game.FixtureCategory.*;
 import net.dp.rpg.game.TileRoom;
 import net.dp.rpg.game.animations.PlayerAnimationId;
 import net.dp.rpg.game.events.*;
@@ -23,8 +24,9 @@ import net.dp.rpg.game.menu.MenuBuilder;
 public class PlayerScript extends EntityScript implements InputListener, GameEventListener
 {
     private final Fixture playerFixture;
-    private final Fixture attackFixture;
     private final Fixture sensorFixture;
+    private Fixture attackFixture;
+    private final FixtureDef attackFixtureDef;
 
     private boolean isSkillWindowOpen = false;
 
@@ -42,10 +44,10 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
 
     int availableSkillPoints = 0;
 
-    public PlayerScript(Fixture playerFixture, Fixture attackFixture, Fixture sensorFixture)
+    public PlayerScript(Fixture playerFixture, FixtureDef attackFixtureDef, Fixture sensorFixture)
     {
         this.playerFixture = playerFixture;
-        this.attackFixture = attackFixture;
+        this.attackFixtureDef = attackFixtureDef;
         this.sensorFixture = sensorFixture;
 
         Engine.eventBus.subscribe(this, SkillPointUsedEvent.class);
@@ -119,28 +121,12 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
     @Override
     public void onCollision(int otherEntity, short category, short otherCategory)
     {
-        if((otherCategory & FixtureCategory.ENEMY) > 0 && (category & FixtureCategory.PLAYER) > 0)
+        if(isCategory(otherCategory, ENEMY) && isCategory(category, PLAYER))
         {
-            HealthComponent health = getComponent(HealthComponent.class);
-            health.dealDamage(1);
-            Engine.eventBus.publish(HealthChangeEvent.class, e -> e.currentHealth = health.health);
-            Body body = getComponent(PhysicalBodyComponent.class).body;
             Vector2 otherPosition = getScene().getComponentStorage(TransformComponent.class).getByEntity(otherEntity).position;
-            Vector2 push = tempVector2.set(body.getPosition()).sub(otherPosition).scl(24);
-            body.applyLinearImpulse(push, body.getPosition(), true);
-            if(health.health <= 0)
-            {
-                MenuBuilder menuBuilder = new MenuBuilder();
-                Scene scene = getEngine().createScene();
-                menuBuilder.build(getEngine(), scene);
-                getEngine().switchScene(scene);
-            }
+            dealDamage(1, otherPosition);
         }
-        if((otherCategory & FixtureCategory.ENEMY) > 0 && (category & FixtureCategory.PLAYER_ATTACK) > 0)
-        {
-            stopAttack();
-        }
-        if((otherCategory & FixtureCategory.OBSTACLE) > 0 && (category & FixtureCategory.PLAYER) > 0)
+        if(isCategory(otherCategory, OBSTACLE) && isCategory(category, PLAYER))
         {
             ScriptComponent scriptComponent = getScene().getComponentStorage(ScriptComponent.class).getByEntity(otherEntity);
             if(scriptComponent == null)
@@ -163,7 +149,7 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
                 transformComponent.setPosition( transformComponent.position.add(Utils.directionToVector2(doorDirection, tempVector2)));
             }
         }
-        if((otherCategory & FixtureCategory.OBSTACLE) > 0 && (category & FixtureCategory.SENSOR) > 0)
+        if(isCategory(otherCategory, OBSTACLE) && isCategory(category, SENSOR))
         {
             ScriptComponent scriptComponent = getScene().getComponentStorage(ScriptComponent.class).getByEntity(otherEntity);
             if(scriptComponent == null)
@@ -179,7 +165,7 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
     @Override
     public void onEndCollision(int otherEntity, short category, short otherCategory)
     {
-        if((otherCategory & FixtureCategory.OBSTACLE) > 0 && (category & FixtureCategory.SENSOR) > 0)
+        if(isCategory(otherCategory,OBSTACLE) && isCategory(category, SENSOR))
         {
             ScriptComponent scriptComponent = getScene().getComponentStorage(ScriptComponent.class).getByEntity(otherEntity);
             if(scriptComponent == null)
@@ -242,17 +228,36 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
         Engine.eventBus.publish(SkillPointsAvailableEvent.class, e -> e.skillPoints = availableSkillPoints);
     }
 
+    private void dealDamage(float damage, Vector2 damageSource)
+    {
+        HealthComponent health = getComponent(HealthComponent.class);
+        if(health.dealDamage(damage))
+        {
+            Engine.eventBus.publish(HealthChangeEvent.class, e -> e.currentHealth = health.health);
+            Body body = getComponent(PhysicalBodyComponent.class).body;
+            Vector2 push = tempVector2.set(body.getPosition()).sub(damageSource).scl(24);
+            body.applyLinearImpulse(push, body.getPosition(), true);
+            if(health.health <= 0)
+            {
+                MenuBuilder menuBuilder = new MenuBuilder();
+                Scene scene = getEngine().createScene();
+                menuBuilder.build(getEngine(), scene);
+                getEngine().switchScene(scene);
+            }
+        }
+    }
+
     private void attack(Direction direction)
     {
         if(isAttacking)
             return;
-        attackOffset.set(direction.getDeltaX(), -1 * direction.getDeltaY());
+        attackOffset.set(direction.getDeltaX()*0.75f, -1 * direction.getDeltaY()*0.75f);
 
-        PolygonShape shape = (PolygonShape) attackFixture.getShape();
-        shape.setAsBox(Math.abs(direction.getDeltaY())*0.3f + 0.3f, Math.abs(direction.getDeltaX())*0.3f + 0.3f, attackOffset, 0);
-        attackFixture.getFilterData().maskBits = (short)0xFFFF;
+        PolygonShape attackShape = (PolygonShape) attackFixtureDef.shape;
+        attackShape.setAsBox(0.6f*10, 0.6f*10, attackOffset, 0);
         isAttacking = true;
         remainingAttackFade = attackFadeTime;
+        attackFixture = getScene().createFixture(getEntity(), attackFixtureDef);
         Sprite sprite = getComponent(MultiSpriteComponent.class).sprites.get(1);
         sprite.setAlpha(1);
         sprite.setOriginCenter();
@@ -281,7 +286,8 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
 
     private void stopAttack()
     {
-        attackFixture.getFilterData().maskBits = 0;
+        if(attackFixture != null)
+            getScene().setFixtureToDelete(attackFixture);
         isAttacking = false;
     }
 

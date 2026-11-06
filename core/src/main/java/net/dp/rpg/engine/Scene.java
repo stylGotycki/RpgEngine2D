@@ -14,6 +14,7 @@ import net.dp.rpg.engine.components.*;
 import net.dp.rpg.engine.components.Component;
 import net.dp.rpg.engine.systems.AnimationSystem;
 import net.dp.rpg.engine.systems.CollisionDispatcher;
+import net.dp.rpg.engine.systems.HealthSystem;
 import net.dp.rpg.engine.systems.MovementSystem;
 import net.dp.rpg.engine.systems.input.EngineInputAdapter;
 import net.dp.rpg.engine.systems.input.InputListener;
@@ -49,6 +50,7 @@ public class Scene implements Disposable
     private final ArrayList<Integer> freeEntity = new ArrayList<>();
     private final ArrayList<ComponentStorage<? extends Component>> componentStorages = new ArrayList<>();
     private final ArrayList<Integer> toDeleteEntities = new ArrayList<>();
+    private final ArrayList<Fixture> toDeleteFixtures = new ArrayList<>();
 
     private SceneScript sceneScript;
 
@@ -56,6 +58,7 @@ public class Scene implements Disposable
 
     private final MovementSystem movementSystem = new MovementSystem();
     private final AnimationSystem animationSystem = new AnimationSystem();
+    private final HealthSystem healthSystem = new HealthSystem();
 
     @Getter
     private final RayHandler rayHandler = new RayHandler(physicalWorld);
@@ -182,6 +185,11 @@ public class Scene implements Disposable
         return body.createFixture(fixtureDef);
     }
 
+    public void setFixtureToDelete(Fixture fixture)
+    {
+        toDeleteFixtures.add(fixture);
+    }
+
     public <T extends Component> ComponentStorage<T> getComponentStorage(Class<T> componentClass)
     {
         for (ComponentStorage<? extends Component> componentStorage : componentStorages)
@@ -212,6 +220,15 @@ public class Scene implements Disposable
             deleteEntity(entity);
         }
         toDeleteEntities.clear();
+    }
+
+    private void deleteFixtures()
+    {
+        for(Fixture fixture : toDeleteFixtures)
+        {
+            fixture.getBody().destroyFixture(fixture);
+        }
+        toDeleteFixtures.clear();
     }
 
     private void deleteEntity(int entityId)
@@ -275,6 +292,7 @@ public class Scene implements Disposable
         }
 
         movementSystem.transformToBody(getComponentStorage(PhysicalBodyComponent.class), getComponentStorage(TransformComponent.class));
+        healthSystem.updateInvincibility(getComponentStorage(HealthComponent.class), delta);
         //todo make less physics steps on higher refresh rate (fix to const refresh rate)
         physicalWorld.step(delta, 6, 2);
 
@@ -292,6 +310,7 @@ public class Scene implements Disposable
         gui.update(delta);
 
         deleteEntities();
+        deleteFixtures();
     }
 
     public void resize(int width, int height)
@@ -314,6 +333,10 @@ public class Scene implements Disposable
             if(component.script instanceof InputListener listener)
             {
                 inputAdapter.removeListener(listener);
+            }
+            if(component.script instanceof Disposable disposable)
+            {
+                disposable.dispose();
             }
         }
         rayHandler.dispose();

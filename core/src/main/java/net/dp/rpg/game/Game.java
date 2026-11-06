@@ -45,6 +45,6 @@ public class Game extends AbstractGame
 
         getEngine().setGlobalScript(new GlobalScript());
 
-        //getEngine().setPhysicsDebug(true);
+        getEngine().setPhysicsDebug(true);
     }
 }
