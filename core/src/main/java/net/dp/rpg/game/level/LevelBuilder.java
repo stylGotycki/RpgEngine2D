@@ -162,5 +162,8 @@ public class LevelBuilder
 
         //scene.setAmbientLight(new Color(0.2f,0.2f,0.3f,0.4f)); // ambient light color when no camera light
         scene.setAmbientLight(new Color(0,0,0,0));
+
+        scene.setAttackCategories(FixtureCategory.ENEMY_ATTACK, FixtureCategory.PLAYER_ATTACK);
+        scene.setBodyCategories(FixtureCategory.PLAYER, FixtureCategory.ENEMY);
     }
 }

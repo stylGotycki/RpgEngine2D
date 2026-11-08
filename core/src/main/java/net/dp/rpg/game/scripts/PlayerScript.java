@@ -29,8 +29,6 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
     private Fixture attackFixture;
     private final FixtureDef attackFixtureDef;
 
-    private final IntSet collidingEnemies = new IntSet();
-
     private boolean isSkillWindowOpen = false;
 
     private final Vector2 tempVector2 = new Vector2();
@@ -108,9 +106,13 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
             if(remainingAttackFade < 0)
             {
                 remainingAttackFade = 0;
-                stopAttack();
             }
             getComponent(MultiSpriteComponent.class).sprites.get(1).setAlpha(remainingAttackFade/attackFadeTime);
+        }
+
+        if(isAttacking)
+        {
+            stopAttack();
         }
 
         if(roomEntered != null)
@@ -119,22 +121,20 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
             currentRoom = roomEntered;
             roomEntered = null;
         }
-
-        if(collidingEnemies.size > 0)
+        HealthComponent health = getComponent(HealthComponent.class);
+        if(health.health <= 0)
         {
-            Vector2 otherPosition = getScene().getComponentStorage(TransformComponent.class).getByEntity(collidingEnemies.first()).position;
-            dealDamage(1, otherPosition);
+            MenuBuilder menuBuilder = new MenuBuilder();
+            Scene scene = getEngine().createScene();
+            menuBuilder.build(getEngine(), scene);
+            getEngine().switchScene(scene);
         }
     }
 
     @Override
     public void onCollision(int otherEntity, short category, short otherCategory)
     {
-        if(isCategory(otherCategory, ENEMY) && isCategory(category, PLAYER))
-        {
-            collidingEnemies.add(otherEntity);
-        }
-        else if(isCategory(otherCategory, OBSTACLE) && isCategory(category, PLAYER))
+        if(isCategory(otherCategory, OBSTACLE) && isCategory(category, PLAYER))
         {
             ScriptComponent scriptComponent = getScene().getComponentStorage(ScriptComponent.class).getByEntity(otherEntity);
             if(scriptComponent == null)
@@ -173,11 +173,7 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
     @Override
     public void onEndCollision(int otherEntity, short category, short otherCategory)
     {
-        if(isCategory(otherCategory, ENEMY) && isCategory(category, PLAYER))
-        {
-            collidingEnemies.remove(otherEntity);
-        }
-        else if(isCategory(otherCategory, OBSTACLE) && isCategory(category, SENSOR))
+        if(isCategory(otherCategory, OBSTACLE) && isCategory(category, SENSOR))
         {
             ScriptComponent scriptComponent = getScene().getComponentStorage(ScriptComponent.class).getByEntity(otherEntity);
             if(scriptComponent == null)
@@ -234,29 +230,30 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
         return false;
     }
 
+    @Override
+    public void onEvent(GameEvent event)
+    {
+        if(event instanceof SkillPointUsedEvent skillPointEvent)
+        {
+            availableSkillPoints--;
+            SkillPointsAvailableEvent pointsAvailableEvent = Engine.poolManager.obtain(SkillPointsAvailableEvent.class);
+            pointsAvailableEvent.skillPoints = availableSkillPoints;
+            Engine.eventBus.publish(SkillPointsAvailableEvent.class, e -> e.skillPoints = availableSkillPoints);
+            Engine.poolManager.free(pointsAvailableEvent);
+        }
+    }
+
+    @Override
+    public void onDamage()
+    {
+        HealthComponent health = getComponent(HealthComponent.class);
+        Engine.eventBus.publish(HealthChangeEvent.class, e -> e.currentHealth = health.health);
+    }
+
     public void addSkillPoint()
     {
         availableSkillPoints++;
         Engine.eventBus.publish(SkillPointsAvailableEvent.class, e -> e.skillPoints = availableSkillPoints);
-    }
-
-    private void dealDamage(float damage, Vector2 damageSource)
-    {
-        HealthComponent health = getComponent(HealthComponent.class);
-        if(health.dealDamage(damage))
-        {
-            Engine.eventBus.publish(HealthChangeEvent.class, e -> e.currentHealth = health.health);
-            Body body = getComponent(PhysicalBodyComponent.class).body;
-            Vector2 push = tempVector2.set(body.getPosition()).sub(damageSource).scl(24);
-            body.applyLinearImpulse(push, body.getPosition(), true);
-            if(health.health <= 0)
-            {
-                MenuBuilder menuBuilder = new MenuBuilder();
-                Scene scene = getEngine().createScene();
-                menuBuilder.build(getEngine(), scene);
-                getEngine().switchScene(scene);
-            }
-        }
     }
 
     private void attack(Direction direction)
@@ -283,24 +280,12 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
         }
     }
 
-    @Override
-    public void onEvent(GameEvent event)
-    {
-        if(event instanceof SkillPointUsedEvent skillPointEvent)
-        {
-            availableSkillPoints--;
-            SkillPointsAvailableEvent pointsAvailableEvent = Engine.poolManager.obtain(SkillPointsAvailableEvent.class);
-            pointsAvailableEvent.skillPoints = availableSkillPoints;
-            Engine.eventBus.publish(SkillPointsAvailableEvent.class, e -> e.skillPoints = availableSkillPoints);
-            Engine.poolManager.free(pointsAvailableEvent);
-        }
-    }
-
     private void stopAttack()
     {
         if(attackFixture != null)
             getScene().setFixtureToDelete(attackFixture);
         isAttacking = false;
+        getComponent(AttackComponent.class).clearHitEntities();
     }
 
     private void rotateSprite(Vector2 vector)

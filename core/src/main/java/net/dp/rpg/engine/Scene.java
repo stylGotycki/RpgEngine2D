@@ -12,10 +12,7 @@ import com.badlogic.gdx.utils.Disposable;
 import lombok.Getter;
 import net.dp.rpg.engine.components.*;
 import net.dp.rpg.engine.components.Component;
-import net.dp.rpg.engine.systems.AnimationSystem;
-import net.dp.rpg.engine.systems.CollisionDispatcher;
-import net.dp.rpg.engine.systems.HealthSystem;
-import net.dp.rpg.engine.systems.MovementSystem;
+import net.dp.rpg.engine.systems.*;
 import net.dp.rpg.engine.systems.input.EngineInputAdapter;
 import net.dp.rpg.engine.systems.input.InputListener;
 import net.dp.rpg.engine.tile.TileMapData;
@@ -29,7 +26,7 @@ public class Scene implements Disposable
     private final EngineServices engine;
     @Getter
     private final World physicalWorld = new World(new Vector2(0, 0), true);
-    CollisionDispatcher collisionDispatcher = new CollisionDispatcher(this);
+    private final CollisionDispatcher collisionDispatcher;
 
     @Getter
     private TileSystem tileSystem;
@@ -59,6 +56,7 @@ public class Scene implements Disposable
     private final MovementSystem movementSystem = new MovementSystem();
     private final AnimationSystem animationSystem = new AnimationSystem();
     private final HealthSystem healthSystem = new HealthSystem();
+    private final CombatSystem combatSystem;
 
     @Getter
     private final RayHandler rayHandler = new RayHandler(physicalWorld);
@@ -67,8 +65,6 @@ public class Scene implements Disposable
     {
         this.engine = engine;
         this.inputAdapter = inputAdapter;
-
-        physicalWorld.setContactListener(collisionDispatcher);
 
         componentStorages.add(new ComponentStorage<>(MoveComponent.class));
         componentStorages.add(new ComponentStorage<>(TransformComponent.class));
@@ -83,6 +79,17 @@ public class Scene implements Disposable
         componentStorages.add(new ComponentStorage<>(MultiAnimationComponent.class));
         componentStorages.add(new ComponentStorage<>(SpriteComponent.class));
         componentStorages.add(new ComponentStorage<>(AnimationComponent.class));
+        componentStorages.add(new ComponentStorage<>(AttackComponent.class));
+        componentStorages.add(new ComponentStorage<>(FractionComponent.class));
+        componentStorages.add(new ComponentStorage<>(PeriodicAttackComponent.class));
+
+        combatSystem = new CombatSystem(getComponentStorage(HealthComponent.class),
+            getComponentStorage(AttackComponent.class),
+            getComponentStorage(PhysicalBodyComponent.class),
+            getComponentStorage(PeriodicAttackComponent.class),
+            getComponentStorage(ScriptComponent.class));
+        collisionDispatcher = new CollisionDispatcher(this, combatSystem);
+        physicalWorld.setContactListener(collisionDispatcher);
 
         RayHandler.useDiffuseLight(true);
     }
@@ -147,6 +154,11 @@ public class Scene implements Disposable
         {
             inputAdapter.removeListener(listener);
         }
+    }
+
+    public <T extends Component> Component getComponent(int entity, Class<T> componentClass)
+    {
+        return getComponentStorage(componentClass).getByEntity(entity);
     }
 
     /**
@@ -273,6 +285,26 @@ public class Scene implements Disposable
         }
     }
 
+    public void setAttackCategories(short... categories)
+    {
+        short mask = 0;
+        for(short category : categories)
+        {
+            mask |= category;
+        }
+        collisionDispatcher.setAttackMask(mask);
+    }
+
+    public void setBodyCategories(short... categories)
+    {
+        short mask = 0;
+        for(short category : categories)
+        {
+            mask |= category;
+        }
+        collisionDispatcher.setBodyMask(mask);
+    }
+
     public void setAmbientLight(Color light)
     {
         rayHandler.setAmbientLight(light);
@@ -292,9 +324,10 @@ public class Scene implements Disposable
         }
 
         movementSystem.transformToBody(getComponentStorage(PhysicalBodyComponent.class), getComponentStorage(TransformComponent.class));
-        healthSystem.updateInvincibility(getComponentStorage(HealthComponent.class), delta);
         //todo make less physics steps on higher refresh rate (fix to const refresh rate)
         physicalWorld.step(delta, 6, 2);
+        healthSystem.updateInvincibility(getComponentStorage(HealthComponent.class), delta);
+        combatSystem.updatePeriodicAttack(delta);
 
         movementSystem.updatePositions(getComponentStorage(TransformComponent.class), getComponentStorage(MoveComponent.class), delta);
         movementSystem.bodyToTransform(getComponentStorage(PhysicalBodyComponent.class), getComponentStorage(TransformComponent.class));

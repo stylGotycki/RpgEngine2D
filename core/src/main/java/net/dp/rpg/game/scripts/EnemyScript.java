@@ -3,6 +3,7 @@ package net.dp.rpg.game.scripts;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
 import net.dp.rpg.engine.EntityScript;
+import net.dp.rpg.engine.components.AttackComponent;
 import net.dp.rpg.engine.components.HealthComponent;
 import net.dp.rpg.engine.components.PhysicalBodyComponent;
 import net.dp.rpg.engine.components.TransformComponent;
@@ -29,19 +30,13 @@ public class EnemyScript extends EntityScript
 
         Body body = getComponent(PhysicalBodyComponent.class).body;
         body.applyForce(direction.scl(speed), body.getPosition(), true);
+        HealthComponent health = getComponent(HealthComponent.class);
+        if(health.health <= 0)
+            getScene().setToDelete(getEntity());
     }
 
     @Override
     public void onCollision(int otherEntity, short category, short otherCategory)
     {
-        if(isCategory(otherCategory, PLAYER_ATTACK))
-        {
-            HealthComponent health = getComponent(HealthComponent.class);
-            health.dealDamage(20);
-            Body body = getComponent(PhysicalBodyComponent.class).body;
-            body.applyLinearImpulse(direction.scl(-1f), body.getPosition(), true);
-            if(health.health <= 0)
-                getScene().setToDelete(getEntity());
-        }
     }
 }

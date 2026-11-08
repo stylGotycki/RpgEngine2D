@@ -19,6 +19,9 @@ public class SpiderEntityCreator extends EntityCreator implements Disposable
 {
     private final float size = 0.5f;
     private final int health = 50;
+    private final float damage = 1;
+    private final float knockback = 10;
+    private final float damageDelay = 1;
 
     private final BodyDef bodyDef = new BodyDef();
     private final FixtureDef fixtureDef = new FixtureDef();
@@ -45,7 +48,7 @@ public class SpiderEntityCreator extends EntityCreator implements Disposable
         fixtureDef.restitution = 0f;
         fixtureDef.friction = 0f;
         fixtureDef.density = 1f;
-        fixtureDef.filter.categoryBits = FixtureCategory.ENEMY;
+        fixtureDef.filter.categoryBits = (short)(FixtureCategory.ENEMY | FixtureCategory.ENEMY_ATTACK);
         fixtureDef.isSensor = false;
         fixtureDef.shape = circle;
 
@@ -68,6 +71,8 @@ public class SpiderEntityCreator extends EntityCreator implements Disposable
         scene.createBodyComponent(entityId, bodyDef);
         scene.createFixture(entityId, fixtureDef);
         scene.addComponent(entityId, new HealthComponent(health,health));
+        scene.addComponent(entityId, new PeriodicAttackComponent(damage, knockback, damageDelay));
+        scene.addComponent(entityId, new FractionComponent(Fraction.ENEMY));
         scene.addComponent(entityId, new SpriteComponent(new Sprite(sprite), false));
         scene.addComponent(entityId, new AnimationComponent(animationSet));
         scene.addComponent(entityId, new ScriptComponent(new EnemyScript(playerId)));

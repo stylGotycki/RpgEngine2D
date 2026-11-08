@@ -15,12 +15,15 @@ import net.dp.rpg.game.FixtureCategory;
 import net.dp.rpg.game.animations.PlayerAnimationId;
 import net.dp.rpg.game.level.entities.DefaultEntityProperties;
 import net.dp.rpg.game.level.entities.EntityCreator;
+import net.dp.rpg.game.level.entities.Fraction;
 import net.dp.rpg.game.scripts.PlayerScript;
 
 public class PlayerCreator extends EntityCreator implements Disposable
 {
     private final float size = 0.8f;
     private final int health = 100;
+    private final float damage = 20;
+    private final float knockback = 8;
 
     private final BodyDef bodyDef = new BodyDef();
     private final FixtureDef bodyFixtureDef = new FixtureDef();
@@ -114,6 +117,8 @@ public class PlayerCreator extends EntityCreator implements Disposable
         light.setContactFilter(lightContactFilter);
 
         scene.addComponent(entityId, new HealthComponent(health,health, 1f));
+        scene.addComponent(entityId, new AttackComponent(damage,knockback));
+        scene.addComponent(entityId, new FractionComponent(Fraction.PLAYER));
         scene.addComponent(entityId, spriteComponent);
 
         MultiAnimationComponent animationComponent = new MultiAnimationComponent();

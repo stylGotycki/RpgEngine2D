@@ -26,6 +26,10 @@ public abstract class EntityScript extends Script
     {
     }
 
+    public void onDamage()
+    {
+    }
+
     protected final <T extends Component> T getComponent(Class<T> componentClass)
     {
         return scene.getComponentStorage(componentClass).getByEntity(entity);
