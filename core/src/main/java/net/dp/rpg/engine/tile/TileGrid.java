@@ -139,7 +139,7 @@ public final class TileGrid {
   public String toDebugString(IntFunction<String> symbols) {
     StringBuilder builder = new StringBuilder((width + 1) * height);
 
-    for (int y = 0; y < height; y++) {
+    for (int y = height - 1; y >= 0; y--) {
       for (int x = 0; x < width; x++) {
         int value = cells[x + y * width];
         String symbol = value == EMPTY ? "." : symbols.apply(value);

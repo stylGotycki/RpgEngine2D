@@ -248,4 +248,55 @@ public final class FloorGraph {
   public RoomNode start() {
     return start;
   }
+
+  /**
+   * The lowest and leftmost occupied cell over all rooms, i.e. the bottom-left corner of the
+   * floor's bounding box, or {@link RoomCell#ORIGIN} for an empty graph.
+   */
+  public RoomCell minCorner() {
+    if (occupied.isEmpty()) {
+      return RoomCell.ORIGIN;
+    }
+
+    int minX = Integer.MAX_VALUE;
+    int minY = Integer.MAX_VALUE;
+
+    for (RoomCell cell : occupied.keySet()) {
+      minX = Math.min(minX, cell.x());
+      minY = Math.min(minY, cell.y());
+    }
+
+    return new RoomCell(minX, minY);
+  }
+
+  /**
+   * A copy of this graph moved by (deltaX, deltaY). Rooms keep their index, so room {@code i} of
+   * the copy is room {@code i} of this graph; links, door types, phases, types, quest ids and
+   * reserved cells come along, and depths are recomputed.
+   */
+  public FloorGraph translated(int deltaX, int deltaY) {
+    FloorGraph copy = new FloorGraph();
+
+    for (RoomNode room : rooms) {
+      RoomNode moved = copy.place(room.variant(), room.origin().translated(deltaX, deltaY));
+
+      moved.setPhase(room.phase());
+      moved.setType(room.type());
+      moved.setQuestId(room.questId());
+    }
+
+    for (RoomLink link : links) {
+      RoomEdge edge = link.edge();
+      RoomEdge movedEdge = new RoomEdge(edge.cell().translated(deltaX, deltaY), edge.direction());
+
+      copy.connect(copy.rooms.get(link.from().index()), copy.rooms.get(link.to().index()),
+          movedEdge, link.doorType());
+    }
+
+    reserved.forEach(cell -> copy.reserve(cell.translated(deltaX, deltaY)));
+    copy.exemptCells = exemptCells;
+    copy.computeDepths();
+
+    return copy;
+  }
 }

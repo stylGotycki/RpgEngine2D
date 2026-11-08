@@ -24,8 +24,7 @@ final class FloorOverlays {
 
   private final ShapeRenderer shapes = new ShapeRenderer();
 
-  void route(RoomCanvas canvas, int tileOffsetX, int tileOffsetY, int mapHeight,
-      OrthographicCamera camera) {
+  void route(RoomCanvas canvas, int tileOffsetX, int tileOffsetY, OrthographicCamera camera) {
     shapes.setProjectionMatrix(camera.combined);
     Gdx.gl.glEnable(GL20.GL_BLEND);
     shapes.begin(ShapeRenderer.ShapeType.Filled);
@@ -34,7 +33,7 @@ final class FloorOverlays {
     for (int y = 0; y < canvas.height(); y++) {
       for (int x = 0; x < canvas.width(); x++) {
         if (!canvas.isVoid(x, y) && canvas.isReserved(x, y)) {
-          shapes.rect(tileOffsetX + x, mapHeight - 1 - (tileOffsetY + y), 1f, 1f);
+          shapes.rect(tileOffsetX + x, tileOffsetY + y, 1f, 1f);
         }
       }
     }
@@ -43,8 +42,7 @@ final class FloorOverlays {
     Gdx.gl.glDisable(GL20.GL_BLEND);
   }
 
-  void selection(RoomNode room, int minCellX, int minCellY, int mapHeight,
-      OrthographicCamera camera) {
+  void selection(RoomNode room, int minCellX, int minCellY, OrthographicCamera camera) {
     shapes.setProjectionMatrix(camera.combined);
     shapes.begin(ShapeRenderer.ShapeType.Filled);
     shapes.setColor(SELECTION);
@@ -52,8 +50,8 @@ final class FloorOverlays {
     for (RoomEdge edge : room.outerEdges()) {
       float left = (edge.cell().x() - minCellX) * RoomGeometry.CELL_WIDTH;
       float right = left + RoomGeometry.CELL_WIDTH;
-      float top = mapHeight - (edge.cell().y() - minCellY) * RoomGeometry.CELL_HEIGHT;
-      float bottom = top - RoomGeometry.CELL_HEIGHT;
+      float bottom = (edge.cell().y() - minCellY) * RoomGeometry.CELL_HEIGHT;
+      float top = bottom + RoomGeometry.CELL_HEIGHT;
 
       switch (edge.direction()) {
         case NORTH -> shapes.rectLine(left, top, right, top, SELECTION_WIDTH);
@@ -66,7 +64,7 @@ final class FloorOverlays {
     shapes.end();
   }
 
-  void markers(List<TileMapObject> objects, int mapHeight, OrthographicCamera camera) {
+  void markers(List<TileMapObject> objects, OrthographicCamera camera) {
     shapes.setProjectionMatrix(camera.combined);
     shapes.begin(ShapeRenderer.ShapeType.Line);
 
@@ -76,7 +74,7 @@ final class FloorOverlays {
       }
 
       shapes.setColor(colorOf(object.type()));
-      shapes.circle(object.x(), mapHeight - object.y(), MARKER_RADIUS, 12);
+      shapes.circle(object.x(), object.y(), MARKER_RADIUS, 12);
     }
 
     shapes.end();

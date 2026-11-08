@@ -22,7 +22,7 @@ final class SpineTargets {
     }
 
     for (TileMapObject point : extraPoints) {
-      targets.add(new int[] {(int) Math.floor(point.x()), (int) Math.floor(point.y())});
+      targets.add(new int[] {point.tileX(), point.tileY()});
     }
 
     return targets;

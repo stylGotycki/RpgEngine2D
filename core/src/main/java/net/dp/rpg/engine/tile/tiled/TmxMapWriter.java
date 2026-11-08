@@ -129,11 +129,13 @@ public final class TmxMapWriter {
     TilesetBinding binding = settings.tileset().binding();
     StringBuilder csv = new StringBuilder(grid.size() * 4);
 
-    for (int y = 0; y < grid.getHeight(); y++) {
+    for (int row = 0; row < grid.getHeight(); row++) {
+      int y = TiledAxis.flipRow(row, grid.getHeight());
+
       for (int x = 0; x < grid.getWidth(); x++) {
         csv.append(toGid(grid.get(x, y), x, y, binding, settings));
 
-        boolean lastCell = x == grid.getWidth() - 1 && y == grid.getHeight() - 1;
+        boolean lastCell = x == grid.getWidth() - 1 && row == grid.getHeight() - 1;
 
         if (!lastCell) {
           csv.append(',');
@@ -172,21 +174,24 @@ public final class TmxMapWriter {
         .attr("name", "Markers");
 
     for (TileMapObject object : map.objects()) {
-      writeObject(xml, object, tileset);
+      writeObject(xml, object, tileset, map.height());
     }
 
     xml.close();
   }
 
-  private void writeObject(XmlWriter xml, TileMapObject object, TilesetDefinition tileset) {
+  private void writeObject(XmlWriter xml, TileMapObject object, TilesetDefinition tileset,
+      int mapHeight) {
     // Objects are kept in tile units internally and converted back to pixels only here, which is
     // what lets a map survive a tileset with a different tile size.
+    float tiledY = TiledAxis.flipObjectY(object.y(), object.height(), mapHeight);
+
     xml.open("object")
         .attr("id", object.id())
         .attrIfPresent("name", object.name())
         .attrIfPresent("type", object.type())
         .attr("x", object.x() * tileset.tileWidth())
-        .attr("y", object.y() * tileset.tileHeight());
+        .attr("y", tiledY * tileset.tileHeight());
 
     if (!object.isPoint()) {
       xml.attr("width", object.width() * tileset.tileWidth())

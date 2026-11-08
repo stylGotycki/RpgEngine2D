@@ -2,9 +2,9 @@ package net.dp.rpg.engine.tile.room;
 
 public enum Direction {
 
-  NORTH(0, -1),
+  NORTH(0, 1),
   EAST(1, 0),
-  SOUTH(0, 1),
+  SOUTH(0, -1),
   WEST(-1, 0);
 
   private final int deltaX;
@@ -22,6 +22,10 @@ public enum Direction {
 
   public int getDeltaY() {
     return deltaY;
+  }
+
+  public boolean isVertical() {
+    return deltaX == 0;
   }
 
   public Direction opposite() {

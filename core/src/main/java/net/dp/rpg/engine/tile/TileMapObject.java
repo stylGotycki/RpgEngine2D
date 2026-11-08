@@ -19,4 +19,12 @@ public record TileMapObject(int id, String name, String type, float x, float y, 
     return type.equals(candidate);
   }
 
+  public int tileX() {
+    return (int) Math.floor(x);
+  }
+
+  public int tileY() {
+    return (int) Math.floor(y);
+  }
+
 }

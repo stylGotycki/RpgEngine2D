@@ -51,10 +51,12 @@ public final class FloorBuilder {
     RetrospectivePass.Result late = retrospective.apply(graph, context, criticalPath);
     List<QuestBundle> bundles = quests.assign(graph, context);
 
-    return new FloorLayout(context.plan().archetypeId(), context.seed(), graph, boss, criticalPath,
-        walk.rooms(), attached.attached(), holeRooms,
+    FloorLayout layout = new FloorLayout(context.plan().archetypeId(), context.seed(), graph, boss,
+        criticalPath, walk.rooms(), attached.attached(), holeRooms,
         extraDoors, late.relocated(), context.loadout().unspentMandatory(), walk.path(), bundles,
         walk.reason());
+
+    return layout.normalized();
   }
 
   private RoomNode bossOf(FloorGraph graph) {

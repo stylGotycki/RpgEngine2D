@@ -20,11 +20,10 @@ final class ZoneOverlay {
   private final ShapeRenderer shapes = new ShapeRenderer();
 
   void render(ZoneMap zones, OrthographicCamera camera) {
-    render(zones, camera, 0, 0, zones.height());
+    render(zones, camera, 0, 0);
   }
 
-  void render(ZoneMap zones, OrthographicCamera camera, int tileOffsetX, int tileOffsetY,
-      int mapHeight) {
+  void render(ZoneMap zones, OrthographicCamera camera, int tileOffsetX, int tileOffsetY) {
     shapes.setProjectionMatrix(camera.combined);
     Gdx.gl.glEnable(GL20.GL_BLEND);
     shapes.begin(ShapeRenderer.ShapeType.Filled);
@@ -35,7 +34,7 @@ final class ZoneOverlay {
 
         if (color != null) {
           shapes.setColor(color);
-          shapes.rect(tileOffsetX + x, mapHeight - 1 - (tileOffsetY + y), 1f, 1f);
+          shapes.rect(tileOffsetX + x, tileOffsetY + y, 1f, 1f);
         }
       }
     }

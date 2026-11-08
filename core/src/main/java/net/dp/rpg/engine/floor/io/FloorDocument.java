@@ -15,7 +15,7 @@ public record FloorDocument(
     List<QuestDoc> quests,
     StateDoc state) {
 
-  public static final int FORMAT = 1;
+  public static final int FORMAT = 2;
 
   public FloorDocument {
     preview = List.copyOf(preview);

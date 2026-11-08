@@ -19,7 +19,7 @@ public final class ShapeHoles {
     Set<RoomCell> outside = floodOutside(shape);
     List<RoomCell> enclosed = new ArrayList<>();
 
-    for (int y = 0; y < shape.cellsDown(); y++) {
+    for (int y = 0; y < shape.cellsHigh(); y++) {
       for (int x = 0; x < shape.cellsAcross(); x++) {
         RoomCell cell = new RoomCell(x, y);
 
@@ -57,7 +57,7 @@ public final class ShapeHoles {
 
   private static boolean inExpandedBox(RoomShape shape, RoomCell cell) {
     return cell.x() >= -1 && cell.x() <= shape.cellsAcross()
-        && cell.y() >= -1 && cell.y() <= shape.cellsDown();
+        && cell.y() >= -1 && cell.y() <= shape.cellsHigh();
   }
 
   private static List<List<RoomCell>> groupRegions(List<RoomCell> cells) {

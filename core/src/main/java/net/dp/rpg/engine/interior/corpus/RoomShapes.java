@@ -19,19 +19,7 @@ public final class RoomShapes {
   }
 
   public static String encode(RoomShape shape) {
-    StringBuilder encoded = new StringBuilder();
-
-    for (int y = 0; y < shape.cellsDown(); y++) {
-      if (y > 0) {
-        encoded.append(ROW_SEPARATOR);
-      }
-
-      for (int x = 0; x < shape.cellsAcross(); x++) {
-        encoded.append(shape.contains(new RoomCell(x, y)) ? '#' : '.');
-      }
-    }
-
-    return encoded.toString();
+    return String.join(ROW_SEPARATOR, shape.toRows());
   }
 
   public static RoomShape of(TileMapData map) {

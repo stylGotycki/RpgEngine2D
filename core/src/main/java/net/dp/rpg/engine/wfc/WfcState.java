@@ -157,10 +157,11 @@ public final class WfcState {
     return narrowAndPropagate(index(x, y));
   }
 
+  /** One text line per row, top row (highest y) first, as the grid looks on screen. */
   public String toDebugString(IntFunction<String> symbols) {
     StringBuilder builder = new StringBuilder((width + 1) * height);
 
-    for (int y = 0; y < height; y++) {
+    for (int y = height - 1; y >= 0; y--) {
       for (int x = 0; x < width; x++) {
         builder.append(symbolOf(x + y * width, symbols));
       }

@@ -6,7 +6,6 @@ import java.util.List;
 import net.dp.rpg.engine.floor.FloorArchetype;
 import net.dp.rpg.engine.floor.FloorDebug;
 import net.dp.rpg.engine.floor.FloorLayout;
-import net.dp.rpg.engine.floor.GridBounds;
 import net.dp.rpg.engine.floor.QuestBundle;
 import net.dp.rpg.engine.floor.RandomSource;
 import net.dp.rpg.engine.floor.graph.RoomLink;
@@ -20,12 +19,12 @@ import net.dp.rpg.engine.tile.room.RoomEdge;
 
 public final class FloorDocuments {
 
-  public static final String GENERATOR_VERSION = "0.6.0";
+  public static final String GENERATOR_VERSION = "0.7.0";
 
   private FloorDocuments() {
   }
 
-  public static FloorDocument of(FloorLayout floor, FloorArchetype archetype, GridBounds bounds) {
+  public static FloorDocument of(FloorLayout floor, FloorArchetype archetype) {
     String content = contentHash(archetype);
 
     return new FloorDocument(
@@ -35,7 +34,7 @@ public final class FloorDocuments {
         floor.archetypeId(),
         floor.seed(),
         descriptor(content, floor),
-        preview(floor, bounds),
+        preview(floor),
         rooms(floor),
         doors(floor),
         quests(floor),
@@ -69,14 +68,14 @@ public final class FloorDocuments {
     return Long.toHexString(value).substring(0, 8);
   }
 
-  private static List<String> preview(FloorLayout floor, GridBounds bounds) {
-    return List.of(FloorDebug.render(floor.graph(), bounds).split("\\R"));
+  private static List<String> preview(FloorLayout floor) {
+    return List.of(FloorDebug.render(floor.graph(), floor.extent()).split("\\R"));
   }
 
   private static List<FloorDocument.RoomDoc> rooms(FloorLayout floor) {
     List<RoomNode> sorted = new ArrayList<>(floor.graph().rooms());
 
-    sorted.sort(Comparator.comparing(RoomNode::anchor, Cells.READING_ORDER));
+    sorted.sort(Comparator.comparing(RoomNode::anchor, Cells.ROW_ORDER));
 
     List<FloorDocument.RoomDoc> docs = new ArrayList<>();
 
@@ -117,7 +116,7 @@ public final class FloorDocuments {
   }
 
   private static RoomEdge canonical(RoomEdge edge) {
-    if (edge.direction() == Direction.EAST || edge.direction() == Direction.SOUTH) {
+    if (edge.direction() == Direction.EAST || edge.direction() == Direction.NORTH) {
       return edge;
     }
 
@@ -125,7 +124,7 @@ public final class FloorDocuments {
   }
 
   private static Comparator<String> comparingCells() {
-    return (first, second) -> Cells.READING_ORDER.compare(Cells.read(first), Cells.read(second));
+    return (first, second) -> Cells.ROW_ORDER.compare(Cells.read(first), Cells.read(second));
   }
 
   private static List<FloorDocument.QuestDoc> quests(FloorLayout floor) {

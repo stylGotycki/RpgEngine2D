@@ -70,7 +70,7 @@ public final class TmxMapParser {
       throw new InvalidTiledFormatException("Map has no tile layers: " + sourcePath);
     }
 
-    List<TileMapObject> objects = parseObjects(root, tileWidth, tileHeight);
+    List<TileMapObject> objects = parseObjects(root, tileWidth, tileHeight, height);
 
     return new TileMapData(layers, objects, TiledProperties.read(root).asMap());
   }
@@ -115,15 +115,17 @@ public final class TmxMapParser {
 
     TileGrid grid = new TileGrid(width, height);
 
-    for (int y = 0; y < height; y++) {
+    for (int row = 0; row < height; row++) {
+      int y = TiledAxis.flipRow(row, height);
+
       for (int x = 0; x < width; x++) {
-        int gid = gids[x + y * width];
+        int gid = gids[x + row * width];
 
         if (gid == 0) {
           continue;
         }
 
-        grid.set(x, y, resolver.resolve(gid, "Layer '%s' at (%d, %d)".formatted(name, x, y)));
+        grid.set(x, y, resolver.resolve(gid, "Layer '%s' at (%d, %d)".formatted(name, x, row)));
       }
     }
 
@@ -144,27 +146,37 @@ public final class TmxMapParser {
     }
   }
 
-  private List<TileMapObject> parseObjects(Element root, int tileWidth, int tileHeight) {
+  private List<TileMapObject> parseObjects(Element root, int tileWidth, int tileHeight,
+      int mapHeight) {
     List<TileMapObject> objects = new ArrayList<>();
 
     for (Element group : root.getChildrenByName("objectgroup")) {
       for (Element object : group.getChildrenByName("object")) {
-        objects.add(parseObject(object, tileWidth, tileHeight));
+        objects.add(parseObject(object, tileWidth, tileHeight, mapHeight));
       }
     }
 
     return objects;
   }
 
-  private TileMapObject parseObject(Element source, int tileWidth, int tileHeight) {
+  private TileMapObject parseObject(Element source, int tileWidth, int tileHeight,
+      int mapHeight) {
+    float width = source.getFloatAttribute("width", 0f) / tileWidth;
+    float height = source.getFloatAttribute("height", 0f) / tileHeight;
+    float tiledY = source.getFloatAttribute("y", 0f) / tileHeight;
+    boolean tileObject = source.getAttribute("gid", null) != null;
+    float y = tileObject
+        ? TiledAxis.flipObjectY(tiledY, 0f, mapHeight)
+        : TiledAxis.flipObjectY(tiledY, height, mapHeight);
+
     return new TileMapObject(
         source.getIntAttribute("id", 0),
         source.getAttribute("name", ""),
         source.getAttribute("type", source.getAttribute("class", "")),
         source.getFloatAttribute("x", 0f) / tileWidth,
-        source.getFloatAttribute("y", 0f) / tileHeight,
-        source.getFloatAttribute("width", 0f) / tileWidth,
-        source.getFloatAttribute("height", 0f) / tileHeight,
+        y,
+        width,
+        height,
         TiledProperties.read(source).asMap());
   }
 }

@@ -78,9 +78,9 @@ public record PrefabOrientation(Prefab prefab, Direction facing, boolean flipped
   private static int[] unrotate(int x, int y, int sourceWidth, int sourceHeight, int turns) {
     return switch (turns) {
       case 0 -> new int[] {x, y};
-      case 1 -> new int[] {y, sourceHeight - 1 - x};
+      case 1 -> new int[] {sourceWidth - 1 - y, x};
       case 2 -> new int[] {sourceWidth - 1 - x, sourceHeight - 1 - y};
-      default -> new int[] {sourceWidth - 1 - y, x};
+      default -> new int[] {y, sourceHeight - 1 - x};
     };
   }
 
@@ -88,9 +88,9 @@ public record PrefabOrientation(Prefab prefab, Direction facing, boolean flipped
                                     int sourceHeight, int turns) {
     return switch (turns) {
       case 0 -> new float[] {x, y, width, height};
-      case 1 -> new float[] {sourceHeight - y - height, x, height, width};
+      case 1 -> new float[] {y, sourceWidth - x - width, height, width};
       case 2 -> new float[] {sourceWidth - x - width, sourceHeight - y - height, width, height};
-      default -> new float[] {y, sourceWidth - x - width, height, width};
+      default -> new float[] {sourceHeight - y - height, x, height, width};
     };
   }
 }
