@@ -37,7 +37,13 @@ public final class PrefabPhase {
 
     for (PrefabRequirement requirement : typeRequirements) {
       for (int i = 0; i < requirement.count(); i++) {
-        placeOne(canvas, requirement, random, accessPoints);
+        // The roll happens for every try, placed or not, so how many dice a room uses does not
+        // depend on which prefabs fit.
+        boolean wanted = random.nextDouble() < requirement.chance();
+
+        if (wanted) {
+          placeOne(canvas, requirement, random, accessPoints);
+        }
       }
     }
 

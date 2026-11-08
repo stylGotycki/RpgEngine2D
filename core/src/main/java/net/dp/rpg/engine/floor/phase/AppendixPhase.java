@@ -37,6 +37,7 @@ public final class AppendixPhase {
 
     int wanted = context.plan().appendixRooms();
     int attached = 0;
+    RoomNode boss = attachBoss(graph, context, shapes, shapeRandom);
 
     for (int index = 0; index < wanted - 1; index++) {
       int opportunities = Math.max(1, wanted - 1 - index);
@@ -48,8 +49,6 @@ public final class AppendixPhase {
     }
 
     attached += spendRemaining(graph, context, shapes, anchorRandom, shapeRandom);
-
-    RoomNode boss = attachBoss(graph, context, shapes, shapeRandom);
 
     return new Result(attached, boss);
   }
@@ -131,9 +130,17 @@ public final class AppendixPhase {
     List<RoomNode> candidates = new ArrayList<>();
     List<Double> weights = new ArrayList<>();
     double total = 0.0;
+    int bossDepth = graph.rooms().stream()
+        .filter(room -> room.type() == RoomType.BOSS)
+        .mapToInt(RoomNode::depth)
+        .findFirst()
+        .orElse(Integer.MAX_VALUE);
 
     for (RoomNode room : graph.rooms()) {
-      if (freeNeighbourCells(graph, room, bounds).isEmpty()) {
+      boolean tooDeep = room.depth() >= bossDepth;
+
+      if (room.type() == RoomType.BOSS || tooDeep
+          || freeNeighbourCells(graph, room, bounds).isEmpty()) {
         continue;
       }
 

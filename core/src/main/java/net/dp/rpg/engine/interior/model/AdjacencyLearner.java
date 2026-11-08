@@ -8,6 +8,7 @@ import net.dp.rpg.engine.interior.corpus.CorpusSample;
 import net.dp.rpg.engine.interior.corpus.Zone;
 import net.dp.rpg.engine.interior.corpus.ZoneMap;
 import net.dp.rpg.engine.tile.TileGrid;
+import net.dp.rpg.engine.tile.TileRole;
 import net.dp.rpg.engine.tile.room.Direction;
 import net.dp.rpg.engine.wfc.AdjacencyRules;
 import net.dp.rpg.engine.wfc.WeightTable;
@@ -16,12 +17,20 @@ public final class AdjacencyLearner {
 
   private final TileClasses classes;
 
+  private final boolean[] doorClasses;
+
   public AdjacencyLearner(TileClasses classes) {
     if (classes == null) {
       throw new IllegalArgumentException("Tile classes must not be null");
     }
 
     this.classes = classes;
+    this.doorClasses = new boolean[classes.tokenCount()];
+
+    for (int token = 0; token < classes.tokenCount(); token++) {
+      doorClasses[token] =
+          !classes.isVoid(token) && classes.representativeOf(token).role() == TileRole.DOOR;
+    }
   }
 
   public InteriorModel learn(List<CorpusSample> samples) {
@@ -30,6 +39,8 @@ public final class AdjacencyLearner {
     }
 
     AdjacencyRules.Builder rules = AdjacencyRules.builder(classes.tokenCount());
+
+    rules.allowEverywhere(TileClasses.VOID, TileClasses.VOID);
     Map<RoomType, Map<Zone, ZoneStatistics>> statsByTypeAndZone = new EnumMap<>(RoomType.class);
     Map<Zone, ZoneStatistics> motifWide = freshZoneMap();
 
@@ -63,7 +74,11 @@ public final class AdjacencyLearner {
               ? classes.classOf(grid.get(neighbourX, neighbourY))
               : TileClasses.VOID;
 
-          rules.allow(here, direction, there);
+          if (doorClasses[here]) {
+            rules.allowEverywhere(here, there);
+          } else {
+            rules.allow(here, direction, there);
+          }
         }
       }
     }

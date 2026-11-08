@@ -5,6 +5,9 @@ import com.badlogic.gdx.utils.JsonValue;
 import com.badlogic.gdx.utils.JsonWriter;
 import java.util.ArrayList;
 import java.util.List;
+import net.dp.rpg.engine.floor.FloorDescriptor;
+import net.dp.rpg.engine.floor.FloorSettings;
+import net.dp.rpg.engine.floor.LoopSettings;
 
 public final class FloorJson {
 
@@ -22,6 +25,11 @@ public final class FloorJson {
     root.addChild("archetype", new JsonValue(document.archetype()));
     root.addChild("seed", new JsonValue(document.seed()));
     root.addChild("descriptor", new JsonValue(document.descriptor()));
+    root.addChild("attempt", new JsonValue((long) document.attempt()));
+
+    if (document.settings() != null) {
+      root.addChild("settings", settings(document.settings()));
+    }
     root.addChild("preview", strings(document.preview()));
 
     JsonValue rooms = array();
@@ -122,11 +130,43 @@ public final class FloorJson {
         root.getString("archetype", "default"),
         root.getLong("seed", 0L),
         root.getString("descriptor", ""),
+        root.getInt("attempt", FloorDescriptor.DIRECT),
+        settings(root.get("settings")),
         strings(root.get("preview")),
         rooms,
         doors,
         quests,
         state(root.get("state")));
+  }
+
+  private static JsonValue settings(FloorSettings settings) {
+    JsonValue node = object();
+    JsonValue loops = object();
+
+    node.addChild("minRooms", new JsonValue((long) settings.minRooms()));
+    node.addChild("maxRooms", new JsonValue((long) settings.maxRooms()));
+    node.addChild("trunkRatio", new JsonValue(settings.trunkRatio()));
+    node.addChild("criticalShare", new JsonValue(settings.criticalShare()));
+    loops.addChild("perRoom", new JsonValue(settings.loops().loopsPerRoom()));
+    loops.addChild("minCycleRooms", new JsonValue((long) settings.loops().minCycleRooms()));
+    loops.addChild("maxCriticalLoss", new JsonValue(settings.loops().maxCriticalLoss()));
+    node.addChild("loops", loops);
+    node.addChild("questRoomRatio", new JsonValue(settings.questRoomRatio()));
+
+    return node;
+  }
+
+  private static FloorSettings settings(JsonValue node) {
+    if (node == null) {
+      return null;
+    }
+
+    JsonValue loops = node.get("loops");
+
+    return new FloorSettings(node.getInt("minRooms"), node.getInt("maxRooms"),
+        node.getDouble("trunkRatio"), node.getDouble("criticalShare"),
+        new LoopSettings(loops.getDouble("perRoom"), loops.getInt("minCycleRooms"),
+            loops.getDouble("maxCriticalLoss")), node.getDouble("questRoomRatio"));
   }
 
   private static FloorDocument.StateDoc state(JsonValue node) {

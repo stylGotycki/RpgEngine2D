@@ -5,7 +5,9 @@ import java.util.Comparator;
 import java.util.List;
 import net.dp.rpg.engine.floor.FloorArchetype;
 import net.dp.rpg.engine.floor.FloorDebug;
+import net.dp.rpg.engine.floor.FloorDescriptor;
 import net.dp.rpg.engine.floor.FloorLayout;
+import net.dp.rpg.engine.floor.FloorSettings;
 import net.dp.rpg.engine.floor.QuestBundle;
 import net.dp.rpg.engine.floor.RandomSource;
 import net.dp.rpg.engine.floor.graph.RoomLink;
@@ -19,21 +21,26 @@ import net.dp.rpg.engine.tile.room.RoomEdge;
 
 public final class FloorDocuments {
 
-  public static final String GENERATOR_VERSION = "0.7.0";
+  public static final String GENERATOR_VERSION = "0.9.0";
 
   private FloorDocuments() {
   }
 
   public static FloorDocument of(FloorLayout floor, FloorArchetype archetype) {
     String content = contentHash(archetype);
+    FloorDescriptor descriptor = floor.descriptor() != null ? floor.descriptor()
+        : new FloorDescriptor(floor.archetypeId(), floor.seed(), FloorDescriptor.DIRECT,
+            FloorSettings.of(archetype));
 
     return new FloorDocument(
         FloorDocument.FORMAT,
         GENERATOR_VERSION,
         content,
         floor.archetypeId(),
-        floor.seed(),
-        descriptor(content, floor),
+        descriptor.seed(),
+        fingerprint(content, descriptor),
+        descriptor.attempt(),
+        descriptor.settings(),
         preview(floor),
         rooms(floor),
         doors(floor),
@@ -55,13 +62,32 @@ public final class FloorDocuments {
     builder.append('|').append(archetype.quests().roomRatio())
         .append('|').append(archetype.trunkRatio())
         .append('|').append(archetype.cellsPerRoom())
-        .append('|').append(archetype.density());
+        .append('|').append(archetype.density())
+        .append('|').append(archetype.aspect())
+        .append('|').append(archetype.criticalShare())
+        .append('|').append(archetype.loops())
+        .append('|').append(archetype.walker());
 
     return hex(RandomSource.hash(builder.toString()));
   }
 
-  private static String descriptor(String content, FloorLayout floor) {
-    return hex(RandomSource.mix(RandomSource.hash(content + floor.archetypeId()) ^ floor.seed()));
+  public static FloorDescriptor descriptorOf(FloorDocument document, FloorArchetype archetype) {
+    if (!archetype.id().equals(document.archetype())) {
+      throw new IllegalArgumentException("Document is a '%s' floor, not '%s'"
+          .formatted(document.archetype(), archetype.id()));
+    }
+
+    FloorSettings settings = document.settings() != null ? document.settings()
+        : FloorSettings.of(archetype);
+
+    return new FloorDescriptor(document.archetype(), document.seed(), document.attempt(),
+        settings);
+  }
+
+  private static String fingerprint(String content, FloorDescriptor descriptor) {
+    long hash = RandomSource.hash(content + descriptor.archetypeId() + descriptor.settings());
+
+    return hex(RandomSource.mix(hash ^ descriptor.seed()) ^ descriptor.attempt());
   }
 
   private static String hex(long value) {

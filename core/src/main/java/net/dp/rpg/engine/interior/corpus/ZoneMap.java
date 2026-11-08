@@ -111,7 +111,29 @@ public final class ZoneMap {
       }
     }
 
-    return onBand ? Zone.WALL : Zone.INTERIOR;
+    if (onBand || isConcaveCorner(shape, cell, localX, localY)) {
+      return Zone.WALL;
+    }
+
+    return Zone.INTERIOR;
+  }
+
+  private static boolean isConcaveCorner(RoomShape shape, RoomCell cell, int localX,
+      int localY) {
+    for (Direction across : new Direction[] {Direction.WEST, Direction.EAST}) {
+      if (!onEdge(across, localX, localY)) {
+        continue;
+      }
+
+      for (Direction along : new Direction[] {Direction.SOUTH, Direction.NORTH}) {
+        if (onEdge(along, localX, localY)
+            && !shape.contains(cell.neighbour(across).neighbour(along))) {
+          return true;
+        }
+      }
+    }
+
+    return false;
   }
 
   private static boolean onEdge(Direction direction, int localX, int localY) {

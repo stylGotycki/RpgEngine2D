@@ -51,6 +51,7 @@ public final class CorpusScanner {
     return new Scan(source, map).run();
   }
 
+  /** The sample, or null when the map had errors, plus every issue found. */
   public record ScanResult(CorpusSample sample, List<CorpusIssue> issues) {
 
     public ScanResult {
@@ -100,6 +101,8 @@ public final class CorpusScanner {
       Set<RoomType> roomTypes = readRoomTypes();
       List<PrefabRegion> prefabs = readPrefabs(zones);
       List<TileMapObject> markers = readMarkers(zones, prefabs);
+
+      checkLooseWalls(ground, zones, prefabs);
 
       if (issues.stream().anyMatch(CorpusIssue::isError)) {
         return reject();
@@ -172,6 +175,41 @@ public final class CorpusScanner {
                 "Door %s stands inside the room instead of in its wall".formatted(type.id())));
           }
         }
+      }
+    }
+
+    /**
+     * Walls inside the room that no PREFAB covers are learned by nobody: WFC never places a wall
+     * inside a room, so such a structure would silently disappear. One warning per sample.
+     */
+    private void checkLooseWalls(TileGrid ground, ZoneMap zones, List<PrefabRegion> prefabs) {
+      int loose = 0;
+      int firstX = 0;
+      int firstY = 0;
+
+      for (int y = 0; y < zones.height(); y++) {
+        for (int x = 0; x < zones.width(); x++) {
+          int id = ground.get(x, y);
+          int column = x;
+          int row = y;
+          boolean wall = zones.zoneAt(x, y) == Zone.INTERIOR && id != TileGrid.EMPTY
+              && types.require(id).role() == TileRole.WALL;
+
+          if (wall && prefabs.stream().noneMatch(prefab -> prefab.contains(column, row))) {
+            if (loose == 0) {
+              firstX = x;
+              firstY = y;
+            }
+
+            loose++;
+          }
+        }
+      }
+
+      if (loose > 0) {
+        issues.add(CorpusIssue.warningAt(source, firstX, tiledRow(firstY), ("%d wall tile(s) "
+            + "inside the room are not part of any PREFAB and are ignored; mark the structure "
+            + "as a PREFAB region").formatted(loose)));
       }
     }
 
@@ -386,6 +424,7 @@ public final class CorpusScanner {
       tally.computeIfAbsent(message, key -> new int[] {0, x, y})[0]++;
     }
 
+    /** Issues name tiles the way Tiled shows them, rows counted from the top. */
     private int tiledRow(int y) {
       return TiledAxis.flipRow(y, map.height());
     }

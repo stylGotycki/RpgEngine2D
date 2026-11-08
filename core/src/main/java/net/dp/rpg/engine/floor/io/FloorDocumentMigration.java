@@ -70,7 +70,8 @@ final class FloorDocumentMigration {
             renamed(document.state().opened(), anchors));
 
     return new FloorDocument(FloorDocument.FORMAT, document.generator(), document.content(),
-        document.archetype(), document.seed(), document.descriptor(), document.preview(), rooms,
+        document.archetype(), document.seed(), document.descriptor(), document.attempt(),
+        document.settings(), document.preview(), rooms,
         doors, quests, state);
   }
 

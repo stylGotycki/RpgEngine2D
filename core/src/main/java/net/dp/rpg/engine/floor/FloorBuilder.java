@@ -7,6 +7,7 @@ import net.dp.rpg.engine.floor.graph.FloorGraph;
 import net.dp.rpg.engine.floor.graph.RoomNode;
 import net.dp.rpg.engine.floor.phase.AppendixPhase;
 import net.dp.rpg.engine.floor.phase.HolePhase;
+import net.dp.rpg.engine.floor.phase.LoopPhase;
 import net.dp.rpg.engine.floor.phase.QuestPhase;
 import net.dp.rpg.engine.floor.phase.RetrospectivePass;
 import net.dp.rpg.engine.floor.phase.WalkerLayout;
@@ -22,6 +23,8 @@ public final class FloorBuilder {
   private final AppendixPhase appendices = new AppendixPhase();
 
   private final HolePhase holes = new HolePhase();
+
+  private final LoopPhase loops = new LoopPhase();
 
   private final RetrospectivePass retrospective = new RetrospectivePass();
 
@@ -41,7 +44,7 @@ public final class FloorBuilder {
 
     AppendixPhase.Result attached = appendices.attach(graph, context, shapes);
     int holeRooms = holes.fill(graph, context);
-    int extraDoors = walk.extraDoors() + completeDoorways(graph);
+    int extraDoors = loops.open(graph, context) + completeDoorways(graph);
 
     graph.computeDepths();
 
@@ -54,7 +57,7 @@ public final class FloorBuilder {
     FloorLayout layout = new FloorLayout(context.plan().archetypeId(), context.seed(), graph, boss,
         criticalPath, walk.rooms(), attached.attached(), holeRooms,
         extraDoors, late.relocated(), context.loadout().unspentMandatory(), walk.path(), bundles,
-        walk.reason());
+        walk.reason(), null);
 
     return layout.normalized();
   }
