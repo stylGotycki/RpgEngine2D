@@ -28,7 +28,6 @@ import net.dp.rpg.engine.tile.debug.GdxTileLogger;
 import net.dp.rpg.engine.tile.debug.TileLogger;
 import net.dp.rpg.engine.tile.exception.TileException;
 import net.dp.rpg.engine.tile.render.TileMapRenderer;
-import net.dp.rpg.engine.tile.room.RoomCell;
 import net.dp.rpg.engine.tile.room.RoomGeometry;
 
 public final class FloorDemoApp extends ApplicationAdapter {
@@ -99,7 +98,7 @@ public final class FloorDemoApp extends ApplicationAdapter {
   private void generate(long newSeed) {
     seed = newSeed;
     layout = generator.generate(archetype, seed);
-    bounds = boundsOf(layout);
+    bounds = layout.extent();
     replay = new FloorReplay(layout);
     focusRoom = 0;
     sinceStep = 0f;
@@ -114,20 +113,6 @@ public final class FloorDemoApp extends ApplicationAdapter {
 
     repaint();
     fitWholeFloor();
-  }
-
-  private GridBounds boundsOf(FloorLayout floor) {
-    int maxX = 0;
-    int maxY = 0;
-
-    for (RoomNode room : floor.graph().rooms()) {
-      for (RoomCell cell : room.cells()) {
-        maxX = Math.max(maxX, cell.x());
-        maxY = Math.max(maxY, cell.y());
-      }
-    }
-
-    return new GridBounds(maxX + 1, maxY + 1);
   }
 
   private void repaint() {
@@ -234,7 +219,7 @@ public final class FloorDemoApp extends ApplicationAdapter {
   }
 
   private void saveFloor() {
-    FloorDocument document = FloorDocuments.of(layout, archetype, bounds);
+    FloorDocument document = FloorDocuments.of(layout, archetype);
     FileHandle file = Gdx.files.local(fileName());
 
     file.writeString(FloorJson.write(document), false);
@@ -384,13 +369,10 @@ public final class FloorDemoApp extends ApplicationAdapter {
     RoomNode room = rooms.get(focusRoom);
 
     camera.zoom = Math.max(MIN_ZOOM, (float) RoomGeometry.CELL_WIDTH / map.width() * 1.6f);
-    camera.position.set(room.anchor().centerTileX() + 0.5f, worldY(room.anchor().centerTileY()), 0f);
+    camera.position.set(room.anchor().centerTileX() + 0.5f, room.anchor().centerTileY() + 0.5f,
+        0f);
 
     updateTitle();
-  }
-
-  private float worldY(int tileY) {
-    return map.height() - tileY - 0.5f;
   }
 
   private void exportFloor() {

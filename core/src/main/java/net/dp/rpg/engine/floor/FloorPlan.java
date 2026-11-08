@@ -11,6 +11,8 @@ public record FloorPlan(
     int roomCount,
     double trunkRatio,
     double cellsPerRoom,
+    double criticalShare,
+    LoopSettings loops,
     ShapePool defaultShapes,
     List<RoomTypeDefinition> roomTypes,
     QuestSettings questSettings,
@@ -19,6 +21,10 @@ public record FloorPlan(
   public static final double DEFAULT_TRUNK_RATIO = 0.70;
 
   public static final double DEFAULT_CELLS_PER_ROOM = 1.8;
+
+  public static final double DEFAULT_CRITICAL_SHARE = 0.5;
+
+  public static final int MIN_CRITICAL_ROOMS = 3;
 
   public FloorPlan {
     if (roomCount < 2) {
@@ -33,32 +39,51 @@ public record FloorPlan(
       throw new IllegalArgumentException("cellsPerRoom must be at least 1, got " + cellsPerRoom);
     }
 
+    if (criticalShare <= 0.0 || criticalShare > 1.0) {
+      throw new IllegalArgumentException("criticalShare must be within 0..1, got " + criticalShare);
+    }
+
+    if (loops == null) {
+      throw new IllegalArgumentException("Loop settings must not be null");
+    }
+
     roomTypes = List.copyOf(roomTypes);
   }
 
   public static FloorPlan of(int roomCount) {
     return new FloorPlan("default", roomCount, DEFAULT_TRUNK_RATIO, DEFAULT_CELLS_PER_ROOM,
-        ShapePools.STANDARD, DefaultRoomTypes.catalog(), QuestSettings.defaults(), true);
+        DEFAULT_CRITICAL_SHARE, LoopSettings.defaults(), ShapePools.STANDARD,
+        DefaultRoomTypes.catalog(), QuestSettings.defaults(), true);
   }
 
   public FloorPlan withTrunkRatio(double ratio) {
-    return new FloorPlan(archetypeId, roomCount, ratio, cellsPerRoom, defaultShapes, roomTypes,
-        questSettings, exclusiveGroups);
+    return new FloorPlan(archetypeId, roomCount, ratio, cellsPerRoom, criticalShare, loops,
+        defaultShapes, roomTypes, questSettings, exclusiveGroups);
   }
 
   public FloorPlan withCellsPerRoom(double cells) {
-    return new FloorPlan(archetypeId, roomCount, trunkRatio, cells, defaultShapes, roomTypes,
-        questSettings, exclusiveGroups);
+    return new FloorPlan(archetypeId, roomCount, trunkRatio, cells, criticalShare, loops,
+        defaultShapes, roomTypes, questSettings, exclusiveGroups);
+  }
+
+  public FloorPlan withCriticalShare(double share) {
+    return new FloorPlan(archetypeId, roomCount, trunkRatio, cellsPerRoom, share, loops,
+        defaultShapes, roomTypes, questSettings, exclusiveGroups);
+  }
+
+  public FloorPlan withLoops(LoopSettings value) {
+    return new FloorPlan(archetypeId, roomCount, trunkRatio, cellsPerRoom, criticalShare, value,
+        defaultShapes, roomTypes, questSettings, exclusiveGroups);
   }
 
   public FloorPlan withQuestSettings(QuestSettings quests) {
-    return new FloorPlan(archetypeId, roomCount, trunkRatio, cellsPerRoom, defaultShapes, roomTypes,
-        quests, exclusiveGroups);
+    return new FloorPlan(archetypeId, roomCount, trunkRatio, cellsPerRoom, criticalShare, loops,
+        defaultShapes, roomTypes, quests, exclusiveGroups);
   }
 
   public FloorPlan withRoomTypes(List<RoomTypeDefinition> types) {
-    return new FloorPlan(archetypeId, roomCount, trunkRatio, cellsPerRoom, defaultShapes, types,
-        questSettings, exclusiveGroups);
+    return new FloorPlan(archetypeId, roomCount, trunkRatio, cellsPerRoom, criticalShare, loops,
+        defaultShapes, types, questSettings, exclusiveGroups);
   }
 
   public int trunkRooms() {
@@ -75,5 +100,13 @@ public record FloorPlan(
 
   public int trunkCellBudget() {
     return cellBudget() - appendixRooms();
+  }
+
+  public int criticalRooms() {
+    return Math.max(MIN_CRITICAL_ROOMS, (int) Math.round(roomCount * criticalShare));
+  }
+
+  public int targetTrunkDepth() {
+    return Math.max(1, Math.min(trunkRooms() - 1, criticalRooms() - 2));
   }
 }

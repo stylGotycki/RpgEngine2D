@@ -65,7 +65,7 @@ public final class RoomNode {
   }
 
   public RoomCell anchor() {
-    return toFloorCell(variant.shape().topLeftCell());
+    return toFloorCell(variant.shape().anchorCell());
   }
 
   public Set<RoomCell> cells() {

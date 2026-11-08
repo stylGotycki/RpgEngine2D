@@ -12,6 +12,7 @@ import net.dp.rpg.engine.tile.TileLayer;
 import net.dp.rpg.engine.tile.TileLayerKind;
 import net.dp.rpg.engine.tile.TileMapObject;
 import net.dp.rpg.engine.tile.room.Direction;
+import net.dp.rpg.engine.tile.tiled.TiledAxis;
 
 public final class PrefabExtractor {
 
@@ -84,7 +85,7 @@ public final class PrefabExtractor {
       try {
         anchor = PrefabAnchor.of(text);
       } catch (IllegalArgumentException exception) {
-        issues.add(CorpusIssue.warningAt(sample.source(), region.x(), region.y(),
+        issues.add(CorpusIssue.warningAt(sample.source(), region.x(), tiledTop(sample, region),
             "PREFAB '%s': %s; defaulting to ANY".formatted(region.group(),
                 exception.getMessage())));
 
@@ -122,10 +123,10 @@ public final class PrefabExtractor {
 
   private static boolean touchesWall(CorpusSample sample, PrefabRegion region,
                                      Direction direction) {
-    boolean vertical = direction == Direction.NORTH || direction == Direction.SOUTH;
+    boolean vertical = direction.isVertical();
     int fixed = switch (direction) {
-      case NORTH -> region.y() - 1;
-      case SOUTH -> region.y() + region.height();
+      case NORTH -> region.y() + region.height();
+      case SOUTH -> region.y() - 1;
       case WEST -> region.x() - 1;
       case EAST -> region.x() + region.width();
     };
@@ -143,6 +144,10 @@ public final class PrefabExtractor {
     }
 
     return false;
+  }
+
+  private static int tiledTop(CorpusSample sample, PrefabRegion region) {
+    return TiledAxis.flipRow(region.y() + region.height() - 1, sample.height());
   }
 
   private static boolean readFlippable(PrefabRegion region) {
@@ -163,7 +168,7 @@ public final class PrefabExtractor {
       return number.doubleValue();
     }
 
-    issues.add(CorpusIssue.warningAt(sample.source(), region.x(), region.y(),
+    issues.add(CorpusIssue.warningAt(sample.source(), region.x(), tiledTop(sample, region),
         "PREFAB '%s' has a non-positive weight '%s'; defaulting to %.1f".formatted(region.group(),
             declared, DEFAULT_WEIGHT)));
 

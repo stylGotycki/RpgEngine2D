@@ -9,16 +9,20 @@ public final class FloorGenerator {
   private final FloorBuilder builder = new FloorBuilder();
 
   public FloorLayout generate(FloorArchetype archetype, long seed) {
+    return generate(archetype, FloorSettings.of(archetype), seed);
+  }
+
+  public FloorLayout generate(FloorArchetype archetype, FloorSettings settings, long seed) {
+    FloorArchetype tuned = archetype.with(settings);
     List<String> lastViolations = List.of();
 
     for (int attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
-      long effectiveSeed = RandomSource.mix(seed + attempt);
-      FloorLayout floor = buildOnce(archetype, effectiveSeed);
+      FloorLayout floor = build(tuned, RandomSource.mix(seed + attempt));
 
-      lastViolations = archetype.postconditions().violations(floor);
+      lastViolations = tuned.postconditions().violations(floor);
 
       if (lastViolations.isEmpty()) {
-        return floor;
+        return floor.withDescriptor(new FloorDescriptor(archetype.id(), seed, attempt, settings));
       }
     }
 
@@ -27,6 +31,21 @@ public final class FloorGenerator {
   }
 
   public FloorLayout buildOnce(FloorArchetype archetype, long seed) {
+    return build(archetype, seed).withDescriptor(new FloorDescriptor(archetype.id(), seed,
+        FloorDescriptor.DIRECT, FloorSettings.of(archetype)));
+  }
+
+  public FloorLayout replay(FloorArchetype archetype, FloorDescriptor descriptor) {
+    if (!archetype.id().equals(descriptor.archetypeId())) {
+      throw new IllegalArgumentException("Descriptor is for archetype '%s', not '%s'"
+          .formatted(descriptor.archetypeId(), archetype.id()));
+    }
+
+    return build(archetype.with(descriptor.settings()), descriptor.effectiveSeed())
+        .withDescriptor(descriptor);
+  }
+
+  private FloorLayout build(FloorArchetype archetype, long seed) {
     int roomCount = archetype.rollRoomCount(RandomSource.derive(seed, "size"));
 
     return builder.build(archetype.planFor(roomCount), archetype.boundsFor(roomCount),

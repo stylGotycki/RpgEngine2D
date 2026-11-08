@@ -17,8 +17,8 @@ public final class RoomGeometry {
     return cellsAcross * CELL_WIDTH;
   }
 
-  public static int tileHeight(int cellsDown) {
-    return cellsDown * CELL_HEIGHT;
+  public static int tileHeight(int cellsHigh) {
+    return cellsHigh * CELL_HEIGHT;
   }
 
   public static int cellXOf(int tileX) {

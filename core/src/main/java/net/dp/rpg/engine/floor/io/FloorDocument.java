@@ -1,6 +1,8 @@
 package net.dp.rpg.engine.floor.io;
 
 import java.util.List;
+import net.dp.rpg.engine.floor.FloorDescriptor;
+import net.dp.rpg.engine.floor.FloorSettings;
 
 public record FloorDocument(
     int format,
@@ -9,13 +11,15 @@ public record FloorDocument(
     String archetype,
     long seed,
     String descriptor,
+    int attempt,
+    FloorSettings settings,
     List<String> preview,
     List<RoomDoc> rooms,
     List<DoorDoc> doors,
     List<QuestDoc> quests,
     StateDoc state) {
 
-  public static final int FORMAT = 1;
+  public static final int FORMAT = 2;
 
   public FloorDocument {
     preview = List.copyOf(preview);

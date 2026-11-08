@@ -87,7 +87,7 @@ public final class RoomShapeDef {
   private static RoomShape rotate(RoomShape shape) {
     List<RoomCell> cells = new ArrayList<>();
 
-    shape.cells().forEach(cell -> cells.add(new RoomCell(-cell.y(), cell.x())));
+    shape.cells().forEach(cell -> cells.add(new RoomCell(cell.y(), -cell.x())));
 
     return RoomShape.of(cells);
   }

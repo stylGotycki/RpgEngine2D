@@ -33,14 +33,14 @@ public final class WalkerLayout {
     Random layoutRandom = context.stream("layout");
     Random shapeRandom = context.stream("shape");
     Random typeRandom = context.stream("type");
-    Random doorRandom = context.stream("door");
 
     FloorGraph graph = new FloorGraph();
     ShapeDrawContext shapes = new ShapeDrawContext(plan.exclusiveGroups());
 
     placeStart(graph, context, shapes, shapeRandom);
+    graph.computeDepths();
 
-    Walker walker = new Walker(bounds.center(), bounds, settings);
+    Walker walker = new Walker(bounds.center(), bounds, settings, plan.targetTrunkDepth());
     List<RoomCell> path = new ArrayList<>();
 
     path.add(walker.cell());
@@ -72,9 +72,7 @@ public final class WalkerLayout {
       }
     }
 
-    int extraDoors = connectTouchingRooms(graph, doorRandom, settings);
-
-    return new WalkResult(graph, graph.size(), steps, extraDoors, List.copyOf(path), reason);
+    return new WalkResult(graph, graph.size(), steps, List.copyOf(path), reason);
   }
 
   private void placeStart(FloorGraph graph, FloorContext context, ShapeDrawContext shapes, Random shapeRandom) {
@@ -151,6 +149,7 @@ public final class WalkerLayout {
       shapes.confirm(variant);
       context.loadout().spend(AbilityPhase.TRUNK, type);
       graph.connect(currentRoom, created, new RoomEdge(from, direction), DoorType.NORMAL);
+      graph.computeDepths();
       walker.moveTo(target, direction);
 
       return Outcome.CREATED;
@@ -195,31 +194,6 @@ public final class WalkerLayout {
     return shapes.draw(pool, roomsLeft, cellsLeft, factor, shapeRandom);
   }
 
-  private int connectTouchingRooms(FloorGraph graph, Random doorRandom, WalkerSettings settings) {
-    int opened = 0;
-
-    for (RoomNode room : graph.rooms()) {
-      for (RoomEdge edge : room.outerEdges()) {
-        RoomNode other = graph.roomAt(edge.cell().neighbour(edge.direction()));
-
-        if (other == null || other.index() < room.index()) {
-          continue;
-        }
-
-        if (graph.doorAt(edge.cell(), edge.direction()) != null) {
-          continue;
-        }
-
-        if (doorRandom.nextDouble() < settings.extraDoorChance()) {
-          graph.connect(room, other, edge, DoorType.NORMAL);
-          opened++;
-        }
-      }
-    }
-
-    return opened;
-  }
-
   private enum Outcome {
 
     CREATED,
@@ -236,7 +210,7 @@ public final class WalkerLayout {
     BLOCKED
   }
 
-  public record WalkResult(FloorGraph graph, int rooms, int steps, int extraDoors, List<RoomCell> path,
+  public record WalkResult(FloorGraph graph, int rooms, int steps, List<RoomCell> path,
                            StopReason reason) {
 
     public WalkResult {

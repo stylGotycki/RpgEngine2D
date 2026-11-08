@@ -2,7 +2,6 @@ package net.dp.rpg.engine.floor;
 
 import net.dp.rpg.engine.tile.room.RoomCell;
 
-/** The coarse grid the walker may not leave. */
 public record GridBounds(int width, int height) {
 
   public GridBounds {
@@ -16,6 +15,6 @@ public record GridBounds(int width, int height) {
   }
 
   public RoomCell center() {
-    return new RoomCell(width / 2, height / 2);
+    return new RoomCell(width / 2, (height - 1) / 2);
   }
 }
