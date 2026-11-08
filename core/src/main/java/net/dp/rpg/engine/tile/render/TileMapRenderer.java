@@ -5,13 +5,15 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.utils.Disposable;
 import lombok.Getter;
+import lombok.Setter;
 import net.dp.rpg.engine.tile.TileGrid;
 import net.dp.rpg.engine.tile.TileLayer;
 import net.dp.rpg.engine.tile.TileMapData;
 
 public final class TileMapRenderer implements Disposable {
 
-  private final SpriteBatch batch;
+  @Setter
+  private SpriteBatch batch;
 
   private final boolean ownsBatch;
 

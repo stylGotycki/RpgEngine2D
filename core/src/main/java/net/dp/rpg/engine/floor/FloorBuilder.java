@@ -1,0 +1,94 @@
+package net.dp.rpg.engine.floor;
+
+import java.util.List;
+
+import net.dp.rpg.engine.floor.graph.DoorType;
+import net.dp.rpg.engine.floor.graph.FloorGraph;
+import net.dp.rpg.engine.floor.graph.RoomNode;
+import net.dp.rpg.engine.floor.phase.AppendixPhase;
+import net.dp.rpg.engine.floor.phase.HolePhase;
+import net.dp.rpg.engine.floor.phase.QuestPhase;
+import net.dp.rpg.engine.floor.phase.RetrospectivePass;
+import net.dp.rpg.engine.floor.phase.WalkerLayout;
+import net.dp.rpg.engine.floor.phase.WalkerSettings;
+import net.dp.rpg.engine.floor.shape.ShapeDrawContext;
+import net.dp.rpg.engine.floor.type.RoomType;
+import net.dp.rpg.engine.tile.room.RoomEdge;
+
+public final class FloorBuilder {
+
+  private final WalkerLayout walker = new WalkerLayout();
+
+  private final AppendixPhase appendices = new AppendixPhase();
+
+  private final HolePhase holes = new HolePhase();
+
+  private final RetrospectivePass retrospective = new RetrospectivePass();
+
+  private final QuestPhase quests = new QuestPhase();
+
+  public FloorLayout build(FloorPlan plan, GridBounds bounds, WalkerSettings settings, long seed) {
+    return build(FloorContext.of(plan, bounds, settings, seed));
+  }
+
+  public FloorLayout build(FloorContext context) {
+    WalkerLayout.WalkResult walk = walker.grow(context);
+    FloorGraph graph = walk.graph();
+
+    ShapeDrawContext shapes = new ShapeDrawContext(context.plan().exclusiveGroups());
+
+    graph.rooms().forEach(room -> shapes.confirm(room.variant()));
+
+    AppendixPhase.Result attached = appendices.attach(graph, context, shapes);
+    int holeRooms = holes.fill(graph, context);
+    int extraDoors = walk.extraDoors() + completeDoorways(graph);
+
+    graph.computeDepths();
+
+    RoomNode boss = bossOf(graph);
+    List<RoomNode> criticalPath = boss == null ? List.of() : graph.pathToStart(boss);
+
+    RetrospectivePass.Result late = retrospective.apply(graph, context, criticalPath);
+    List<QuestBundle> bundles = quests.assign(graph, context);
+
+    return new FloorLayout(context.plan().archetypeId(), context.seed(), graph, boss, criticalPath,
+        walk.rooms(), attached.attached(), holeRooms,
+        extraDoors, late.relocated(), context.loadout().unspentMandatory(), walk.path(), bundles,
+        walk.reason());
+  }
+
+  private RoomNode bossOf(FloorGraph graph) {
+    return graph.rooms().stream()
+        .filter(room -> room.type() == RoomType.BOSS)
+        .findFirst()
+        .orElse(null);
+  }
+
+  private int completeDoorways(FloorGraph graph) {
+    int opened = 0;
+
+    for (RoomNode room : List.copyOf(graph.rooms())) {
+      for (RoomEdge edge : room.outerEdges()) {
+        RoomNode other = graph.roomAt(edge.cell().neighbour(edge.direction()));
+
+        if (other == null || other.index() < room.index() || !room.isLinkedTo(other)) {
+          continue;
+        }
+
+        if (graph.doorAt(edge.cell(), edge.direction()) != null || isLocked(room, other)) {
+          continue;
+        }
+
+        graph.connect(room, other, edge, DoorType.NORMAL);
+        opened++;
+      }
+    }
+
+    return opened;
+  }
+
+  private boolean isLocked(RoomNode room, RoomNode other) {
+    return room.links().stream()
+        .anyMatch(link -> link.other(room) == other && link.doorType() == DoorType.LOCKED);
+  }
+}

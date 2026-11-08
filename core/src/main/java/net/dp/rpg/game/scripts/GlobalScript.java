@@ -2,7 +2,7 @@ package net.dp.rpg.game.scripts;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
-import net.dp.rpg.engine.InputListener;
+import net.dp.rpg.engine.systems.input.InputListener;
 import net.dp.rpg.engine.Script;
 
 public class GlobalScript extends Script implements InputListener

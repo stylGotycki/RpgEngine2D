@@ -12,8 +12,8 @@ public class MenuBuilder
     public void build(EngineServices engine, Scene scene)
     {
         Skin guiSkin = engine.getAssetManager().get("skins/default/default.json");
-        ParticleEffect buttonParticle = engine.getAssetManager().get("particles/buttonDust.p");
-        ParticleEffect backgroundParticle = engine.getAssetManager().get("particles/menuDust.p");
+        ParticleEffect buttonParticle = engine.getAssetManager().get("particles/button_dust.p");
+        ParticleEffect backgroundParticle = engine.getAssetManager().get("particles/menu_dust.p");
 
         Gui gui = scene.getGui();
         Table mainTable = gui.getMainTable();

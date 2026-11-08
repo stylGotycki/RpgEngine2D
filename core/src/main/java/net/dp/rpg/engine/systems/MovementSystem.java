@@ -1,14 +1,17 @@
 package net.dp.rpg.engine.systems;
 
 import com.badlogic.gdx.graphics.Camera;
-import com.badlogic.gdx.math.Rectangle;
+import com.badlogic.gdx.graphics.g2d.Sprite;
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
-import com.badlogic.gdx.utils.viewport.Viewport;
+import com.badlogic.gdx.utils.Array;
 import net.dp.rpg.engine.components.*;
 
 public class MovementSystem
 {
+    private final Vector2 tempTargetPos = new Vector2();
+
     public void updatePositions(ComponentStorage<TransformComponent> transforms, ComponentStorage<MoveComponent> velocities, float delta)
     {
         int vSize = velocities.size();
@@ -23,69 +26,172 @@ public class MovementSystem
         }
     }
 
-    public void syncBodyAndSpritePositions(ComponentStorage<PhysicalBodyComponent> bodies, ComponentStorage<SpriteComponent> sprites)
+    public void follow(ComponentStorage<FollowComponent> followComponents, ComponentStorage<TransformComponent> transformComponents, ComponentStorage<BoundingComponent> bounds, float delta)
+    {
+        int fSize = followComponents.size();
+        for(int i = 0; i < fSize; i++)
+        {
+            FollowComponent followComponent = followComponents.getByIndex(i);
+            int following = followComponents.getEntity(i);
+            int target = followComponent.targetEntity;
+            if(transformComponents.hasComponent(following))
+            {
+                Vector2 position = transformComponents.getByEntity(following).position;
+                TransformComponent targetTransform = transformComponents.getByEntity(target);
+                if(targetTransform == null)
+                    continue;
+                Vector2 targetPosition = targetTransform.position;
+                tempTargetPos.set(targetPosition);
+                if(bounds.hasComponent(following))
+                {
+                    BoundingComponent bound = bounds.getByIndex(i);
+                    tempTargetPos.x = MathUtils.clamp(tempTargetPos.x, bound.minX, bound.maxX);
+                    tempTargetPos.y = MathUtils.clamp(tempTargetPos.y, bound.minY, bound.maxY);
+                }
+                lerp(position, followComponent.lerp, delta, tempTargetPos);
+            }
+        }
+    }
+
+    public void boundPositions(ComponentStorage<BoundingComponent> bounds, ComponentStorage<TransformComponent> transforms, float delta)
+    {
+        int bSize = bounds.size();
+        for(int i = 0; i < bSize; i++)
+        {
+            int entity = bounds.getEntity(i);
+            if(transforms.hasComponent(entity))
+            {
+                BoundingComponent bound = bounds.getByIndex(i);
+                Vector2 position = transforms.getByEntity(entity).position;
+                tempTargetPos.x = MathUtils.clamp(position.x, bound.minX, bound.maxX);
+                tempTargetPos.y = MathUtils.clamp(position.y, bound.minY, bound.maxY);
+                bound.isInside = position.epsilonEquals(tempTargetPos, bound.insideTolerance);
+                if(bound.smoothCorrection)
+                {
+                    if(bound.useLerp)
+                        lerp(position, bound.lerp, delta, tempTargetPos);
+                    else
+                    {
+                        position.x += (tempTargetPos.x - position.x) * delta * bound.speed;
+                        position.y += (tempTargetPos.y - position.y) * delta * bound.speed;
+                    }
+                }
+                else
+                {
+                    position.set(tempTargetPos);
+                }
+            }
+        }
+    }
+
+    public void bodyToTransform(ComponentStorage<PhysicalBodyComponent> bodies, ComponentStorage<TransformComponent> transforms)
     {
         int bSize = bodies.size();
         for(int i = 0; i < bSize; i++)
         {
             int entity = bodies.getEntity(i);
-            SpriteComponent sprite = sprites.getByEntity(entity);
-            if(sprite != null)
+            if(transforms.hasComponent(entity))
             {
                 Body body = bodies.getByIndex(i).body;
-                sprite.sprite.setCenter(body.getPosition().x, body.getPosition().y);
-                sprite.sprite.setRotation(body.getTransform().getRotation() * 180 / (float) Math.PI);
+                TransformComponent transform = transforms.getByEntity(entity);
+                if(!transform.changed)
+                {
+                    transform.position.set(body.getPosition());
+                    transform.rotation = body.getTransform().getRotation();
+                }
             }
         }
     }
 
-    public void updateCameraPosition(ComponentStorage<CameraComponent> cameras, ComponentStorage<PhysicalBodyComponent> bodies, ComponentStorage<TransformComponent> transforms)
+    public void transformToBody(ComponentStorage<PhysicalBodyComponent> bodies, ComponentStorage<TransformComponent> transforms)
+    {
+        int bSize = bodies.size();
+        for(int i = 0; i < bSize; i++)
+        {
+            int entity = bodies.getEntity(i);
+            if(transforms.hasComponent(entity))
+            {
+                TransformComponent transform = transforms.getByEntity(entity);
+                if(transform.changed)
+                {
+                    Body body = bodies.getByIndex(i).body;
+                    body.setTransform(transform.position, transform.rotation);
+                    transform.changed = false;
+                }
+            }
+        }
+    }
+
+    public void transformToSprite(ComponentStorage<TransformComponent> transforms, ComponentStorage<MultiSpriteComponent> multiSpriteComponents, ComponentStorage<SpriteComponent> spriteComponents)
+    {
+        int sSize = multiSpriteComponents.size();
+        for(int i = 0; i < sSize; i++)
+        {
+            int entity = multiSpriteComponents.getEntity(i);
+            if(transforms.hasComponent(entity))
+            {
+                MultiSpriteComponent spriteComponent = multiSpriteComponents.getByIndex(i);
+                for(int j = 0; j < spriteComponent.sprites.size; j++)
+                {
+                    Array<Sprite> sprites = spriteComponent.sprites;
+                    TransformComponent transform = transforms.getByEntity(entity);
+                    sprites.get(j).setOriginBasedPosition(transform.position.x, transform.position.y);
+                    if(!(spriteComponent.fixedRotation.size > j && spriteComponent.fixedRotation.get(j)))
+                        sprites.get(j).setRotation(transform.rotation * MathUtils.radDeg);
+                }
+            }
+        }
+
+        sSize = spriteComponents.size();
+        for(int i = 0; i < sSize; i++)
+        {
+            int entity = spriteComponents.getEntity(i);
+            if(transforms.hasComponent(entity))
+            {
+                SpriteComponent spriteComponent = spriteComponents.getByIndex(i);
+                TransformComponent transform = transforms.getByEntity(entity);
+                spriteComponent.sprite.setOriginBasedPosition(transform.position.x, transform.position.y);
+                if(!(spriteComponent.fixedRotation))
+                    spriteComponent.sprite.setRotation(transform.rotation * MathUtils.radDeg);
+            }
+        }
+    }
+
+    public void transformToCamera(ComponentStorage<TransformComponent> transforms, ComponentStorage<CameraComponent> cameras)
     {
         int cSize = cameras.size();
         for(int i = 0; i < cSize; i++)
         {
             int entity = cameras.getEntity(i);
-            CameraComponent component = cameras.getByIndex(i);
-            Camera camera = component.camera;
-            Vector2 position;
             if(transforms.hasComponent(entity))
             {
-                position = transforms.getByEntity(entity).position;
-                camera.position.x = position.x;
-                camera.position.y = position.y;
+                Camera camera = cameras.getByIndex(i).camera;
+                TransformComponent transform = transforms.getByEntity(entity);
+                camera.position.x = transform.position.x;
+                camera.position.y = transform.position.y;
+                camera.update();
             }
-            else if(bodies.hasComponent(entity))
-            {
-                position = bodies.getByEntity(entity).body.getPosition();
-                camera.position.x = position.x;
-                camera.position.y = position.y;
-            }
-
-            if(component.isBounded)
-            {
-                Rectangle bounds = component.boundingRectangle;
-                float minX = bounds.x + camera.viewportWidth/2;
-                float minY = bounds.y + camera.viewportHeight/2;
-                float maxX = bounds.width - camera.viewportWidth/2;
-                float maxY = bounds.height - camera.viewportHeight/2;
-                if(camera.position.x < minX)
-                {
-                    camera.position.x = minX;
-                }
-                else if(camera.position.x > maxX)
-                {
-                    camera.position.x = maxX;
-                }
-                if(camera.position.y < minY)
-                {
-                    camera.position.y = minY;
-                }
-                else if(camera.position.y > maxY)
-                {
-                    camera.position.y = maxY;
-                }
-            }
-            camera.update();
         }
+    }
+
+    public void transformToLight(ComponentStorage<TransformComponent> transforms, ComponentStorage<LightComponent> lights)
+    {
+        int lSize = lights.size();
+        for(int i = 0; i < lSize; i++)
+        {
+            int entity = lights.getEntity(i);
+            LightComponent lightComponent = lights.getByEntity(entity);
+            if (lightComponent.light.getBody() == null && transforms.hasComponent(entity))
+            {
+                TransformComponent transform = transforms.getByEntity(entity);
+                lightComponent.light.setPosition(transform.position);
+            }
+        }
+    }
+
+    private void lerp(Vector2 position, float lerp, float delta, Vector2 target)
+    {
+        position.x += lerp * delta * (target.x - position.x);
+        position.y += lerp * delta * (target.y - position.y);
     }
 }
