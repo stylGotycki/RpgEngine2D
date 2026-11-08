@@ -23,7 +23,7 @@ public final class TileRoomShapes
   public static String encode(RoomShape shape) {
     StringBuilder encoded = new StringBuilder();
 
-    for (int y = 0; y < shape.cellsDown(); y++) {
+    for (int y = 0; y < shape.cellsHigh(); y++) {
       if (y > 0) {
         encoded.append(ROW_SEPARATOR);
       }

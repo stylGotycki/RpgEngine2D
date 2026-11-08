@@ -1,6 +1,6 @@
 package net.dp.rpg.engine.systems;
 
-import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.physics.box2d.ChainShape;
 import com.badlogic.gdx.physics.box2d.FixtureDef;
 import com.badlogic.gdx.utils.Array;
@@ -24,11 +24,6 @@ public class TileConverter
         this.fieldSize = fieldSize;
         this.tempWidth = width;
         this.tempHeight = height;
-    }
-
-    public float convertToWorldY(float y)
-    {
-        return (tempHeight-y)*fieldSize;
     }
 
     public Array<FixtureDef> creatFixtureDefsOnNotWalkable(TileMapData tileMap, TileSystem tileSystem)
@@ -55,7 +50,7 @@ public class TileConverter
                 if(!isWalkable(grid,x,y))
                     for(Direction dir : Direction.values())
                     {
-                        if(!visited[getArrayIndex(x,y,dir)] && isWalkable(grid, x+dir.getDeltaX(), y-dir.getDeltaY()))
+                        if(!visited[getArrayIndex(x,y,dir)] && isWalkable(grid, x+dir.getDeltaX(), y+viewDeltaY(dir)))
                         {
                             FixtureDef newFixture = createFixtureFrom(grid, x, y, dir);
                             if(newFixture != null)
@@ -66,11 +61,6 @@ public class TileConverter
             }
 
         return fixtureDefs;
-    }
-
-    public static void convertToWorldCoords(Vector2 coords, float fieldSize, int tilemapHeight)
-    {
-        coords.set(coords.x*fieldSize, (tilemapHeight-coords.y)*fieldSize);
     }
 
     private FixtureDef createFixtureFrom(TileGrid grid, int x, int y, Direction direction)
@@ -110,8 +100,17 @@ public class TileConverter
 
         // start of the chain
         addVertex(vertices, x, y);
+        // A closed contour walks each tile edge at most once; more steps means it never closes.
+        int maxSteps = 4 * (tempWidth + 2) * (tempHeight + 2);
+        int steps = 0;
         while(true)
         {
+            if(++steps > maxSteps)
+            {
+                Gdx.app.error("TileConverter", "Wall contour from (" + firstX + ", " + firxtY + ") does not close; skipped");
+                shape.dispose();
+                return null;
+            }
             // set visited edge
             switch(direction)
             {
@@ -203,24 +202,46 @@ public class TileConverter
         array.add(x*fieldSize, (tempHeight-y)*fieldSize);
     }
 
+    /**
+     * The contour tracer works in rows counted from the top (vertex (x, y) is the top-left corner of
+     * view tile (x, y), placed in the world at (x, tempHeight - y)). Tile maps count rows from the
+     * bottom since 0.7.0, so view row y is map row tempHeight - 1 - y. With that one flip here the
+     * tracer is unchanged and map tile (x, y) ends up covering world [x, x + 1] x [y, y + 1].
+     *
+     * <p>Doors of every kind count as walkable: their collision comes from the door entity (see
+     * LevelBuilder and DoorScript), so a locked door can still be opened. As a wall tile here it
+     * would block the doorway for good.
+     */
     private boolean isWalkable(TileGrid grid, int x, int y)
     {
         if(x >= tempWidth || x < 0 || y >= tempHeight || y < 0)
             return true;
-        int runtimeId = grid.get(x, y);
+        int runtimeId = grid.get(x, tempHeight - 1 - y);
         if(runtimeId == TileGrid.EMPTY)
             return true;
-        return tempTypeRegistry.require(runtimeId).walkable();
+        TileType type = tempTypeRegistry.require(runtimeId);
+        return type.walkable() || type.role() == TileRole.DOOR;
+    }
+
+    /**
+     * The tracer was written when NORTH was (0, -1) and names its edges after that: "NORTH" is the
+     * view row below (y + 1). Since 0.7.0 NORTH is (0, +1) in the engine, so the old
+     * {@code y - dir.getDeltaY()} pointed to the other side, the trace never came back to its start
+     * and vertices piled up until the heap ran out. Kept explicit so the axis can change again.
+     */
+    private static int viewDeltaY(Direction dir)
+    {
+        return switch(dir)
+        {
+            case NORTH -> 1;
+            case SOUTH -> -1;
+            default -> 0;
+        };
     }
 
     private int getArrayIndex(int x, int y, Direction dir)
     {
         return ( y * tempWidth + x ) * 4 + dir.ordinal();
-    }
-
-    private void convertToWorldCoords(Vector2 coords)
-    {
-        coords.set(coords.x*fieldSize, (tempHeight-coords.y)*fieldSize);
     }
 
     private void setVisited(int x, int y, Direction dir)

@@ -6,21 +6,37 @@ import net.dp.rpg.engine.EntityScript;
 import net.dp.rpg.engine.components.HealthComponent;
 import net.dp.rpg.engine.components.PhysicalBodyComponent;
 import net.dp.rpg.engine.components.TransformComponent;
+import net.dp.rpg.game.TileFloor;
+import net.dp.rpg.game.TileRoom;
 import static net.dp.rpg.game.FixtureCategory.*;
 
 public class EnemyScript extends EntityScript
 {
     private final int playerEntity;
     private final Vector2 direction = new Vector2();
+    private final TileFloor floor;
+    private final TileRoom home;
+
+    /** An enemy without a room (floor or home null) is always awake, as before. */
+    public EnemyScript(int playerEntity, TileFloor floor, TileRoom home)
+    {
+        this.playerEntity = playerEntity;
+        this.floor = floor;
+        this.home = home;
+    }
 
     public EnemyScript(int playerEntity)
     {
-        this.playerEntity = playerEntity;
+        this(playerEntity, null, null);
     }
 
     @Override
     public void update(float delta)
     {
+        // Enemies of other rooms sleep; otherwise they would walk into walls towards the player.
+        if(floor != null && home != null && floor.getActiveRoom() != home)
+            return;
+
         float speed = 10;
         Vector2 playerPosition = getScene().getComponentStorage(TransformComponent.class).getByEntity(playerEntity).position;
         Vector2 position = getComponent(TransformComponent.class).position;

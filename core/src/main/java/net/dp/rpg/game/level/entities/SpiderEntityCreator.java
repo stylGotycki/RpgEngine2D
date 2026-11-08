@@ -12,6 +12,8 @@ import net.dp.rpg.engine.Scene;
 import net.dp.rpg.engine.animation.AnimationSet;
 import net.dp.rpg.engine.components.*;
 import net.dp.rpg.game.FixtureCategory;
+import net.dp.rpg.game.TileFloor;
+import net.dp.rpg.game.TileRoom;
 import net.dp.rpg.game.animations.EnemyAnimationId;
 import net.dp.rpg.game.scripts.EnemyScript;
 
@@ -59,6 +61,11 @@ public class SpiderEntityCreator extends EntityCreator implements Disposable
     @Override
     public int create(float x, float y)
     {
+        return create(x, y, null, null);
+    }
+
+    public int create(float x, float y, TileFloor floor, TileRoom home)
+    {
         bodyDef.position.set(x,y);
 
         AnimationSet<EnemyAnimationId> animationSet = new AnimationSet<>();
@@ -70,7 +77,7 @@ public class SpiderEntityCreator extends EntityCreator implements Disposable
         scene.addComponent(entityId, new HealthComponent(health,health));
         scene.addComponent(entityId, new SpriteComponent(new Sprite(sprite), false));
         scene.addComponent(entityId, new AnimationComponent(animationSet));
-        scene.addComponent(entityId, new ScriptComponent(new EnemyScript(playerId)));
+        scene.addComponent(entityId, new ScriptComponent(new EnemyScript(playerId, floor, home)));
 
         return entityId;
     }

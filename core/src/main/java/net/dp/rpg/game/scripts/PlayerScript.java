@@ -20,6 +20,7 @@ import static net.dp.rpg.game.FixtureCategory.*;
 import net.dp.rpg.game.TileRoom;
 import net.dp.rpg.game.animations.PlayerAnimationId;
 import net.dp.rpg.game.events.*;
+import net.dp.rpg.game.level.LevelBuilder;
 import net.dp.rpg.game.menu.MenuBuilder;
 
 public class PlayerScript extends EntityScript implements InputListener, GameEventListener
@@ -151,10 +152,13 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
                 else
                     return;
                 TransformComponent transformComponent = getComponent(TransformComponent.class);
+                // The door belongs to the room being entered and sits in its wall facing the player,
+                // so the tile in front of it, against its side, is inside that room. Measured from the
+                // door, not from the player: one tile from the player left the body overlapping the
+                // door, which closes on entering.
                 Direction doorDirection = doorScript.getRoomEdge().opposite();
-                if(doorDirection == Direction.NORTH || doorDirection == Direction.SOUTH)
-                    doorDirection = doorDirection.opposite();
-                transformComponent.setPosition( transformComponent.position.add(Utils.directionToVector2(doorDirection, tempVector2)));
+                Utils.directionToVector2(doorDirection, tempVector2).add(doorScript.getCenter());
+                transformComponent.setPosition(tempVector2);
             }
         }
         else if(isCategory(otherCategory, OBSTACLE) && isCategory(category, SENSOR))
@@ -204,8 +208,23 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
             attack(Direction.WEST);
         else if(keycode == Input.Keys.E)
         {
+            if(doorReached != null && !doorReached.open())
+                Gdx.app.log("Door", "Locked. K unlocks it (debug, until keys exist).");
+        }
+        else if(keycode == Input.Keys.K)
+        {
             if(doorReached != null)
+            {
+                doorReached.unlock();
                 doorReached.open();
+            }
+        }
+        else if(keycode == Input.Keys.F5)
+        {
+            // Debug: a new floor from a new seed, same as starting a new game.
+            Scene scene = getEngine().createScene();
+            new LevelBuilder(new java.util.Random().nextLong()).build(getEngine(), scene);
+            getEngine().switchScene(scene);
         }
         else if(keycode == Input.Keys.X && !isWalking)
         {
@@ -263,7 +282,7 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
     {
         if(isAttacking)
             return;
-        attackOffset.set(direction.getDeltaX()*0.75f, -1 * direction.getDeltaY()*0.75f);
+        attackOffset.set(direction.getDeltaX()*0.75f, direction.getDeltaY()*0.75f);
 
         PolygonShape attackShape = (PolygonShape) attackFixtureDef.shape;
         attackShape.setAsBox(0.6f, 0.6f, attackOffset, 0);

@@ -41,7 +41,7 @@ public class CameraScript extends EntityScript implements GameEventListener
 
             BoundingComponent bounds = getComponent(BoundingComponent.class);
             float minX = room.origin().x() * RoomGeometry.CELL_WIDTH;
-            float minY = (7 - room.origin().y()) * RoomGeometry.CELL_HEIGHT - room.shape().tileHeight();
+            float minY = room.origin().y() * RoomGeometry.CELL_HEIGHT;
             bounds.set(minX, minY, minX + getScene().getTileMap().width(), minY + getScene().getTileMap().height(), camera.viewportWidth, camera.viewportHeight);
         }
     }

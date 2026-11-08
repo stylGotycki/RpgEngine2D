@@ -202,8 +202,9 @@ public class Scene implements Disposable
 
     public int createEntity()
     {
+        // Removing the id matters: getFirst() alone handed the same id to every new entity.
         if(!freeEntity.isEmpty())
-            return freeEntity.getFirst();
+            return freeEntity.removeFirst();
 
         return nextEntity++;
     }
@@ -262,14 +263,19 @@ public class Scene implements Disposable
             this.activeCamera = component.camera;
     }
 
-    public void setTileMap(TileMapData tileMap, TileSystem tileSystem, float xPos, float yPos, int gridHeight)
+    /**
+     * Shows {@code tileMap} with its tile (0, 0) at the bottom-left corner of floor cell
+     * ({@code cellX}, {@code cellY}). Map and world share the y-up axis, so tile (x, y) is drawn at
+     * world (cellX * CELL_WIDTH + x, cellY * CELL_HEIGHT + y).
+     */
+    public void setTileMap(TileMapData tileMap, TileSystem tileSystem, float cellX, float cellY)
     {
         if(tileMap != null && tileSystem != null)
         {
             this.tileSystem = tileSystem;
             this.tileMap = tileMap;
-            this.tileTransformX = xPos * RoomGeometry.CELL_WIDTH;
-            this.tileTransformY = (gridHeight - yPos) * RoomGeometry.CELL_HEIGHT - tileMap.height();
+            this.tileTransformX = cellX * RoomGeometry.CELL_WIDTH;
+            this.tileTransformY = cellY * RoomGeometry.CELL_HEIGHT;
         }
     }
 
