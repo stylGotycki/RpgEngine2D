@@ -1,0 +1,14 @@
+{
+  "dialogues": [
+    { "id": "talk.sentinel", "start": "question", "nodes": {
+      "question": { "speaker": "Strażnik", "text": "Stój! Kto idzie?", "choices": [
+        { "text": "Przyjaciel.", "action": "talk-correct", "next": "pass" },
+        { "text": "Twój najgorszy koszmar.", "action": "talk-wrong", "next": "angry" },
+        { "text": "Nikt.", "action": "talk-wrong", "next": "puzzled" }
+      ] },
+      "pass": { "speaker": "Strażnik", "text": "Przyjaciel? Dawno nie słyszałem tego słowa. Przechodź." },
+      "angry": { "speaker": "Strażnik", "text": "Tak? To spróbujmy jeszcze raz, grzeczniej.", "next": "question" },
+      "puzzled": { "speaker": "Strażnik", "text": "Nikt nie mówi. A ty mówisz. Jeszcze raz.", "next": "question" }
+    } }
+  ]
+}

@@ -21,6 +21,7 @@ import net.dp.rpg.game.FixtureCategory;
 import net.dp.rpg.game.TileFloor;
 import net.dp.rpg.game.TileRoom;
 import net.dp.rpg.game.animations.EnemyAnimationId;
+import net.dp.rpg.game.dialogue.DialogueController;
 import net.dp.rpg.game.enemy.EnemyDef;
 import net.dp.rpg.game.scripts.EnemyScript;
 
@@ -32,6 +33,8 @@ public class EnemyEntityCreator implements Disposable {
 
   private final int playerId;
 
+  private final DialogueController dialogues;
+
   private final BodyDef bodyDef = new BodyDef();
 
   private final FixtureDef fixtureDef = new FixtureDef();
@@ -40,7 +43,9 @@ public class EnemyEntityCreator implements Disposable {
 
   private final Map<String, Animation<TextureRegion>> animations = new HashMap<>();
 
-  public EnemyEntityCreator(Scene scene, TextureAtlas atlas, int playerId) {
+  public EnemyEntityCreator(Scene scene, TextureAtlas atlas, int playerId,
+      DialogueController dialogues) {
+    this.dialogues = dialogues;
     this.scene = scene;
     this.atlas = atlas;
     this.playerId = playerId;
@@ -77,7 +82,7 @@ public class EnemyEntityCreator implements Disposable {
     scene.addComponent(entityId, new SpriteComponent(sprite, false));
     scene.addComponent(entityId, new AnimationComponent(animationSet));
     scene.addComponent(entityId,
-        new ScriptComponent(new EnemyScript(playerId, enemy, floor, home)));
+        new ScriptComponent(new EnemyScript(playerId, enemy, floor, home, dialogues)));
 
     return entityId;
   }

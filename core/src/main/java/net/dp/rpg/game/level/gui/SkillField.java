@@ -42,7 +42,8 @@ public class SkillField extends ImageButton
 
     public void updateState(int availablePoints)
     {
-        if((parent == null || parent.isChecked()) && availablePoints > 0)
+        // A chosen field stays chosen: clicking it again would uncheck it without refunding.
+        if(!isChecked() && (parent == null || parent.isChecked()) && availablePoints > 0)
             this.setTouchable(Touchable.enabled);
         else
             this.setTouchable(Touchable.disabled);

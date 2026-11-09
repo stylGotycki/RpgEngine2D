@@ -9,6 +9,7 @@ import net.dp.rpg.engine.EngineServices;
 import net.dp.rpg.engine.Gui;
 import net.dp.rpg.engine.Scene;
 import net.dp.rpg.engine.components.HealthComponent;
+import net.dp.rpg.game.dialogue.DialogueController;
 import net.dp.rpg.game.events.GameMessageEvent;
 import net.dp.rpg.game.events.HealthChangeEvent;
 import net.dp.rpg.game.events.ItemHoverEvent;
@@ -26,7 +27,7 @@ public class LevelGui
 
     private final SkillWindow skillWindow;
 
-    public LevelGui(EngineServices engine, Scene scene, int playerId, MinimapWidget minimap, PlayerStats stats, TextureAtlas atlas)
+    public LevelGui(EngineServices engine, Scene scene, int playerId, MinimapWidget minimap, PlayerStats stats, TextureAtlas atlas, DialogueController dialogues)
     {
         this.scene = scene;
         this.gui = scene.getGui();
@@ -50,10 +51,15 @@ public class LevelGui
         messageTable.add(messageLabel).padBottom(12).row();
         messageTable.add(tooltip).padBottom(40);
         stack.add(messageTable);
+        Table dialogueTable = new Table();
+        dialogueTable.bottom();
+        dialogueTable.add(new DialogueBox(dialogues, atlas, skin)).padBottom(32);
+        stack.add(dialogueTable);
         stack.add(skillWindow);
         Engine.eventBus.subscribe(skillWindow, SkillWindowToggleEvent.class);
         Engine.eventBus.subscribe(skillWindow, SkillPointsAvailableEvent.class);
         skillWindow.setVisible(false);
+        skillWindow.showLevels(stats);
         table.top().left();
         HealthComponent playerHealth = scene.getComponentStorage(HealthComponent.class).getByEntity(playerId);
         HealthBar healthBar = new HealthBar(playerHealth.maxHealth, skin);

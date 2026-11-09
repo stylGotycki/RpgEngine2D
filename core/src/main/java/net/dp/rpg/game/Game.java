@@ -40,6 +40,8 @@ public class Game extends AbstractGame
         Engine.poolManager.addPool(EnemyKilledEvent.class, EnemyKilledEvent::new);
         Engine.poolManager.addPool(PlayerDamagedEvent.class, PlayerDamagedEvent::new);
         Engine.poolManager.addPool(ItemHoverEvent.class, ItemHoverEvent::new);
+        Engine.poolManager.addPool(DialogueChoiceEvent.class, DialogueChoiceEvent::new);
+        Engine.poolManager.addPool(DialogueEndedEvent.class, DialogueEndedEvent::new);
 
         getEngine().getAssetManager().finishLoading();
 

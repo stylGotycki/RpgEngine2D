@@ -19,6 +19,8 @@ import net.dp.rpg.engine.systems.input.InputListener;
 import net.dp.rpg.engine.tile.room.Direction;
 import static net.dp.rpg.game.FixtureCategory.*;
 import net.dp.rpg.game.TileRoom;
+import net.dp.rpg.game.dialogue.DialogueController;
+import net.dp.rpg.game.dialogue.GameDialogues;
 import net.dp.rpg.game.enemy.EnemyDef;
 import net.dp.rpg.game.item.ItemDef;
 import net.dp.rpg.game.item.PlayerStats;
@@ -57,11 +59,14 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
 
     private static final float ENEMY_CONTACT_DAMAGE = 10f;
     private final PlayerStats stats;
+    private final DialogueController dialogues;
     private ItemPickupScript itemReached = null;
+    private NpcScript npcReached = null;
     private float attackCooldown = 0;
 
-    public PlayerScript(Fixture playerFixture, FixtureDef attackFixtureDef, Fixture sensorFixture, PlayerStats stats)
+    public PlayerScript(Fixture playerFixture, FixtureDef attackFixtureDef, Fixture sensorFixture, PlayerStats stats, DialogueController dialogues)
     {
+        this.dialogues = dialogues;
         this.playerFixture = playerFixture;
         this.attackFixtureDef = attackFixtureDef;
         this.sensorFixture = sensorFixture;
@@ -95,6 +100,10 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
         {
             tempVector2.y -= 1;
         }
+
+        // The player stands still while talking.
+        if(dialogues.isOpen())
+            tempVector2.set(0, 0);
 
         if(!tempVector2.isZero())
         {
@@ -200,6 +209,14 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
                 doorReached = doorScript;
             }
         }
+        else if(isCategory(otherCategory, NPC) && isCategory(category, SENSOR))
+        {
+            if(scriptOf(otherEntity) instanceof NpcScript npc)
+            {
+                npcReached = npc;
+                message("[[E] Porozmawiaj: " + npc.name());
+            }
+        }
     }
 
     @Override
@@ -216,6 +233,11 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
                 itemReached = null;
                 hover(null);
             }
+        }
+        else if(isCategory(otherCategory, NPC) && isCategory(category, SENSOR))
+        {
+            if(npcReached != null && npcReached.getEntity() == otherEntity)
+                npcReached = null;
         }
         else if(isCategory(otherCategory, OBSTACLE) && isCategory(category, SENSOR))
         {
@@ -234,6 +256,19 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
     @Override
     public boolean keyDown(int keycode)
     {
+        if(dialogues.isOpen())
+        {
+            if(keycode == Input.Keys.E || keycode == Input.Keys.SPACE || keycode == Input.Keys.ENTER)
+                dialogues.confirm();
+            else if(keycode == Input.Keys.W || keycode == Input.Keys.UP)
+                dialogues.moveSelection(-1);
+            else if(keycode == Input.Keys.S || keycode == Input.Keys.DOWN)
+                dialogues.moveSelection(1);
+            else if(keycode >= Input.Keys.NUM_1 && keycode <= Input.Keys.NUM_3)
+                dialogues.choose(keycode - Input.Keys.NUM_1);
+            return true;
+        }
+
         if(keycode == Input.Keys.UP)
             attack(Direction.NORTH);
         else if(keycode == Input.Keys.RIGHT)
@@ -246,6 +281,8 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
         {
             if(itemReached != null)
                 pickUp(itemReached);
+            else if(npcReached != null)
+                npcReached.talk(dialogues, GameDialogues.library());
             else if(doorReached != null && !doorReached.open())
                 Gdx.app.log("Door", "Locked. K unlocks it (debug, until keys exist).");
         }
@@ -361,7 +398,8 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
         }
         else if(event instanceof SkillPointUsedEvent skillPointEvent)
         {
-            stats.setBase(Stat.of(skillPointEvent.skillType), skillPointEvent.level);
+            Stat stat = Stat.of(skillPointEvent.skillType);
+            stats.setBase(stat, Math.max(stats.base(stat), skillPointEvent.level));
             availableSkillPoints--;
             SkillPointsAvailableEvent pointsAvailableEvent = Engine.poolManager.obtain(SkillPointsAvailableEvent.class);
             pointsAvailableEvent.skillPoints = availableSkillPoints;

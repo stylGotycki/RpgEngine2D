@@ -10,6 +10,7 @@ import net.dp.rpg.engine.components.ScriptComponent;
 import net.dp.rpg.engine.components.TransformComponent;
 import net.dp.rpg.game.TileFloor;
 import net.dp.rpg.game.TileRoom;
+import net.dp.rpg.game.dialogue.DialogueController;
 import net.dp.rpg.game.enemy.EnemyDef;
 import net.dp.rpg.game.events.EnemyKilledEvent;
 import net.dp.rpg.game.events.GameMessageEvent;
@@ -24,9 +25,11 @@ public class EnemyScript extends EntityScript
     private final TileRoom home;
     private final EnemyDef enemy;
     private boolean dead = false;
+    private final DialogueController dialogues;
 
-    public EnemyScript(int playerEntity, EnemyDef enemy, TileFloor floor, TileRoom home)
+    public EnemyScript(int playerEntity, EnemyDef enemy, TileFloor floor, TileRoom home, DialogueController dialogues)
     {
+        this.dialogues = dialogues;
         this.playerEntity = playerEntity;
         this.enemy = enemy;
         this.floor = floor;
@@ -43,6 +46,9 @@ public class EnemyScript extends EntityScript
     {
         // Enemies of other rooms sleep; otherwise they would walk into walls towards the player.
         if(floor != null && home != null && floor.getActiveRoom() != home)
+            return;
+        // The world waits while the player reads.
+        if(dialogues != null && dialogues.isOpen())
             return;
         PlayerStats playerStats = playerStats();
         if(playerStats != null && playerStats.isInvisible())

@@ -5,6 +5,7 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Random;
 
 public final class PlayerStats {
 
@@ -59,6 +60,26 @@ public final class PlayerStats {
     public float remaining() {
       return remaining;
     }
+  }
+
+  public static final int START_POINTS = 3;
+
+  public static final int START_CAP = 2;
+
+  public static final Stat[] SKILLS = {Stat.STRENGTH, Stat.AGILITY, Stat.WISDOM};
+
+  public static PlayerStats rolled(Random random) {
+    PlayerStats stats = new PlayerStats();
+
+    for (int point = 0; point < START_POINTS; point++) {
+      Stat stat;
+      do {
+        stat = SKILLS[random.nextInt(SKILLS.length)];
+      } while (stats.base(stat) >= START_CAP);
+      stats.setBase(stat, stats.base(stat) + 1);
+    }
+
+    return stats;
   }
 
   public int base(Stat stat) {
