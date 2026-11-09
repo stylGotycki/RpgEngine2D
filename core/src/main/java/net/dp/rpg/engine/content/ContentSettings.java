@@ -5,21 +5,6 @@ import java.util.List;
 import java.util.Map;
 import net.dp.rpg.engine.floor.type.RoomType;
 
-/**
- * The knobs of room content. {@link #difficulty} is the one adaptation (E6) turns: it scales the
- * enemy budget of every room. The rest describes the game's rules and stays fixed.
- *
- * @param difficulty multiplier of every room's enemy count; 1 is the designed game
- * @param enemies enemies a room of each type gets at depth 0 (missing type = none)
- * @param depthBonus extra enemies a NORMAL room gets at the floor's deepest point (linear in depth)
- * @param enemyTypes which plain enemy a spot gets, weighted by how deep the room lies
- * @param enemyDoorClearance enemies keep this many tiles (Chebyshev) from every door, so entering
- *     a room is never an instant hit
- * @param npcDoorClearance the same for NPCs; also the distance a quest giver aims for
- * @param spacing tiles between two spots, relaxed when a small room has no room for it
- * @param potionChance chance of a potion in a NORMAL or EMPTY room outside quests
- * @param shopOffers items laid out in a shop (the player takes one)
- */
 public record ContentSettings(
     double difficulty,
     Map<RoomType, Range> enemies,
@@ -31,7 +16,6 @@ public record ContentSettings(
     double potionChance,
     int shopOffers) {
 
-  /** Inclusive range of a count. */
   public record Range(int min, int max) {
 
     public Range {
@@ -41,7 +25,6 @@ public record ContentSettings(
     }
   }
 
-  /** A plain enemy type, with its weight in the shallowest and in the deepest rooms. */
   public record EnemyWeight(String tag, double shallow, double deep) {
 
     public double at(double depthFraction) {

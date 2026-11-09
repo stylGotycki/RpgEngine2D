@@ -12,15 +12,7 @@ import net.dp.rpg.engine.interior.InteriorGenerator;
 import net.dp.rpg.engine.interior.prefab.DefaultInteriorTypes;
 import net.dp.rpg.engine.tile.TileSystem;
 
-/**
- * The placeholder motif as the game uses it: its tileset, the room corpus WFC learns from, which
- * tile types count as interchangeable and which tile stands for each kind of door. The demos have
- * their own copy in {@code lwjgl3}; the game cannot depend on that module.
- *
- * <p>The corpus is found through {@code assets.txt}, which Gradle writes before every build
- * ({@code generateAssetList}). Unlike walking the working directory, this works from the jar and
- * from any run configuration.
- */
+
 public final class PlaceholderInterior {
 
   public static final String MOTIF = "placeholder";
@@ -34,7 +26,6 @@ public final class PlaceholderInterior {
   private PlaceholderInterior() {
   }
 
-  /** Learns the corpus. Takes a moment (all samples are scanned), so do it once per tile system. */
   public static InteriorContext load(TileSystem tiles) {
     return InteriorContext.load(MOTIF, assetPaths(), tiles::loadMap, tiles.types(),
         Map.of("floor.stone_any", List.of("floor.stone", "floor.stone_cracked")),

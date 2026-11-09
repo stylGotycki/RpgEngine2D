@@ -5,7 +5,6 @@ import java.util.IdentityHashMap;
 import java.util.Map;
 import net.dp.rpg.engine.floor.graph.RoomNode;
 
-/** The content of every room of a floor, by room. */
 public final class FloorContent {
 
   private final Map<RoomNode, RoomContent> rooms;

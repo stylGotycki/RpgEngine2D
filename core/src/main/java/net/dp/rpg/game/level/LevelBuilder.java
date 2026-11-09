@@ -54,7 +54,7 @@ import java.util.Random;
 
 public class LevelBuilder
 {
-    /** System property with a seed to replay, e.g. {@code -Drpg.seed=42}. */
+
     public static final String SEED_PROPERTY = "rpg.seed";
 
     private final float playerMaxHealth = 100;
@@ -72,7 +72,6 @@ public class LevelBuilder
         this(seed, PlayerStats.rolled(RandomSource.derive(seed, "player-start")));
     }
 
-    /** The seed from {@link #SEED_PROPERTY}, or a random one. Logged, so a floor can be replayed. */
     public static LevelBuilder fromSystemProperty()
     {
         String value = System.getProperty(SEED_PROPERTY);
@@ -268,7 +267,6 @@ public class LevelBuilder
         return npc;
     }
 
-    /** World x of the centre of local tile x of the room. */
     private static float worldX(TileRoom room, int tileX)
     {
         return room.origin().x() * RoomGeometry.CELL_WIDTH + tileX + 0.5f;

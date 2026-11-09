@@ -109,7 +109,6 @@ public final class FloorDebug {
     return canvas;
   }
 
-  /** The canvas is indexed by model y, which grows upwards, so the last row is printed first. */
   private static String joinTopFirst(char[][] canvas) {
     StringBuilder builder = new StringBuilder();
 

@@ -102,7 +102,6 @@ public final class FloorInterior {
     return minCellY;
   }
 
-  /** Tile x of the room's origin cell in the stitched floor map. */
   public int tileOffsetX(RoomNode room) {
     return RoomGeometry.originXOf(rooms.get(room.index()).blueprint().origin().x() - minCellX);
   }

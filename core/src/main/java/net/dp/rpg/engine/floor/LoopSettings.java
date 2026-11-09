@@ -12,8 +12,7 @@ public record LoopSettings(double loopsPerRoom, int minCycleRooms, double maxCri
     }
 
     if (maxCriticalLoss < 0.0 || maxCriticalLoss >= 1.0) {
-      throw new IllegalArgumentException("maxCriticalLoss must be within 0..1, got "
-          + maxCriticalLoss);
+      throw new IllegalArgumentException("maxCriticalLoss must be within 0..1, got " + maxCriticalLoss);
     }
   }
 

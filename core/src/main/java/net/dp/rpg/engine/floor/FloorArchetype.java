@@ -28,8 +28,7 @@ public record FloorArchetype(
 
   public FloorArchetype {
     if (minRooms < 2 || maxRooms < minRooms) {
-      throw new IllegalArgumentException("Room range must be sane, got %d..%d".formatted(minRooms,
-          maxRooms));
+      throw new IllegalArgumentException("Room range must be sane, got %d..%d".formatted(minRooms, maxRooms));
     }
 
     if (density <= 0.0 || density > 1.0) {

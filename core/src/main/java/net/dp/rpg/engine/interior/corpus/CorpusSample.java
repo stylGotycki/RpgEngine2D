@@ -51,7 +51,6 @@ public record CorpusSample(
     return zones.zoneAt(x, y);
   }
 
-  /** The fixed-element region covering the tile, or null. */
   public PrefabRegion prefabAt(int x, int y) {
     for (PrefabRegion prefab : prefabs) {
       if (prefab.contains(x, y)) {

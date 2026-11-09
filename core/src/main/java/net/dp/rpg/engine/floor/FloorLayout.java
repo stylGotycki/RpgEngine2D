@@ -74,7 +74,6 @@ public record FloorLayout(
     return quests.stream().filter(bundle -> bundle.contains(room)).findFirst().orElse(null);
   }
 
-  /** The size of the floor's bounding box in cells; with a normalised layout, the grid it fills. */
   public GridBounds extent() {
     RoomCell min = graph.minCorner();
     int maxX = min.x();
@@ -124,20 +123,15 @@ public record FloorLayout(
     return rooms.stream().map(room -> graph.rooms().get(room.index())).toList();
   }
 
-  /**
-   * The same floor with the descriptor that built it. {@link FloorGenerator} attaches it; a layout
-   * straight from {@link FloorBuilder} has none.
-   */
   public FloorLayout withDescriptor(FloorDescriptor value) {
     return new FloorLayout(archetypeId, seed, graph, boss, criticalPath, trunkRooms, appendixRooms,
         holeRooms, extraDoors, relocated, unspentAbilities, walkerPath, quests, walkStop, value);
   }
 
   public String summary() {
-    return ("rooms=%d cells=%d doors=%d deadEnds=%d critical=%d holes=%d extraDoors=%d "
-        + "quests=%d/%d types=%s%s").formatted(
-        graph.size(), graph.usedCells(), graph.links().size(), graph.deadEnds().size(),
-        criticalPath.size(), holeRooms, extraDoors, quests.size(), questRooms(), typeCounts(),
-        unspentAbilities.isEmpty() ? "" : " UNSPENT=" + unspentAbilities);
+    return ("rooms=%d cells=%d doors=%d deadEnds=%d critical=%d holes=%d extraDoors=%d quests=%d/%d types=%s%s")
+        .formatted(graph.size(), graph.usedCells(), graph.links().size(), graph.deadEnds().size(),
+            criticalPath.size(), holeRooms, extraDoors, quests.size(), questRooms(), typeCounts(),
+            unspentAbilities.isEmpty() ? "" : " UNSPENT=" + unspentAbilities);
   }
 }

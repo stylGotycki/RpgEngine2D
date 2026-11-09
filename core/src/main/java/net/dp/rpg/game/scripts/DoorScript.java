@@ -15,11 +15,11 @@ public class DoorScript extends EntityScript
     private final Direction roomEdge;
     @Getter
     private boolean closed = true;
-    /** Locked doors come from the floor graph (DoorType.LOCKED); a key will unlock them. */
+
     @Getter
     private boolean locked;
     private final Fixture fixture;
-    /** World centre of the door tile; the player lands one tile further into the room. */
+
     @Getter
     private final Vector2 center;
 
@@ -38,7 +38,6 @@ public class DoorScript extends EntityScript
 
     }
 
-    /** @return false when the door is locked and stays closed */
     public boolean open()
     {
         if(locked)

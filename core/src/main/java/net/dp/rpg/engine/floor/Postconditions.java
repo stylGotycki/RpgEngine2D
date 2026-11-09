@@ -27,7 +27,6 @@ public record Postconditions(
     return new Postconditions(minCriticalLength, count, maxBoundingCells, requireAllAbilities);
   }
 
-  /** Reasons this floor is not acceptable. An empty list means it is. */
   public List<String> violations(FloorLayout floor) {
     List<String> violations = new ArrayList<>();
 

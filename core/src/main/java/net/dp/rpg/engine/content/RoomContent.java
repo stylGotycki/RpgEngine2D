@@ -2,7 +2,6 @@ package net.dp.rpg.engine.content;
 
 import java.util.List;
 
-/** Everything the generator put into one room. */
 public record RoomContent(List<ContentSpot> spots) {
 
   public static final RoomContent EMPTY = new RoomContent(List.of());

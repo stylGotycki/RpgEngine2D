@@ -24,7 +24,6 @@ public final class MinimapIcons {
   private MinimapIcons() {
   }
 
-  /** The atlas region of the icon, or null for a room type without one. */
   public static String regionOf(RoomType type) {
     return REGIONS.get(type);
   }

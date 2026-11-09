@@ -23,8 +23,7 @@ public final class WfcGrid {
 
   public WfcGrid(int width, int height, AdjacencyRules rules, List<WeightTable> tables) {
     if (width <= 0 || height <= 0) {
-      throw new IllegalArgumentException("Grid dimensions must be greater than zero: %dx%d"
-          .formatted(width, height));
+      throw new IllegalArgumentException("Grid dimensions must be greater than zero: %dx%d".formatted(width, height));
     }
 
     if (rules == null) {
@@ -37,8 +36,7 @@ public final class WfcGrid {
 
     for (WeightTable table : tables) {
       if (table.tokenCount() != rules.tokenCount()) {
-        throw new IllegalArgumentException("Weight table covers %d tokens, rules cover %d"
-            .formatted(table.tokenCount(), rules.tokenCount()));
+        throw new IllegalArgumentException("Weight table covers %d tokens, rules cover %d".formatted(table.tokenCount(), rules.tokenCount()));
       }
     }
 
@@ -79,8 +77,7 @@ public final class WfcGrid {
 
   public void setTable(int x, int y, int table) {
     if (table < 0 || table >= tables.size()) {
-      throw new IllegalArgumentException("Weight table %d is outside 0..%d"
-          .formatted(table, tables.size() - 1));
+      throw new IllegalArgumentException("Weight table %d is outside 0..%d".formatted(table, tables.size() - 1));
     }
 
     tableOfCell[index(x, y)] = table;
@@ -145,8 +142,7 @@ public final class WfcGrid {
 
   private int index(int x, int y) {
     if (!isInside(x, y)) {
-      throw new IllegalArgumentException("Cell %d,%d is outside the %dx%d grid"
-          .formatted(x, y, width, height));
+      throw new IllegalArgumentException("Cell %d,%d is outside the %dx%d grid".formatted(x, y, width, height));
     }
 
     return x + y * width;

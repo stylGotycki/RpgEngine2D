@@ -13,14 +13,14 @@ attack
   index: -1
 boss/walk
   rotate: false
-  xy: 104, 60
+  xy: 104, 94
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
   index: 1
 boss/walk
   rotate: false
-  xy: 138, 26
+  xy: 138, 60
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
@@ -34,14 +34,14 @@ box
   index: -1
 enemy/walk
   rotate: false
-  xy: 70, 26
+  xy: 138, 94
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
   index: 1
 enemy/walk
   rotate: false
-  xy: 172, 94
+  xy: 172, 60
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
@@ -244,14 +244,14 @@ items/weightless_sabre
   index: -1
 miniboss/walk
   rotate: false
-  xy: 104, 26
+  xy: 70, 26
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
   index: 1
 miniboss/walk
   rotate: false
-  xy: 206, 94
+  xy: 172, 94
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
@@ -384,14 +384,14 @@ player/idle
   index: 4
 player/walk
   rotate: false
-  xy: 138, 94
+  xy: 104, 26
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
   index: 1
 player/walk
   rotate: false
-  xy: 172, 60
+  xy: 206, 94
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
@@ -426,14 +426,14 @@ player/walk
   index: 6
 skeleton/walk
   rotate: false
-  xy: 104, 94
+  xy: 104, 60
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
   index: 1
 skeleton/walk
   rotate: false
-  xy: 138, 60
+  xy: 138, 26
   size: 32, 32
   orig: 32, 32
   offset: 0, 0

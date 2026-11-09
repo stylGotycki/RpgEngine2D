@@ -10,8 +10,7 @@ public record FloorSettings(
 
   public FloorSettings {
     if (minRooms < 2 || maxRooms < minRooms) {
-      throw new IllegalArgumentException("Room range must be sane, got %d..%d".formatted(minRooms,
-          maxRooms));
+      throw new IllegalArgumentException("Room range must be sane, got %d..%d".formatted(minRooms, maxRooms));
     }
 
     if (trunkRatio <= 0.0 || trunkRatio > 1.0) {
@@ -27,12 +26,10 @@ public record FloorSettings(
     }
 
     if (questRoomRatio < 0.0 || questRoomRatio > 1.0) {
-      throw new IllegalArgumentException("questRoomRatio must be within 0..1, got "
-          + questRoomRatio);
+      throw new IllegalArgumentException("questRoomRatio must be within 0..1, got " + questRoomRatio);
     }
   }
 
-  /** The archetype's own values: generating with these changes nothing. */
   public static FloorSettings of(FloorArchetype archetype) {
     return new FloorSettings(archetype.minRooms(), archetype.maxRooms(), archetype.trunkRatio(),
         archetype.criticalShare(), archetype.loops(), archetype.quests().roomRatio());

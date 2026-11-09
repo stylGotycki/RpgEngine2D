@@ -26,8 +26,7 @@ public final class FloorGenerator {
       }
     }
 
-    throw new IllegalStateException("Floor %s failed %d attempts from seed %d, last: %s"
-        .formatted(archetype.id(), MAX_ATTEMPTS, seed, lastViolations));
+    throw new IllegalStateException("Floor %s failed %d attempts from seed %d, last: %s".formatted(archetype.id(), MAX_ATTEMPTS, seed, lastViolations));
   }
 
   public FloorLayout buildOnce(FloorArchetype archetype, long seed) {
@@ -37,8 +36,7 @@ public final class FloorGenerator {
 
   public FloorLayout replay(FloorArchetype archetype, FloorDescriptor descriptor) {
     if (!archetype.id().equals(descriptor.archetypeId())) {
-      throw new IllegalArgumentException("Descriptor is for archetype '%s', not '%s'"
-          .formatted(descriptor.archetypeId(), archetype.id()));
+      throw new IllegalArgumentException("Descriptor is for archetype '%s', not '%s'".formatted(descriptor.archetypeId(), archetype.id()));
     }
 
     return build(archetype.with(descriptor.settings()), descriptor.effectiveSeed())

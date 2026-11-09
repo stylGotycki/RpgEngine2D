@@ -24,22 +24,6 @@ import net.dp.rpg.engine.tile.TileRole;
 import net.dp.rpg.engine.tile.TileTypeRegistry;
 import net.dp.rpg.engine.tile.room.RoomEdge;
 
-/**
- * Places what stands in the rooms of a generated floor: enemies, items and NPCs (E1). Runs after
- * the interiors, because spots must lie on real floor tiles of the room's map.
- *
- * <p>Rules, all checked by {@code ContentPlacementTest}:
- * <ul>
- *   <li>every spot is a plain floor tile (no door, wall, hazard, pillar or detail on it);
- *   <li>enemies keep {@link ContentSettings#enemyDoorClearance()} tiles from every door;
- *   <li>an NPC never cuts any floor of its room off from the doors;
- *   <li>START, SHOP, PUZZLE and EMPTY rooms and a quest giver's room hold no enemies;
- *   <li>the enemy count grows with depth (difficulty control) and scales with
- *       {@link ContentSettings#difficulty()};
- *   <li>each room draws from its own random stream, so changing one room's content (or the
- *       difficulty) moves nothing in the others, and one seed always gives the same content.
- * </ul>
- */
 public final class ContentGenerator {
 
   private final TileTypeRegistry types;
@@ -91,8 +75,6 @@ public final class ContentGenerator {
     int target = settings.npcDoorClearance() + 1;
     List<int[]> pool = tiles.floor(settings.npcDoorClearance(), random);
 
-    // Close to the door the player comes in through, so the giver is the first thing they meet,
-    // but not in the way.
     pool.sort(Comparator.comparingInt(tile -> Math.abs(distance(tile, entries) - target)));
 
     for (int[] tile : pool) {
@@ -104,10 +86,6 @@ public final class ContentGenerator {
     }
   }
 
-  /**
-   * Door tiles towards shallower rooms: the way the player arrives. All doors when there is none
-   * (only START), so the result is never empty for a room with doors.
-   */
   private static List<int[]> entryDoors(FloorLayout layout, RoomNode room,
       GeneratedRoom generated) {
     List<int[]> entries = new ArrayList<>();
@@ -144,7 +122,6 @@ public final class ContentGenerator {
       case VAULT -> placeFar(ContentKind.ITEM, ContentTags.EQUIPMENT, tiles, random, spots);
       case COLLECTIBLE -> placeFar(ContentKind.ITEM, ContentTags.LOOT, tiles, random, spots);
       case NORMAL, EMPTY -> {
-        // Drawn even in quest rooms, so a quest does not shift the other rooms' streams.
         boolean potion = random.nextDouble() < settings.potionChance();
 
         if (potion && !inQuest) {
@@ -156,7 +133,6 @@ public final class ContentGenerator {
     }
   }
 
-  /** The offers in a row through the middle of the room, two tiles apart. */
   private void placeShop(Tiles tiles, Random random, List<ContentSpot> spots) {
     int count = settings.shopOffers();
     List<int[]> pool = tiles.floor(2, random);
@@ -184,13 +160,11 @@ public final class ContentGenerator {
       }
     }
 
-    // A room too narrow for a row: anywhere, still apart.
     for (int i = 0; i < count; i++) {
       place(ContentKind.ITEM, ContentTags.SHOP_OFFER, pool, spots);
     }
   }
 
-  /** Farthest from the doors: a reward at the back of the room. */
   private void placeFar(ContentKind kind, String tag, Tiles tiles, Random random,
       List<ContentSpot> spots) {
     List<int[]> pool = tiles.floor(2, random);
@@ -239,10 +213,6 @@ public final class ContentGenerator {
     return settings.enemyTypes().get(settings.enemyTypes().size() - 1).tag();
   }
 
-  /**
-   * Takes the first tile of the pool far enough from every spot so far, relaxing the spacing
-   * down to "any free tile" in rooms too small for it. Places nothing when the pool is used up.
-   */
   private void place(ContentKind kind, String tag, List<int[]> pool, List<ContentSpot> spots) {
     for (int spacing = settings.spacing(); spacing >= 1; spacing--) {
       for (int[] tile : pool) {
@@ -264,7 +234,6 @@ public final class ContentGenerator {
     return true;
   }
 
-  /** The tiles of one room's map, as content placement sees them. */
   private final class Tiles {
 
     private final TileMapData map;
@@ -291,7 +260,6 @@ public final class ContentGenerator {
       }
     }
 
-    /** Plain floor at least {@code clearance} tiles from every door, in a random order. */
     List<int[]> floor(int clearance, Random random) {
       List<int[]> pool = new ArrayList<>();
 
@@ -315,7 +283,6 @@ public final class ContentGenerator {
       return distance(tile, doors);
     }
 
-    /** Whether blocking the tile would leave some walkable tile unreachable from the doors. */
     boolean cutsOff(int[] blocked) {
       return reachable(null) - 1 != reachable(blocked);
     }

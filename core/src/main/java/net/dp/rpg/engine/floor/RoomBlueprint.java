@@ -87,9 +87,7 @@ public record RoomBlueprint(
       boolean facesOut = !shape.contains(edge.cell().neighbour(edge.direction()));
 
       if (!inside || !facesOut) {
-        throw new IllegalArgumentException(
-            "Door %s is not an outer edge of the room shape; is it in floor cells instead of local?"
-                .formatted(edge));
+        throw new IllegalArgumentException("Door %s is not an outer edge of the room shape; is it in floor cells instead of local?".formatted(edge));
       }
     }
   }

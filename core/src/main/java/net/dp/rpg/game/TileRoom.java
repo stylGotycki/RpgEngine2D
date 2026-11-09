@@ -11,20 +11,12 @@ import net.dp.rpg.engine.tile.room.RoomCell;
 import net.dp.rpg.engine.tile.room.RoomEdge;
 import net.dp.rpg.engine.tile.room.RoomShape;
 
-/**
- * One room of the floor the player walks through: its node in the floor graph (type, depth,
- * quest), and its WFC interior. Coordinates follow the engine's y-up axis. Tile (x, y) of
- * {@link #map()} lies at world (origin.x * CELL_WIDTH + x, origin.y * CELL_HEIGHT + y), and
- * {@link #doors()} are edges of the room's own shape, so {@code doorTileX/Y} are tiles of
- * {@link #map()}. {@link #content()} spots use the same local tiles.
- */
 public record TileRoom(int id, RoomNode node, GeneratedRoom generated, RoomContent content) {
 
   public RoomShape shape() {
     return generated.blueprint().shape();
   }
 
-  /** The floor cell of the shape's cell (0, 0): where the room's map starts on the floor. */
   public RoomCell origin() {
     return node.origin();
   }

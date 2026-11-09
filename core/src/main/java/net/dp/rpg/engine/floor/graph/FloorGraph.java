@@ -249,10 +249,6 @@ public final class FloorGraph {
     return start;
   }
 
-  /**
-   * The lowest and leftmost occupied cell over all rooms, i.e. the bottom-left corner of the
-   * floor's bounding box, or {@link RoomCell#ORIGIN} for an empty graph.
-   */
   public RoomCell minCorner() {
     if (occupied.isEmpty()) {
       return RoomCell.ORIGIN;
@@ -269,11 +265,6 @@ public final class FloorGraph {
     return new RoomCell(minX, minY);
   }
 
-  /**
-   * A copy of this graph moved by (deltaX, deltaY). Rooms keep their index, so room {@code i} of
-   * the copy is room {@code i} of this graph; links, door types, phases, types, quest ids and
-   * reserved cells come along, and depths are recomputed.
-   */
   public FloorGraph translated(int deltaX, int deltaY) {
     FloorGraph copy = new FloorGraph();
 

@@ -202,16 +202,6 @@ public class TileConverter
         array.add(x*fieldSize, (tempHeight-y)*fieldSize);
     }
 
-    /**
-     * The contour tracer works in rows counted from the top (vertex (x, y) is the top-left corner of
-     * view tile (x, y), placed in the world at (x, tempHeight - y)). Tile maps count rows from the
-     * bottom since 0.7.0, so view row y is map row tempHeight - 1 - y. With that one flip here the
-     * tracer is unchanged and map tile (x, y) ends up covering world [x, x + 1] x [y, y + 1].
-     *
-     * <p>Doors of every kind count as walkable: their collision comes from the door entity (see
-     * LevelBuilder and DoorScript), so a locked door can still be opened. As a wall tile here it
-     * would block the doorway for good.
-     */
     private boolean isWalkable(TileGrid grid, int x, int y)
     {
         if(x >= tempWidth || x < 0 || y >= tempHeight || y < 0)
@@ -223,12 +213,6 @@ public class TileConverter
         return type.walkable() || type.role() == TileRole.DOOR;
     }
 
-    /**
-     * The tracer was written when NORTH was (0, -1) and names its edges after that: "NORTH" is the
-     * view row below (y + 1). Since 0.7.0 NORTH is (0, +1) in the engine, so the old
-     * {@code y - dir.getDeltaY()} pointed to the other side, the trace never came back to its start
-     * and vertices piled up until the heap ran out. Kept explicit so the axis can change again.
-     */
     private static int viewDeltaY(Direction dir)
     {
         return switch(dir)

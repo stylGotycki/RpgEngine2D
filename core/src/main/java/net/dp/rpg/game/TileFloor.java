@@ -28,17 +28,9 @@ import net.dp.rpg.engine.tile.room.RoomEdge;
 import net.dp.rpg.game.events.EnterRoomEvent;
 import net.dp.rpg.game.level.PlaceholderInterior;
 
-/**
- * The floor the player is on: the floor graph from {@link FloorGenerator} and one WFC interior per
- * room from {@link InteriorGenerator}. Only the active room's map is shown and collided with; the
- * scene switches maps on {@link EnterRoomEvent}.
- *
- * <p>Up to the integration with the generator this class grew its own floors with a copy of the
- * old demo generator and painted rooms by hand; the floor graph it also generated was thrown away.
- */
+
 public class TileFloor implements GameEventListener {
 
-  /** Corpus learning takes a moment, so the motif is loaded once per run and kept. */
   private static TileSystem sharedTiles;
 
   private static InteriorContext sharedContext;
@@ -114,7 +106,6 @@ public class TileFloor implements GameEventListener {
     return rooms.get(layout.graph().start().index());
   }
 
-  /** The room on the other side of a door of {@code room}, or null for an edge with no room. */
   public TileRoom roomBehind(TileRoom room, RoomEdge localEdge) {
     RoomCell outside = room.toFloorCell(localEdge.cell()).neighbour(localEdge.direction());
     RoomNode node = layout.graph().roomAt(outside);
@@ -135,10 +126,6 @@ public class TileFloor implements GameEventListener {
     showActiveRoom();
   }
 
-  /**
-   * A walkable tile of the room near local tile (x, y), searched in growing squares, so a spawn
-   * point never lands in a pillar or a pond. Falls back to (x, y) when nothing is walkable.
-   */
   public int[] walkableTileNear(TileRoom room, int x, int y) {
     int limit = Math.max(room.map().width(), room.map().height());
 

@@ -149,9 +149,7 @@ public class Scene implements Disposable
         }
     }
 
-    /**
-     * creates Body using parameters set in bodyDef and adds it as Component
-     */
+
     public Body createBodyComponent(int entity, BodyDef bodyDef)
     {
         Body body = physicalWorld.createBody(bodyDef);
@@ -263,11 +261,6 @@ public class Scene implements Disposable
             this.activeCamera = component.camera;
     }
 
-    /**
-     * Shows {@code tileMap} with its tile (0, 0) at the bottom-left corner of floor cell
-     * ({@code cellX}, {@code cellY}). Map and world share the y-up axis, so tile (x, y) is drawn at
-     * world (cellX * CELL_WIDTH + x, cellY * CELL_HEIGHT + y).
-     */
     public void setTileMap(TileMapData tileMap, TileSystem tileSystem, float cellX, float cellY)
     {
         if(tileMap != null && tileSystem != null)

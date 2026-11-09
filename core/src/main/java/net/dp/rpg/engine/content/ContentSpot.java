@@ -1,10 +1,5 @@
 package net.dp.rpg.engine.content;
 
-/**
- * One thing in a room, at local tile (x, y) of the room's map (y-up, like the map).
- *
- * @param questId the quest bundle the spot belongs to, or null
- */
 public record ContentSpot(ContentKind kind, String tag, String questId, int x, int y) {
 
   public ContentSpot {

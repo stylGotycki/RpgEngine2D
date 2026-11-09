@@ -16,16 +16,6 @@ import net.dp.rpg.engine.tile.TileLayerKind;
 import net.dp.rpg.engine.tile.TileMapData;
 import net.dp.rpg.engine.wfc.WeightTable;
 
-/**
- * The room generation falls back to when every attempt fails: the shape's wall band, its doors
- * exactly as the floor graph demands, and one floor material over the whole interior. It carries
- * no fixed element and no details, so a SHOP built this way has no counter; the caller is told
- * through {@link GeneratedRoom#note()}. What it does keep is the one property the floor depends on,
- * that every door opens onto open floor, so the floor graph's connectivity survives a bad room.
- *
- * <p>Wall and floor are the heaviest classes the corpus learned for a NORMAL room, i.e. the
- * material the motif itself calls ordinary, not something chosen here.
- */
 final class EmergencyRoom {
 
   private EmergencyRoom() {

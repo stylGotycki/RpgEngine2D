@@ -10,10 +10,6 @@ import net.dp.rpg.engine.tile.TileGrid;
 import net.dp.rpg.engine.tile.TileLayer;
 import net.dp.rpg.engine.tile.TileMapData;
 
-/**
- * Draws a map with one world unit per tile. Tile (x, y) covers the world square from (x, y) to
- * (x + 1, y + 1); the map and the world share the y-up axis, so nothing is flipped here.
- */
 public final class TileMapRenderer implements Disposable {
 
   @Setter
