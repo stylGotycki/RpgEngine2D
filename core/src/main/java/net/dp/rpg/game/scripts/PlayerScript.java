@@ -3,6 +3,7 @@ package net.dp.rpg.game.scripts;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.g2d.Sprite;
+import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.box2d.Body;
@@ -18,10 +19,16 @@ import net.dp.rpg.engine.systems.input.InputListener;
 import net.dp.rpg.engine.tile.room.Direction;
 import static net.dp.rpg.game.FixtureCategory.*;
 import net.dp.rpg.game.TileRoom;
+import net.dp.rpg.game.enemy.EnemyDef;
+import net.dp.rpg.game.item.ItemDef;
+import net.dp.rpg.game.item.PlayerStats;
+import net.dp.rpg.game.item.Stat;
+import net.dp.rpg.game.level.entities.ItemPickupCreator;
 import net.dp.rpg.game.animations.PlayerAnimationId;
 import net.dp.rpg.game.events.*;
 import net.dp.rpg.game.level.LevelBuilder;
 import net.dp.rpg.game.menu.MenuBuilder;
+import java.util.Optional;
 
 public class PlayerScript extends EntityScript implements InputListener, GameEventListener
 {
@@ -48,19 +55,29 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
 
     int availableSkillPoints = 0;
 
-    public PlayerScript(Fixture playerFixture, FixtureDef attackFixtureDef, Fixture sensorFixture)
+    private static final float ENEMY_CONTACT_DAMAGE = 10f;
+    private final PlayerStats stats;
+    private ItemPickupScript itemReached = null;
+    private float attackCooldown = 0;
+
+    public PlayerScript(Fixture playerFixture, FixtureDef attackFixtureDef, Fixture sensorFixture, PlayerStats stats)
     {
         this.playerFixture = playerFixture;
         this.attackFixtureDef = attackFixtureDef;
         this.sensorFixture = sensorFixture;
+        this.stats = stats;
 
         Engine.eventBus.subscribe(this, SkillPointUsedEvent.class);
+        Engine.eventBus.subscribe(this, EnterRoomEvent.class);
     }
 
     @Override
     public void update(float delta)
     {
-        float speed = 60f;
+        stats.update(delta);
+        if(attackCooldown > 0)
+            attackCooldown -= delta;
+        float speed = 60f * stats.moveSpeedMultiplier();
         tempVector2.set(0,0);
         if(Gdx.input.isKeyPressed(Input.Keys.A))
         {
@@ -123,8 +140,11 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
 
         if(collidingEnemies.size > 0)
         {
-            Vector2 otherPosition = getScene().getComponentStorage(TransformComponent.class).getByEntity(collidingEnemies.first()).position;
-            dealDamage(1, otherPosition);
+            int enemyEntity = collidingEnemies.first();
+            Vector2 otherPosition = getScene().getComponentStorage(TransformComponent.class).getByEntity(enemyEntity).position;
+            EnemyDef enemy = scriptOf(enemyEntity) instanceof EnemyScript enemyScript ? enemyScript.getEnemy() : null;
+            dealDamage(stats.damageTaken(enemy == null ? ENEMY_CONTACT_DAMAGE : enemy.damage()), otherPosition,
+                    enemy == null ? "enemy" : enemy.id());
         }
     }
 
@@ -134,6 +154,14 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
         if(isCategory(otherCategory, ENEMY) && isCategory(category, PLAYER))
         {
             collidingEnemies.add(otherEntity);
+        }
+        else if(isCategory(otherCategory, ITEM) && isCategory(category, PLAYER))
+        {
+            if(scriptOf(otherEntity) instanceof ItemPickupScript pickup)
+            {
+                itemReached = pickup;
+                hover(pickup);
+            }
         }
         else if(isCategory(otherCategory, OBSTACLE) && isCategory(category, PLAYER))
         {
@@ -181,6 +209,14 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
         {
             collidingEnemies.remove(otherEntity);
         }
+        else if(isCategory(otherCategory, ITEM) && isCategory(category, PLAYER))
+        {
+            if(itemReached != null && itemReached.getEntity() == otherEntity)
+            {
+                itemReached = null;
+                hover(null);
+            }
+        }
         else if(isCategory(otherCategory, OBSTACLE) && isCategory(category, SENSOR))
         {
             ScriptComponent scriptComponent = getScene().getComponentStorage(ScriptComponent.class).getByEntity(otherEntity);
@@ -208,8 +244,14 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
             attack(Direction.WEST);
         else if(keycode == Input.Keys.E)
         {
-            if(doorReached != null && !doorReached.open())
+            if(itemReached != null)
+                pickUp(itemReached);
+            else if(doorReached != null && !doorReached.open())
                 Gdx.app.log("Door", "Locked. K unlocks it (debug, until keys exist).");
+        }
+        else if(keycode == Input.Keys.NUM_1 || keycode == Input.Keys.NUM_2 || keycode == Input.Keys.NUM_3)
+        {
+            usePotion(keycode - Input.Keys.NUM_1);
         }
         else if(keycode == Input.Keys.K)
         {
@@ -223,7 +265,7 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
         {
             // Debug: a new floor from a new seed, same as starting a new game.
             Scene scene = getEngine().createScene();
-            new LevelBuilder(new java.util.Random().nextLong()).build(getEngine(), scene);
+            new LevelBuilder(new java.util.Random().nextLong(), stats).build(getEngine(), scene);
             getEngine().switchScene(scene);
         }
         else if(keycode == Input.Keys.X && !isWalking)
@@ -259,12 +301,19 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
         Engine.eventBus.publish(SkillPointsAvailableEvent.class, e -> e.skillPoints = availableSkillPoints);
     }
 
-    private void dealDamage(float damage, Vector2 damageSource)
+    private void dealDamage(float damage, Vector2 damageSource, String source)
     {
         HealthComponent health = getComponent(HealthComponent.class);
         if(health.dealDamage(damage))
         {
             Engine.eventBus.publish(HealthChangeEvent.class, e -> e.currentHealth = health.health);
+            TileRoom room = currentRoom;
+            Engine.eventBus.publish(PlayerDamagedEvent.class, e ->
+            {
+                e.amount = damage;
+                e.source = source;
+                e.room = room;
+            });
             Body body = getComponent(PhysicalBodyComponent.class).body;
             Vector2 push = tempVector2.set(body.getPosition()).sub(damageSource).scl(24);
             body.applyLinearImpulse(push, body.getPosition(), true);
@@ -280,8 +329,9 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
 
     private void attack(Direction direction)
     {
-        if(isAttacking)
+        if(isAttacking || attackCooldown > 0)
             return;
+        attackCooldown = stats.attackCooldown();
         attackOffset.set(direction.getDeltaX()*0.75f, direction.getDeltaY()*0.75f);
 
         PolygonShape attackShape = (PolygonShape) attackFixtureDef.shape;
@@ -305,8 +355,13 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
     @Override
     public void onEvent(GameEvent event)
     {
-        if(event instanceof SkillPointUsedEvent skillPointEvent)
+        if(event instanceof EnterRoomEvent enterRoomEvent)
         {
+            currentRoom = enterRoomEvent.room;
+        }
+        else if(event instanceof SkillPointUsedEvent skillPointEvent)
+        {
+            stats.setBase(Stat.of(skillPointEvent.skillType), skillPointEvent.level);
             availableSkillPoints--;
             SkillPointsAvailableEvent pointsAvailableEvent = Engine.poolManager.obtain(SkillPointsAvailableEvent.class);
             pointsAvailableEvent.skillPoints = availableSkillPoints;
@@ -327,5 +382,104 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
         Sprite playerSprite = getComponent(MultiSpriteComponent.class).sprites.get(0);
         float degrees = vector.angleDeg();
         playerSprite.setRotation(degrees);
+    }
+
+    public PlayerStats getStats()
+    {
+        return stats;
+    }
+
+    private Script scriptOf(int entity)
+    {
+        ScriptComponent scriptComponent = getScene().getComponentStorage(ScriptComponent.class).getByEntity(entity);
+        return scriptComponent == null ? null : scriptComponent.script;
+    }
+
+    private void pickUp(ItemPickupScript pickup)
+    {
+        ItemDef item = pickup.item();
+        if(item.isEquipment())
+        {
+            Optional<String> missing = stats.missingRequirement(item);
+            if(missing.isPresent())
+            {
+                message("Wymaga: " + missing.get());
+                return;
+            }
+            // The old piece lands where the player stands, so a swap can be undone.
+            stats.equip(item).ifPresent(this::drop);
+        }
+        else if(stats.addPotion(item) < 0)
+        {
+            message("Brak miejsca na miksturę (1, 2, 3)");
+            return;
+        }
+
+        removePickups(pickup);
+        itemReached = null;
+        hover(null);
+        boolean fromShop = pickup.group() != null;
+        Engine.eventBus.publish(ItemPickedEvent.class, e ->
+        {
+            e.item = item;
+            e.fromShop = fromShop;
+        });
+        message("Podniesiono: " + item.name());
+    }
+
+    private void drop(ItemDef item)
+    {
+        ItemPickupCreator creator = new ItemPickupCreator(getScene(), getEngine().getAssetManager().get("atlases/textures.atlas", TextureAtlas.class));
+        Vector2 position = getComponent(TransformComponent.class).position;
+        creator.create(item, position.x, position.y, null);
+        creator.dispose();
+    }
+
+    private void removePickups(ItemPickupScript taken)
+    {
+        getScene().setToDelete(taken.getEntity());
+        if(taken.group() == null)
+            return;
+        ComponentStorage<ScriptComponent> scripts = getScene().getComponentStorage(ScriptComponent.class);
+        for(int i = 0; i < scripts.size(); i++)
+        {
+            if(scripts.getByIndex(i).script instanceof ItemPickupScript other && other != taken
+                    && taken.group().equals(other.group()))
+                getScene().setToDelete(other.getEntity());
+        }
+    }
+
+    private void usePotion(int slot)
+    {
+        ItemDef potion = stats.potion(slot);
+        if(potion == null)
+            return;
+        float heal = stats.usePotion(slot);
+        if(heal > 0)
+        {
+            HealthComponent health = getComponent(HealthComponent.class);
+            health.addHealth(heal);
+            Engine.eventBus.publish(HealthChangeEvent.class, e -> e.currentHealth = health.health);
+        }
+        Engine.eventBus.publish(PotionUsedEvent.class, e ->
+        {
+            e.potion = potion;
+            e.slot = slot;
+        });
+        message(potion.name());
+    }
+
+    private void hover(ItemPickupScript pickup)
+    {
+        Engine.eventBus.publish(ItemHoverEvent.class, e ->
+        {
+            e.item = pickup == null ? null : pickup.item();
+            e.fromShop = pickup != null && pickup.group() != null;
+        });
+    }
+
+    private void message(String text)
+    {
+        Engine.eventBus.publish(GameMessageEvent.class, e -> e.text = text);
     }
 }

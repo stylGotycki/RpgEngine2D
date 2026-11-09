@@ -1,5 +1,6 @@
 package net.dp.rpg.game.level.gui;
 
+import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Stack;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
@@ -8,10 +9,14 @@ import net.dp.rpg.engine.EngineServices;
 import net.dp.rpg.engine.Gui;
 import net.dp.rpg.engine.Scene;
 import net.dp.rpg.engine.components.HealthComponent;
+import net.dp.rpg.game.events.GameMessageEvent;
 import net.dp.rpg.game.events.HealthChangeEvent;
+import net.dp.rpg.game.events.ItemHoverEvent;
+import net.dp.rpg.game.item.PlayerStats;
 import net.dp.rpg.game.events.SkillPointUsedEvent;
 import net.dp.rpg.game.events.SkillPointsAvailableEvent;
 import net.dp.rpg.game.events.SkillWindowToggleEvent;
+import net.dp.rpg.game.minimap.MinimapWidget;
 
 public class LevelGui
 {
@@ -21,7 +26,7 @@ public class LevelGui
 
     private final SkillWindow skillWindow;
 
-    public LevelGui(EngineServices engine, Scene scene, int playerId)
+    public LevelGui(EngineServices engine, Scene scene, int playerId, MinimapWidget minimap, PlayerStats stats, TextureAtlas atlas)
     {
         this.scene = scene;
         this.gui = scene.getGui();
@@ -32,6 +37,19 @@ public class LevelGui
         mainTable.add(stack).expand().fill();
         Table table = new Table();
         stack.add(table);
+        Table minimapTable = new Table();
+        minimapTable.top().right();
+        minimapTable.add(minimap).pad(16).size(minimap.getWidth(), minimap.getHeight());
+        stack.add(minimapTable);
+        Table messageTable = new Table();
+        messageTable.bottom();
+        MessageLabel messageLabel = new MessageLabel(skin);
+        Engine.eventBus.subscribe(messageLabel, GameMessageEvent.class);
+        ItemTooltip tooltip = new ItemTooltip(stats, atlas, skin);
+        Engine.eventBus.subscribe(tooltip, ItemHoverEvent.class);
+        messageTable.add(messageLabel).padBottom(12).row();
+        messageTable.add(tooltip).padBottom(40);
+        stack.add(messageTable);
         stack.add(skillWindow);
         Engine.eventBus.subscribe(skillWindow, SkillWindowToggleEvent.class);
         Engine.eventBus.subscribe(skillWindow, SkillPointsAvailableEvent.class);
@@ -40,6 +58,8 @@ public class LevelGui
         HealthComponent playerHealth = scene.getComponentStorage(HealthComponent.class).getByEntity(playerId);
         HealthBar healthBar = new HealthBar(playerHealth.maxHealth, skin);
         Engine.eventBus.subscribe(healthBar, HealthChangeEvent.class);
-        table.add(healthBar).pad(16).width(playerHealth.maxHealth*4);
+        table.add(healthBar).pad(16).padBottom(8).width(playerHealth.maxHealth*4).left().row();
+        table.add(new InventoryWidget(stats, atlas, skin)).padLeft(16).padBottom(8).left().row();
+        table.add(new StatBarsWidget(stats, atlas, skin)).padLeft(16).left();
     }
 }

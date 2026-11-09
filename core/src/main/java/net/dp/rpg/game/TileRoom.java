@@ -2,6 +2,7 @@ package net.dp.rpg.game;
 
 import java.util.Map;
 import java.util.Set;
+import net.dp.rpg.engine.content.RoomContent;
 import net.dp.rpg.engine.floor.graph.DoorType;
 import net.dp.rpg.engine.floor.graph.RoomNode;
 import net.dp.rpg.engine.interior.GeneratedRoom;
@@ -15,9 +16,9 @@ import net.dp.rpg.engine.tile.room.RoomShape;
  * quest), and its WFC interior. Coordinates follow the engine's y-up axis. Tile (x, y) of
  * {@link #map()} lies at world (origin.x * CELL_WIDTH + x, origin.y * CELL_HEIGHT + y), and
  * {@link #doors()} are edges of the room's own shape, so {@code doorTileX/Y} are tiles of
- * {@link #map()}.
+ * {@link #map()}. {@link #content()} spots use the same local tiles.
  */
-public record TileRoom(int id, RoomNode node, GeneratedRoom generated) {
+public record TileRoom(int id, RoomNode node, GeneratedRoom generated, RoomContent content) {
 
   public RoomShape shape() {
     return generated.blueprint().shape();

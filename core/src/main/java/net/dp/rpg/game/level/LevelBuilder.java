@@ -12,11 +12,13 @@ import net.dp.rpg.engine.Engine;
 import net.dp.rpg.engine.EngineServices;
 import net.dp.rpg.engine.Scene;
 import net.dp.rpg.engine.components.*;
+import net.dp.rpg.engine.content.ContentSpot;
+import net.dp.rpg.engine.content.ContentTags;
+import net.dp.rpg.engine.floor.RandomSource;
 import net.dp.rpg.engine.floor.FloorArchetype;
 import net.dp.rpg.engine.floor.FloorArchetypes;
 import net.dp.rpg.engine.floor.FloorSettings;
 import net.dp.rpg.engine.floor.graph.DoorType;
-import net.dp.rpg.engine.floor.type.RoomType;
 import net.dp.rpg.engine.systems.TileConverter;
 import net.dp.rpg.engine.tile.room.RoomEdge;
 import net.dp.rpg.engine.tile.room.RoomGeometry;
@@ -24,13 +26,23 @@ import net.dp.rpg.game.FixtureCategory;
 import net.dp.rpg.game.TileFloor;
 import net.dp.rpg.game.TileRoom;
 import net.dp.rpg.game.events.EnterRoomEvent;
+import net.dp.rpg.game.enemy.EnemyRegistry;
+import net.dp.rpg.game.enemy.GameEnemies;
+import net.dp.rpg.game.item.GameItems;
+import net.dp.rpg.game.item.ItemDef;
+import net.dp.rpg.game.item.LootTable;
+import net.dp.rpg.game.item.PlayerStats;
 import net.dp.rpg.game.level.entities.DefaultEntityProperties;
-import net.dp.rpg.game.level.entities.SpiderEntityCreator;
+import net.dp.rpg.game.level.entities.EnemyEntityCreator;
+import net.dp.rpg.game.level.entities.ItemPickupCreator;
 import net.dp.rpg.game.level.entities.player.PlayerCreator;
 import net.dp.rpg.game.level.gui.LevelGui;
+import net.dp.rpg.game.minimap.MinimapIcons;
+import net.dp.rpg.game.minimap.MinimapWidget;
 import net.dp.rpg.game.scripts.CameraScript;
 import net.dp.rpg.game.scripts.DoorScript;
 
+import java.util.List;
 import java.util.Random;
 
 public class LevelBuilder
@@ -40,17 +52,24 @@ public class LevelBuilder
 
     private final float playerMaxHealth = 100;
     private final long seed;
+    private final PlayerStats stats;
+
+    public LevelBuilder(long seed, PlayerStats stats)
+    {
+        this.seed = seed;
+        this.stats = stats;
+    }
 
     public LevelBuilder(long seed)
     {
-        this.seed = seed;
+        this(seed, new PlayerStats());
     }
 
     /** The seed from {@link #SEED_PROPERTY}, or a random one. Logged, so a floor can be replayed. */
     public static LevelBuilder fromSystemProperty()
     {
         String value = System.getProperty(SEED_PROPERTY);
-        return new LevelBuilder(value == null || value.isBlank() ? new Random().nextLong() : Long.parseLong(value.trim()));
+        return new LevelBuilder(value == null || value.isBlank() ? new Random().nextLong() : Long.parseLong(value.trim()), new PlayerStats());
     }
 
     public void build(EngineServices engine, Scene scene)
@@ -58,7 +77,6 @@ public class LevelBuilder
         TextureAtlas atlas = engine.getAssetManager().get("atlases/textures.atlas");
 
         //tilemap
-        Random random = new Random(seed);
         TileConverter tileConverter = new TileConverter();
         FloorArchetype archetype = FloorArchetypes.CATACOMBS;
         TileFloor floor = new TileFloor(archetype, FloorSettings.of(archetype), seed, scene);
@@ -113,7 +131,7 @@ public class LevelBuilder
         }
 
         //create player entity
-        PlayerCreator playerCreator = new PlayerCreator(scene, atlas);
+        PlayerCreator playerCreator = new PlayerCreator(scene, atlas, stats);
         TileRoom start = floor.getStartRoom();
         int[] spawn = floor.walkableTileNear(start, RoomGeometry.CELL_WIDTH / 2, RoomGeometry.CELL_HEIGHT / 2);
         int player = playerCreator.create(worldX(start, spawn[0]), worldY(start, spawn[1]));
@@ -168,24 +186,51 @@ public class LevelBuilder
         scene.addComponent(box1, boxSpriteComponent);
 
         //enemies
-        SpiderEntityCreator spiderBuilder = new SpiderEntityCreator(scene, atlas, player);
+        EnemyEntityCreator enemyCreator = new EnemyEntityCreator(scene, atlas, player);
+        EnemyRegistry enemies = GameEnemies.registry();
+        // Content comes from the generator (E1): spots on floor tiles, enemies away from doors.
+        ItemPickupCreator itemCreator = new ItemPickupCreator(scene, atlas);
+        LootTable loot = GameItems.loot();
+        int maxDepth = floor.getRooms().stream().mapToInt(room -> room.node().depth()).max().orElse(1);
         for(TileRoom room : floor.getRooms())
         {
-            int count = enemiesFor(room.node().type(), random);
-            for(int i = 0; i < count; i++)
+            double depth = maxDepth == 0 ? 0 : (double) room.node().depth() / maxDepth;
+            Random itemRandom = RandomSource.derive(seed, "items:" + room.id());
+            List<ContentSpot> offers = room.content().spots().stream()
+                    .filter(spot -> spot.tag().equals(ContentTags.SHOP_OFFER)).toList();
+            List<ItemDef> offerItems = loot.shopOffers(offers.size(), itemRandom, depth);
+            for(int i = 0; i < offers.size(); i++)
+                itemCreator.create(offerItems.get(i), worldX(room, offers.get(i).x()), worldY(room, offers.get(i).y()), "shop-" + room.id());
+
+            for(ContentSpot spot : room.content().spots())
             {
-                int[] tile = floor.walkableTileNear(room, 2 + random.nextInt(room.map().width() - 4), 2 + random.nextInt(room.map().height() - 4));
-                spiderBuilder.create(worldX(room, tile[0]), worldY(room, tile[1]), floor, room);
+                float x = worldX(room, spot.x());
+                float y = worldY(room, spot.y());
+                switch(spot.kind())
+                {
+                    case ENEMY -> enemyCreator.create(enemies.get(spot.tag()), x, y, floor, room);
+                    case ITEM ->
+                    {
+                        if(!spot.tag().equals(ContentTags.SHOP_OFFER))
+                            itemCreator.create(loot.resolve(spot.tag(), itemRandom, depth), x, y, null);
+                    }
+                    // NPCs (E4) are coloured markers until they exist.
+                    case NPC -> createMarker(scene, atlas, x, y, NPC_MARKER);
+                }
             }
         }
+        itemCreator.dispose();
 
-        spiderBuilder.dispose();
+        enemyCreator.dispose();
         playerCreator.dispose();
 
         polygon.dispose();
 
         //gui
-        LevelGui levelGui = new LevelGui(engine, scene, player);
+        // Subscribed before the first EnterRoomEvent below, like the rest of the room listeners.
+        MinimapWidget minimap = new MinimapWidget(floor.getLayout(), atlas, 260, 180);
+        Engine.eventBus.subscribe(minimap, EnterRoomEvent.class);
+        LevelGui levelGui = new LevelGui(engine, scene, player, minimap, stats, atlas);
 
         //inform about first room
         Engine.eventBus.publish(EnterRoomEvent.class, e -> e.room = floor.getActiveRoom());
@@ -194,20 +239,18 @@ public class LevelBuilder
         scene.setAmbientLight(new Color(0,0,0,0));
     }
 
-    /**
-     * Placeholder until the content pass: how many spiders a room gets. Will come from the
-     * room's content (spawn markers) and the player's profile.
-     */
-    private static int enemiesFor(RoomType type, Random random)
+    private static final Color NPC_MARKER = new Color(0.3f, 0.6f, 1f, 1f);
+
+    /** A tinted square in place of an entity that does not exist yet; no body, nothing to hit. */
+    private static void createMarker(Scene scene, TextureAtlas atlas, float x, float y, Color color)
     {
-        return switch(type)
-        {
-            case NORMAL -> 2 + random.nextInt(3);
-            case MINIBOSS -> 6;
-            case BOSS -> 10;
-            case VAULT, COLLECTIBLE -> random.nextInt(2);
-            default -> 0;
-        };
+        Sprite sprite = atlas.createSprite(MinimapIcons.PIXEL);
+        sprite.setSize(0.6f, 0.6f);
+        sprite.setOriginCenter();
+        sprite.setCenter(x, y);
+        sprite.setColor(color);
+        int marker = scene.createEntity();
+        scene.addComponent(marker, new SpriteComponent(sprite, true));
     }
 
     /** World x of the centre of local tile x of the room. */

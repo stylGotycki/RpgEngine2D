@@ -1,9 +1,14 @@
 package net.dp.rpg.game;
 
 import java.util.ArrayList;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 import lombok.Getter;
 import net.dp.rpg.engine.Scene;
+import net.dp.rpg.engine.content.ContentGenerator;
+import net.dp.rpg.engine.content.ContentSettings;
+import net.dp.rpg.engine.content.FloorContent;
 import net.dp.rpg.engine.floor.FloorArchetype;
 import net.dp.rpg.engine.floor.FloorGenerator;
 import net.dp.rpg.engine.floor.FloorLayout;
@@ -56,7 +61,15 @@ public class TileFloor implements GameEventListener {
 
   private int activeRoom;
 
+  @Getter
+  private final FloorContent content;
+
   public TileFloor(FloorArchetype archetype, FloorSettings settings, long seed, Scene scene) {
+    this(archetype, settings, ContentSettings.DEFAULTS, seed, scene);
+  }
+
+  public TileFloor(FloorArchetype archetype, FloorSettings settings,
+      ContentSettings contentSettings, long seed, Scene scene) {
     this.scene = scene;
     this.tileSystem = tiles();
     this.walkability = new RoomReachability(tileSystem.types());
@@ -65,10 +78,17 @@ public class TileFloor implements GameEventListener {
 
     layout = new FloorGenerator().generate(archetype, settings, seed);
 
-    for (RoomNode node : layout.graph().rooms()) {
-      GeneratedRoom generated = interiors.generate(layout.blueprintOf(node));
+    Map<RoomNode, GeneratedRoom> generated = new IdentityHashMap<>();
 
-      rooms.add(new TileRoom(node.index(), node, generated));
+    for (RoomNode node : layout.graph().rooms()) {
+      generated.put(node, interiors.generate(layout.blueprintOf(node)));
+    }
+
+    content = new ContentGenerator(tileSystem.types(), contentSettings)
+        .generate(layout, generated::get);
+
+    for (RoomNode node : layout.graph().rooms()) {
+      rooms.add(new TileRoom(node.index(), node, generated.get(node), content.of(node)));
     }
 
     activeRoom = layout.graph().start().index();
@@ -151,9 +171,9 @@ public class TileFloor implements GameEventListener {
   private void logSummary(long seed) {
     long fallbacks = rooms.stream().filter(room -> room.generated().isFallback()).count();
 
-    logger.log("Floor %s seed %d: %d rooms, critical path %d, %d fallback interiors%n%s"
+    logger.log("Floor %s seed %d: %d rooms, critical path %d, %d fallback interiors%n%s%n%s"
         .formatted(layout.archetypeId(), seed, rooms.size(), layout.criticalLength(), fallbacks,
-            layout.summary()));
+            layout.summary(), "content " + content.totals()));
   }
 
   @Override

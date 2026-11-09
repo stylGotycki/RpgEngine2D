@@ -1,0 +1,12 @@
+{
+  "enemies": [
+    { "id": "spider", "name": "Pająk", "health": 50, "damage": 10, "acceleration": 50,
+      "size": 0.5, "sprite": "enemy/walk", "frameTime": 0.1, "spriteScale": 1.6 },
+    { "id": "skeleton", "name": "Szkielet", "health": 90, "damage": 14, "acceleration": 32,
+      "size": 0.6, "sprite": "skeleton/walk", "frameTime": 0.25, "spriteScale": 1.5 },
+    { "id": "miniboss", "name": "Matka pająków", "health": 300, "damage": 18, "acceleration": 40,
+      "size": 1.0, "sprite": "miniboss/walk", "frameTime": 0.12, "spriteScale": 1.6, "boss": true },
+    { "id": "boss", "name": "Król kości", "health": 700, "damage": 25, "acceleration": 28,
+      "size": 1.4, "sprite": "boss/walk", "frameTime": 0.3, "spriteScale": 1.5, "boss": true }
+  ]
+}
