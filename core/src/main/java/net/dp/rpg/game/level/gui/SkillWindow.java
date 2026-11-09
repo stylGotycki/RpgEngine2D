@@ -8,8 +8,8 @@ import com.badlogic.gdx.utils.Array;
 import net.dp.rpg.engine.systems.gameEvent.GameEvent;
 import net.dp.rpg.engine.systems.gameEvent.GameEventListener;
 import net.dp.rpg.game.SkillType;
-import net.dp.rpg.game.events.SkillPointsAvailableEvent;
-import net.dp.rpg.game.events.SkillWindowToggleEvent;
+import net.dp.rpg.game.level.events.SkillPointsAvailableEvent;
+import net.dp.rpg.game.level.events.SkillWindowToggleEvent;
 
 public class SkillWindow extends WidgetGroup implements GameEventListener
 {

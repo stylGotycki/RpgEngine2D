@@ -18,13 +18,15 @@ import net.dp.rpg.engine.tile.room.RoomGeometry;
 import net.dp.rpg.game.FixtureCategory;
 import net.dp.rpg.game.TileFloor;
 import net.dp.rpg.game.TileRoom;
-import net.dp.rpg.game.events.EnterRoomEvent;
+import net.dp.rpg.game.level.events.EnterRoomEvent;
 import net.dp.rpg.game.level.entities.DefaultEntityProperties;
 import net.dp.rpg.game.level.entities.SpiderEntityCreator;
 import net.dp.rpg.game.level.entities.player.PlayerCreator;
+import net.dp.rpg.game.level.events.PlayerDeathEvent;
 import net.dp.rpg.game.level.gui.LevelGui;
 import net.dp.rpg.game.scripts.CameraScript;
 import net.dp.rpg.game.scripts.DoorScript;
+import net.dp.rpg.game.scripts.LevelScript;
 
 import java.util.Random;
 
@@ -143,7 +145,7 @@ public class LevelBuilder
         scene.addComponent(box1, boxSpriteComponent);
 
         //enemies
-        SpiderEntityCreator spiderBuilder = new SpiderEntityCreator(scene, atlas, player);
+        SpiderEntityCreator spiderBuilder = new SpiderEntityCreator(scene, atlas);
         for(int i = 0; i < 100; i++)
         {
             spiderBuilder.create(45+i,60);
@@ -165,5 +167,10 @@ public class LevelBuilder
 
         scene.setAttackCategories(FixtureCategory.ENEMY_ATTACK, FixtureCategory.PLAYER_ATTACK);
         scene.setBodyCategories(FixtureCategory.PLAYER, FixtureCategory.ENEMY);
+
+        LevelScript levelScript = new LevelScript();
+        Engine.eventBus.subscribe(levelScript, PlayerDeathEvent.class);
+        scene.setSceneScript(levelScript);
+
     }
 }

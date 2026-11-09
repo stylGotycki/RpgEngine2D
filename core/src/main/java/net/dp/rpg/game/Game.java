@@ -8,7 +8,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import net.dp.rpg.engine.AbstractGame;
 import net.dp.rpg.engine.Engine;
 import net.dp.rpg.engine.Scene;
-import net.dp.rpg.game.events.*;
+import net.dp.rpg.game.level.events.*;
 import net.dp.rpg.game.menu.MenuBuilder;
 import net.dp.rpg.game.scripts.GlobalScript;
 
@@ -31,6 +31,7 @@ public class Game extends AbstractGame
         Engine.poolManager.addPool(SkillWindowToggleEvent.class, SkillWindowToggleEvent::new);
         Engine.poolManager.addPool(SkillPointsAvailableEvent.class, SkillPointsAvailableEvent::new);
         Engine.poolManager.addPool(SkillPointUsedEvent.class, SkillPointUsedEvent::new);
+        Engine.poolManager.addPool(PlayerDeathEvent.class, PlayerDeathEvent::new);
 
         getEngine().getAssetManager().finishLoading();
 

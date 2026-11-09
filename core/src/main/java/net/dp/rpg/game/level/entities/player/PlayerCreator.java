@@ -36,6 +36,7 @@ public class PlayerCreator extends EntityCreator implements Disposable
     private final Sprite attackSprite;
     private final Animation<TextureRegion> idleAnimation;
     private final Animation<TextureRegion> walkAnimation;
+    private final Animation<TextureRegion> deathAnimation;
 
     private final TextureAtlas atlas;
 
@@ -89,6 +90,8 @@ public class PlayerCreator extends EntityCreator implements Disposable
 
         idleAnimation = new Animation<>(1f, atlas.findRegions("player/idle"), Animation.PlayMode.LOOP);
         walkAnimation = new Animation<>(0.1f, atlas.findRegions("player/walk"), Animation.PlayMode.LOOP);
+        deathAnimation = new Animation<>(0.1f, atlas.findRegions("player/death"), Animation.PlayMode.NORMAL);
+
     }
 
     @Override
@@ -99,6 +102,7 @@ public class PlayerCreator extends EntityCreator implements Disposable
         AnimationSet<PlayerAnimationId> animationSet = new AnimationSet<>();
         animationSet.addAnimation(idleAnimation, PlayerAnimationId.IDLE);
         animationSet.addAnimation(walkAnimation, PlayerAnimationId.WALK);
+        animationSet.addAnimation(deathAnimation, PlayerAnimationId.DEATH);
 
         MultiSpriteComponent spriteComponent = new MultiSpriteComponent();
         spriteComponent.add(bodySprite, true);

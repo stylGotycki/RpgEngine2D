@@ -20,6 +20,7 @@ import net.dp.rpg.engine.tile.TileSystem;
 import net.dp.rpg.engine.tile.room.RoomGeometry;
 
 import java.util.ArrayList;
+import java.util.BitSet;
 
 public class Scene implements Disposable
 {
@@ -45,6 +46,7 @@ public class Scene implements Disposable
 
     private int nextEntity = 0;
     private final ArrayList<Integer> freeEntity = new ArrayList<>();
+    private final BitSet validEntities = new BitSet();
     private final ArrayList<ComponentStorage<? extends Component>> componentStorages = new ArrayList<>();
     private final ArrayList<Integer> toDeleteEntities = new ArrayList<>();
     private final ArrayList<Fixture> toDeleteFixtures = new ArrayList<>();
@@ -214,10 +216,14 @@ public class Scene implements Disposable
 
     public int createEntity()
     {
+        int entity;
         if(!freeEntity.isEmpty())
-            return freeEntity.getFirst();
+            entity = freeEntity.getFirst();
+        else
+            entity = nextEntity++;
 
-        return nextEntity++;
+        validEntities.set(entity);
+        return entity;
     }
 
     public void setToDelete(int entityId)
@@ -246,6 +252,7 @@ public class Scene implements Disposable
     private void deleteEntity(int entityId)
     {
         freeEntity.add(entityId);
+        validEntities.clear(entityId);
         for(ComponentStorage<? extends Component> componentStorage : componentStorages)
         {
             if(componentStorage.getComponentClass() == PhysicalBodyComponent.class && componentStorage.hasComponent(entityId))
@@ -255,6 +262,13 @@ public class Scene implements Disposable
             }
             componentStorage.remove(entityId);
         }
+    }
+
+    public boolean entityExists(int entity)
+    {
+        if(entity >= nextEntity)
+            return false;
+        return validEntities.get(entity);
     }
 
     public void setSceneScript(SceneScript script)

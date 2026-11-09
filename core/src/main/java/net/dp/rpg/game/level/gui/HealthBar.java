@@ -4,7 +4,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.ProgressBar;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import net.dp.rpg.engine.systems.gameEvent.GameEvent;
 import net.dp.rpg.engine.systems.gameEvent.GameEventListener;
-import net.dp.rpg.game.events.HealthChangeEvent;
+import net.dp.rpg.game.level.events.HealthChangeEvent;
 
 public class HealthBar extends ProgressBar implements GameEventListener
 {

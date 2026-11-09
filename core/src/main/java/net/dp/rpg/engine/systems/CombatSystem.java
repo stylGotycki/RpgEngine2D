@@ -87,7 +87,13 @@ public class CombatSystem
             pushBody(attackedBody, attackerBody.getPosition(), knockback);
             ScriptComponent scriptComponent = scriptComponents.getByEntity(attacked);
             if(scriptComponent != null)
+            {
                 scriptComponent.script.onDamage();
+                if(health.health <= 0)
+                {
+                    scriptComponent.script.onDeath();
+                }
+            }
             return true;
         }
         return false;

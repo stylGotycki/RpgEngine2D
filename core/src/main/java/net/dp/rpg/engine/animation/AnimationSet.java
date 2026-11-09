@@ -11,22 +11,30 @@ public class AnimationSet<T extends AnimationId>
     private Animation<TextureRegion> currentAnimation;
     private final Map<T, Animation<TextureRegion>> animationMap = new HashMap<T, Animation<TextureRegion>>();
     private float currentTime = 0;
+    private boolean isPlaying = false;
 
     public TextureRegion getKeyFrame(float deltaTime)
     {
-        currentTime += deltaTime;
+        if(isPlaying)
+            currentTime += deltaTime;
         if(currentAnimation != null)
-            return currentAnimation.getKeyFrame(currentTime, true);
+            return currentAnimation.getKeyFrame(currentTime, false);
         return null;
     }
 
     public <T extends AnimationId> void play(T animationId)
     {
+        isPlaying = true;
         currentTime = 0;
         if(animationMap.containsKey(animationId))
         {
             currentAnimation = animationMap.get(animationId);
         }
+    }
+
+    public void stop()
+    {
+        isPlaying = false;
     }
 
     public void addAnimation(Animation<TextureRegion> newAnimation, T id)

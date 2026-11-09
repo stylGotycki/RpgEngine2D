@@ -8,10 +8,9 @@ import net.dp.rpg.engine.EngineServices;
 import net.dp.rpg.engine.Gui;
 import net.dp.rpg.engine.Scene;
 import net.dp.rpg.engine.components.HealthComponent;
-import net.dp.rpg.game.events.HealthChangeEvent;
-import net.dp.rpg.game.events.SkillPointUsedEvent;
-import net.dp.rpg.game.events.SkillPointsAvailableEvent;
-import net.dp.rpg.game.events.SkillWindowToggleEvent;
+import net.dp.rpg.game.level.events.HealthChangeEvent;
+import net.dp.rpg.game.level.events.SkillPointsAvailableEvent;
+import net.dp.rpg.game.level.events.SkillWindowToggleEvent;
 
 public class LevelGui
 {

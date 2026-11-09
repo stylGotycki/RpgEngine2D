@@ -9,7 +9,6 @@ import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.Fixture;
 import com.badlogic.gdx.physics.box2d.FixtureDef;
 import com.badlogic.gdx.physics.box2d.PolygonShape;
-import com.badlogic.gdx.utils.IntSet;
 import net.dp.rpg.engine.*;
 import net.dp.rpg.engine.components.*;
 import net.dp.rpg.engine.systems.gameEvent.GameEvent;
@@ -19,8 +18,7 @@ import net.dp.rpg.engine.tile.room.Direction;
 import static net.dp.rpg.game.FixtureCategory.*;
 import net.dp.rpg.game.TileRoom;
 import net.dp.rpg.game.animations.PlayerAnimationId;
-import net.dp.rpg.game.events.*;
-import net.dp.rpg.game.menu.MenuBuilder;
+import net.dp.rpg.game.level.events.*;
 
 public class PlayerScript extends EntityScript implements InputListener, GameEventListener
 {
@@ -120,14 +118,6 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
             Engine.eventBus.publish(EnterRoomEvent.class, e -> e.room = roomEntered);
             currentRoom = roomEntered;
             roomEntered = null;
-        }
-        HealthComponent health = getComponent(HealthComponent.class);
-        if(health.health <= 0)
-        {
-            MenuBuilder menuBuilder = new MenuBuilder();
-            Scene scene = getEngine().createScene();
-            menuBuilder.build(getEngine(), scene);
-            getEngine().switchScene(scene);
         }
     }
 
@@ -248,6 +238,13 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
     {
         HealthComponent health = getComponent(HealthComponent.class);
         Engine.eventBus.publish(HealthChangeEvent.class, e -> e.currentHealth = health.health);
+    }
+
+    @Override
+    public void onDeath()
+    {
+        getComponent(MultiAnimationComponent.class).animationSets.get(0).play(PlayerAnimationId.DEATH);
+        Engine.eventBus.publish(PlayerDeathEvent.class, e -> e.playerId = getEntity());
     }
 
     public void addSkillPoint()
