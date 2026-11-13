@@ -52,6 +52,10 @@
     { "id": "potion_speed_small", "name": "Mała mikstura szybkości", "category": "POTION", "potion": "SPEED", "big": false },
     { "id": "potion_speed_big", "name": "Duża mikstura szybkości", "category": "POTION", "potion": "SPEED", "big": true },
     { "id": "potion_wisdom_small", "name": "Mała mikstura inteligencji", "category": "POTION", "potion": "WISDOM", "big": false },
-    { "id": "potion_wisdom_big", "name": "Duża mikstura inteligencji", "category": "POTION", "potion": "WISDOM", "big": true }
+    { "id": "potion_wisdom_big", "name": "Duża mikstura inteligencji", "category": "POTION", "potion": "WISDOM", "big": true },
+    { "id": "quest_relic", "name": "Relikwia", "category": "QUEST" },
+    { "id": "quest_ore", "name": "Bryłka srebra", "category": "QUEST" },
+    { "id": "quest_herb", "name": "Ziele z głębin", "category": "QUEST" },
+    { "id": "quest_letter", "name": "Zapieczętowany list", "category": "QUEST" }
   ]
 }

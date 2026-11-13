@@ -17,6 +17,8 @@ import net.dp.rpg.engine.floor.graph.RoomNode;
 import net.dp.rpg.engine.floor.type.RoomType;
 import net.dp.rpg.engine.interior.GeneratedRoom;
 import net.dp.rpg.engine.interior.pass.RoomReachability;
+import net.dp.rpg.engine.quest.Quest;
+import net.dp.rpg.engine.quest.QuestContent;
 import net.dp.rpg.engine.tile.TileGrid;
 import net.dp.rpg.engine.tile.TileLayerKind;
 import net.dp.rpg.engine.tile.TileMapData;
@@ -24,6 +26,22 @@ import net.dp.rpg.engine.tile.TileRole;
 import net.dp.rpg.engine.tile.TileTypeRegistry;
 import net.dp.rpg.engine.tile.room.RoomEdge;
 
+/**
+ * Places what stands in the rooms of a generated floor: enemies, items and NPCs (E1). Runs after
+ * the interiors, because spots must lie on real floor tiles of the room's map.
+ *
+ * <p>Rules, all checked by {@code ContentPlacementTest}:
+ * <ul>
+ *   <li>every spot is a plain floor tile (no door, wall, hazard, pillar or detail on it);
+ *   <li>enemies keep {@link ContentSettings#enemyDoorClearance()} tiles from every door;
+ *   <li>an NPC never cuts any floor of its room off from the doors;
+ *   <li>START, SHOP, PUZZLE and EMPTY rooms and a quest giver's room hold no enemies;
+ *   <li>the enemy count grows with depth (difficulty control) and scales with
+ *       {@link ContentSettings#difficulty()};
+ *   <li>each room draws from its own random stream, so changing one room's content (or the
+ *       difficulty) moves nothing in the others, and one seed always gives the same content.
+ * </ul>
+ */
 public final class ContentGenerator {
 
   private final TileTypeRegistry types;
@@ -39,17 +57,23 @@ public final class ContentGenerator {
   }
 
   public FloorContent generate(FloorLayout layout, Function<RoomNode, GeneratedRoom> interiors) {
+    return generate(layout, interiors, List.of());
+  }
+
+  public FloorContent generate(FloorLayout layout, Function<RoomNode, GeneratedRoom> interiors,
+      List<Quest> quests) {
     int maxDepth = layout.graph().rooms().stream().mapToInt(RoomNode::depth).max().orElse(0);
     Map<RoomNode, RoomContent> rooms = new IdentityHashMap<>();
 
     for (RoomNode room : layout.graph().rooms()) {
-      rooms.put(room, place(layout, room, interiors.apply(room), maxDepth));
+      rooms.put(room, place(layout, room, interiors.apply(room), maxDepth, quests));
     }
 
     return new FloorContent(rooms);
   }
 
-  RoomContent place(FloorLayout layout, RoomNode room, GeneratedRoom generated, int maxDepth) {
+  RoomContent place(FloorLayout layout, RoomNode room, GeneratedRoom generated, int maxDepth,
+      List<Quest> quests) {
     Random random = RandomSource.derive(layout.seed(), "content:" + room.index());
     Tiles tiles = new Tiles(generated);
     List<ContentSpot> spots = new ArrayList<>();
@@ -61,10 +85,21 @@ public final class ContentGenerator {
       placeQuestGiver(tiles, entryDoors(layout, room, generated), quest.id(), random, spots);
     }
 
+    for (QuestContent.TalkerRequest talker : QuestContent.talkers(quests, room.index())) {
+      placeNpc(tiles, tiles.floor(settings.npcDoorClearance(), random),
+          ContentTags.talker(talker.dialogueId()), talker.questId(), spots);
+    }
+
     placeItems(room, quest != null, tiles, random, spots);
 
+    for (QuestContent.ItemRequest item : QuestContent.items(quests, room.index())) {
+      place(ContentKind.ITEM, ContentTags.questItem(item.itemId()), item.questId(),
+          tiles.floor(2, random), spots);
+    }
+
     if (!questGiver) {
-      placeEnemies(room.type(), depth, tiles, random, spots);
+      placeEnemies(room.type(), depth, tiles, random, spots,
+          QuestContent.enemies(quests, room.index()));
     }
 
     return new RoomContent(spots);
@@ -75,17 +110,26 @@ public final class ContentGenerator {
     int target = settings.npcDoorClearance() + 1;
     List<int[]> pool = tiles.floor(settings.npcDoorClearance(), random);
 
+    // Close to the door the player comes in through, so the giver is the first thing they meet,
+    // but not in the way.
     pool.sort(Comparator.comparingInt(tile -> Math.abs(distance(tile, entries) - target)));
+    placeNpc(tiles, pool, ContentTags.QUEST_GIVER, questId, spots);
+  }
 
+  private void placeNpc(Tiles tiles, List<int[]> pool, String tag, String questId,
+      List<ContentSpot> spots) {
     for (int[] tile : pool) {
-      if (!tiles.cutsOff(tile)) {
-        spots.add(new ContentSpot(ContentKind.NPC, ContentTags.QUEST_GIVER, questId, tile[0],
-            tile[1]));
+      if (!tiles.cutsOff(tile) && farFromAll(tile, spots, 1)) {
+        spots.add(new ContentSpot(ContentKind.NPC, tag, questId, tile[0], tile[1]));
         return;
       }
     }
   }
 
+  /**
+   * Door tiles towards shallower rooms: the way the player arrives. All doors when there is none
+   * (only START), so the result is never empty for a room with doors.
+   */
   private static List<int[]> entryDoors(FloorLayout layout, RoomNode room,
       GeneratedRoom generated) {
     List<int[]> entries = new ArrayList<>();
@@ -122,6 +166,7 @@ public final class ContentGenerator {
       case VAULT -> placeFar(ContentKind.ITEM, ContentTags.EQUIPMENT, tiles, random, spots);
       case COLLECTIBLE -> placeFar(ContentKind.ITEM, ContentTags.LOOT, tiles, random, spots);
       case NORMAL, EMPTY -> {
+        // Drawn even in quest rooms, so a quest does not shift the other rooms' streams.
         boolean potion = random.nextDouble() < settings.potionChance();
 
         if (potion && !inQuest) {
@@ -133,6 +178,7 @@ public final class ContentGenerator {
     }
   }
 
+  /** The offers in a row through the middle of the room, two tiles apart. */
   private void placeShop(Tiles tiles, Random random, List<ContentSpot> spots) {
     int count = settings.shopOffers();
     List<int[]> pool = tiles.floor(2, random);
@@ -160,11 +206,13 @@ public final class ContentGenerator {
       }
     }
 
+    // A room too narrow for a row: anywhere, still apart.
     for (int i = 0; i < count; i++) {
       place(ContentKind.ITEM, ContentTags.SHOP_OFFER, pool, spots);
     }
   }
 
+  /** Farthest from the doors: a reward at the back of the room. */
   private void placeFar(ContentKind kind, String tag, Tiles tiles, Random random,
       List<ContentSpot> spots) {
     List<int[]> pool = tiles.floor(2, random);
@@ -174,7 +222,7 @@ public final class ContentGenerator {
   }
 
   private void placeEnemies(RoomType type, double depth, Tiles tiles, Random random,
-      List<ContentSpot> spots) {
+      List<ContentSpot> spots, Map<String, Integer> questNeeds) {
     ContentSettings.Range range = settings.enemiesOf(type);
     double base = range.min() + random.nextInt(range.max() - range.min() + 1);
 
@@ -196,6 +244,16 @@ public final class ContentGenerator {
     for (int i = 0; i < count; i++) {
       place(ContentKind.ENEMY, enemyType(depth, random), pool, spots);
     }
+
+    // Quests may need more of one kind than the room drew.
+    questNeeds.forEach((tag, needed) -> {
+      long present = spots.stream()
+          .filter(spot -> spot.kind() == ContentKind.ENEMY && spot.tag().equals(tag)).count();
+
+      for (long i = present; i < needed; i++) {
+        place(ContentKind.ENEMY, tag, pool, spots);
+      }
+    });
   }
 
   private String enemyType(double depth, Random random) {
@@ -213,11 +271,20 @@ public final class ContentGenerator {
     return settings.enemyTypes().get(settings.enemyTypes().size() - 1).tag();
   }
 
+  /**
+   * Takes the first tile of the pool far enough from every spot so far, relaxing the spacing
+   * down to "any free tile" in rooms too small for it. Places nothing when the pool is used up.
+   */
   private void place(ContentKind kind, String tag, List<int[]> pool, List<ContentSpot> spots) {
+    place(kind, tag, null, pool, spots);
+  }
+
+  private void place(ContentKind kind, String tag, String questId, List<int[]> pool,
+      List<ContentSpot> spots) {
     for (int spacing = settings.spacing(); spacing >= 1; spacing--) {
       for (int[] tile : pool) {
         if (farFromAll(tile, spots, spacing)) {
-          spots.add(ContentSpot.of(kind, tag, tile[0], tile[1]));
+          spots.add(new ContentSpot(kind, tag, questId, tile[0], tile[1]));
           return;
         }
       }
@@ -234,6 +301,7 @@ public final class ContentGenerator {
     return true;
   }
 
+  /** The tiles of one room's map, as content placement sees them. */
   private final class Tiles {
 
     private final TileMapData map;
@@ -260,6 +328,7 @@ public final class ContentGenerator {
       }
     }
 
+    /** Plain floor at least {@code clearance} tiles from every door, in a random order. */
     List<int[]> floor(int clearance, Random random) {
       List<int[]> pool = new ArrayList<>();
 
@@ -283,6 +352,7 @@ public final class ContentGenerator {
       return distance(tile, doors);
     }
 
+    /** Whether blocking the tile would leave some walkable tile unreachable from the doors. */
     boolean cutsOff(int[] blocked) {
       return reachable(null) - 1 != reachable(blocked);
     }

@@ -21,7 +21,7 @@ import net.dp.rpg.engine.tile.room.RoomEdge;
 
 public final class FloorDocuments {
 
-  public static final String GENERATOR_VERSION = "0.9.0";
+  public static final String GENERATOR_VERSION = "0.10.0";
 
   private FloorDocuments() {
   }

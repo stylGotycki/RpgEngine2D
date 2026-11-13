@@ -18,7 +18,7 @@ public record QuestSettings(double roomRatio, List<Double> bundleWeights) {
   }
 
   public static QuestSettings defaults() {
-    return new QuestSettings(0.30, List.of(8.0, 4.0, 2.0, 1.0));
+    return new QuestSettings(0.30, List.of(1.0, 4.0, 3.0, 1.0));
   }
 
   public QuestSettings withRoomRatio(double ratio) {

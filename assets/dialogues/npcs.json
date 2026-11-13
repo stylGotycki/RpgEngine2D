@@ -1,14 +1,37 @@
 {
   "dialogues": [
-    { "id": "talk.sentinel", "start": "question", "nodes": {
-      "question": { "speaker": "Strażnik", "text": "Stój! Kto idzie?", "choices": [
+    { "id": "talk.q.sentinel", "start": "question", "nodes": {
+      "question": { "speaker": "{name}", "text": "Stój! Kto idzie?", "choices": [
         { "text": "Przyjaciel.", "action": "talk-correct", "next": "pass" },
         { "text": "Twój najgorszy koszmar.", "action": "talk-wrong", "next": "angry" },
         { "text": "Nikt.", "action": "talk-wrong", "next": "puzzled" }
       ] },
-      "pass": { "speaker": "Strażnik", "text": "Przyjaciel? Dawno nie słyszałem tego słowa. Przechodź." },
-      "angry": { "speaker": "Strażnik", "text": "Tak? To spróbujmy jeszcze raz, grzeczniej.", "next": "question" },
-      "puzzled": { "speaker": "Strażnik", "text": "Nikt nie mówi. A ty mówisz. Jeszcze raz.", "next": "question" }
+      "pass": { "speaker": "{name}", "text": "Przyjaciel? Dawno nie słyszałem tego słowa. Przechodź." },
+      "angry": { "speaker": "{name}", "text": "Tak? To spróbujmy jeszcze raz, grzeczniej.", "next": "question" },
+      "puzzled": { "speaker": "{name}", "text": "Nikt nie mówi. A ty mówisz. Jeszcze raz.", "next": "question" }
+    } },
+    { "id": "talk.q.riddle", "start": "riddle", "nodes": {
+      "riddle": { "speaker": "{name}", "text": "Rozwiąż zagadkę: ma klucze, a nie otworzy żadnych drzwi. Co to?", "choices": [
+        { "text": "Pianino.", "action": "talk-correct", "next": "right" },
+        { "text": "Zamek.", "action": "talk-wrong", "next": "wrong" },
+        { "text": "Strażnik.", "action": "talk-wrong", "next": "wrong" }
+      ] },
+      "right": { "speaker": "{name}", "text": "Brawo! Dawno nikt nie zgadł." },
+      "wrong": { "speaker": "{name}", "text": "Pudło. Pomyśl jeszcze.", "next": "riddle" }
+    } },
+    { "id": "talk.q.recipient", "start": "ask", "nodes": {
+      "ask": { "speaker": "{name}", "text": "Ktoś mówił, że niesiesz dla mnie list?", "choices": [
+        { "text": "Tak, proszę. To dla ciebie.", "action": "talk-correct", "next": "thanks" },
+        { "text": "Nie wiem, o czym mówisz.", "action": "talk-wrong", "next": "sigh" }
+      ] },
+      "thanks": { "speaker": "{name}", "text": "Wreszcie! Przekaż, że dotarł cały." },
+      "sigh": { "speaker": "{name}", "text": "Szkoda. Czekam na niego od miesięcy.", "next": "ask" }
+    } },
+    { "id": "talk.locked", "start": "a", "nodes": {
+      "a": { "speaker": "{name}", "text": "{locked}" }
+    } },
+    { "id": "talk.done", "start": "a", "nodes": {
+      "a": { "speaker": "{name}", "text": "Już wszystko sobie powiedzieliśmy." }
     } }
   ]
 }
