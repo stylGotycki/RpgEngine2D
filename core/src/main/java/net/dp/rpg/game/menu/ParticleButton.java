@@ -1,5 +1,6 @@
 package net.dp.rpg.game.menu;
 
+import com.badlogic.gdx.graphics.g2d.NinePatch;
 import com.badlogic.gdx.graphics.g2d.ParticleEffect;
 import com.badlogic.gdx.graphics.g2d.ParticleEmitter;
 import com.badlogic.gdx.graphics.g3d.particles.emitters.Emitter;
@@ -8,6 +9,8 @@ import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Touchable;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
+import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
+import com.badlogic.gdx.scenes.scene2d.utils.NinePatchDrawable;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -20,6 +23,7 @@ public class ParticleButton extends Stack
 
     private int id;
     private ButtonStateListener stateListener;
+    private final float scale = 2;
 
     public ParticleButton(String name, ParticleEffect particle, Skin skin)
     {
@@ -27,6 +31,14 @@ public class ParticleButton extends Stack
         particleActor.setTouchable(Touchable.disabled);
 
         button = new TextButton(name, skin);
+        NinePatchDrawable patchDrawable = (NinePatchDrawable) button.getStyle().up;
+        NinePatch patch = patchDrawable.getPatch();
+        patch.scale(scale,scale);
+        patchDrawable.setPatch(patch);
+        patchDrawable = (NinePatchDrawable) button.getStyle().down;
+        patch = patchDrawable.getPatch();
+        patch.scale(scale,scale);
+        patchDrawable.setPatch(patch);
 
         ParticleButton particleButton = this;
 

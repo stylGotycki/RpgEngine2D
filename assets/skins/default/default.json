@@ -97,9 +97,8 @@ com.badlogic.gdx.scenes.scene2d.ui.Skin$TintedDrawable: {
 }
 com.badlogic.gdx.scenes.scene2d.ui.Button$ButtonStyle: {
 	default: {
-		up: default-round
-		down: default-round-down
-		disabled: default-round
+		up: button
+		down: buttonDown
 	}
 	toggle: {
 		parent: default

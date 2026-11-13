@@ -39,17 +39,6 @@ public class Game extends AbstractGame
 
         getEngine().getAssetManager().finishLoading();
 
-//        float healthBarSize = 8;
-//        Skin skin = getEngine().getAssetManager().get("skins/default/default.json");
-//        NinePatch healthBarPatch = skin.getPatch("health-bar");
-//        NinePatch healthPatch = skin.getPatch("health");
-//        healthBarPatch.scale(healthBarSize, healthBarSize);
-//        healthPatch.scale(healthBarSize, healthBarSize);
-//        NinePatchDrawable healthBar = (NinePatchDrawable) skin.getDrawable("health-bar");
-//        NinePatchDrawable health = (NinePatchDrawable) skin.getDrawable("health");
-//        healthBar.setPatch(healthBarPatch);
-//        health.setPatch(healthPatch);
-
         getEngine().setTextureFilters(Texture.TextureFilter.Linear, Texture.TextureFilter.Nearest);
 
         Scene scene = getEngine().createScene();

@@ -6,14 +6,14 @@ filter: Linear, Linear
 repeat: none
 check-off
   rotate: false
-  xy: 35, 46
+  xy: 35, 52
   size: 14, 14
   orig: 14, 14
   offset: 0, 0
   index: -1
 textfield
   rotate: false
-  xy: 35, 46
+  xy: 35, 52
   size: 14, 14
   split: 3, 3, 3, 3
   orig: 14, 14
@@ -21,14 +21,14 @@ textfield
   index: -1
 check-on
   rotate: false
-  xy: 515, 883
+  xy: 515, 889
   size: 14, 14
   orig: 14, 14
   offset: 0, 0
   index: -1
 cursor
   rotate: false
-  xy: 509, 121
+  xy: 509, 127
   size: 3, 3
   split: 1, 1, 1, 1
   orig: 3, 3
@@ -36,14 +36,14 @@ cursor
   index: -1
 default
   rotate: false
-  xy: 515, 933
+  xy: 515, 939
   size: 254, 77
   orig: 254, 77
   offset: 0, 0
   index: -1
 default-pane
   rotate: false
-  xy: 1, 1
+  xy: 35, 47
   size: 5, 3
   split: 1, 1, 1, 1
   orig: 5, 3
@@ -51,7 +51,7 @@ default-pane
   index: -1
 default-rect-pad
   rotate: false
-  xy: 1, 1
+  xy: 35, 47
   size: 5, 3
   split: 1, 1, 1, 1
   orig: 5, 3
@@ -59,7 +59,7 @@ default-rect-pad
   index: -1
 default-pane-noborder
   rotate: false
-  xy: 771, 971
+  xy: 814, 1015
   size: 1, 1
   split: 0, 0, 0, 0
   orig: 1, 1
@@ -67,7 +67,7 @@ default-pane-noborder
   index: -1
 default-rect
   rotate: false
-  xy: 1052, 1115
+  xy: 1052, 1121
   size: 3, 3
   split: 1, 1, 1, 1
   orig: 3, 3
@@ -75,7 +75,7 @@ default-rect
   index: -1
 default-rect-down
   rotate: false
-  xy: 51, 57
+  xy: 531, 900
   size: 3, 3
   split: 1, 1, 1, 1
   orig: 3, 3
@@ -83,7 +83,7 @@ default-rect-down
   index: -1
 default-round
   rotate: false
-  xy: 800, 990
+  xy: 800, 996
   size: 12, 20
   split: 5, 5, 5, 4
   pad: 4, 4, 1, 1
@@ -92,7 +92,7 @@ default-round
   index: -1
 default-round-down
   rotate: false
-  xy: 1023, 1067
+  xy: 1023, 1073
   size: 12, 20
   split: 5, 5, 5, 4
   pad: 4, 4, 1, 1
@@ -101,7 +101,7 @@ default-round-down
   index: -1
 default-round-large
   rotate: false
-  xy: 1057, 1132
+  xy: 1057, 1138
   size: 20, 20
   split: 5, 5, 5, 4
   orig: 20, 20
@@ -109,7 +109,7 @@ default-round-large
   index: -1
 default-scroll
   rotate: false
-  xy: 1, 6
+  xy: 1, 12
   size: 20, 20
   split: 2, 2, 2, 2
   orig: 20, 20
@@ -117,7 +117,7 @@ default-scroll
   index: -1
 default-select
   rotate: false
-  xy: 771, 990
+  xy: 771, 996
   size: 27, 20
   split: 4, 14, 4, 4
   orig: 27, 20
@@ -125,7 +125,7 @@ default-select
   index: -1
 default-select-selection
   rotate: false
-  xy: 515, 878
+  xy: 549, 918
   size: 3, 3
   split: 1, 1, 1, 1
   orig: 3, 3
@@ -133,7 +133,7 @@ default-select-selection
   index: -1
 default-slider
   rotate: false
-  xy: 1057, 1122
+  xy: 23, 24
   size: 8, 8
   split: 2, 2, 2, 2
   orig: 8, 8
@@ -141,14 +141,14 @@ default-slider
   index: -1
 default-slider-knob
   rotate: false
-  xy: 1079, 1134
+  xy: 1079, 1140
   size: 9, 18
   orig: 9, 18
   offset: 0, 0
   index: -1
 default-splitpane
   rotate: false
-  xy: 23, 23
+  xy: 51, 63
   size: 5, 3
   split: 0, 5, 0, 0
   orig: 5, 3
@@ -156,7 +156,7 @@ default-splitpane
   index: -1
 default-splitpane-vertical
   rotate: false
-  xy: 531, 892
+  xy: 565, 932
   size: 3, 5
   split: 0, 0, 0, 5
   orig: 3, 5
@@ -164,7 +164,7 @@ default-splitpane-vertical
   index: -1
 default-window
   rotate: false
-  xy: 1023, 1089
+  xy: 1023, 1095
   size: 27, 29
   split: 4, 3, 20, 3
   orig: 27, 29
@@ -172,70 +172,86 @@ default-window
   index: -1
 selection
   rotate: false
-  xy: 787, 987
+  xy: 1023, 1070
   size: 1, 1
   orig: 1, 1
   offset: 0, 0
   index: -1
 tree-minus
   rotate: false
-  xy: 549, 917
+  xy: 549, 923
   size: 14, 14
   orig: 14, 14
   offset: 0, 0
   index: -1
 tree-plus
   rotate: false
-  xy: 771, 974
+  xy: 771, 980
   size: 14, 14
   orig: 14, 14
   offset: 0, 0
   index: -1
 white
   rotate: false
-  xy: 549, 912
+  xy: 771, 975
   size: 3, 3
   orig: 3, 3
   offset: 0, 0
   index: -1
 EspiaHungaroSmall
   rotate: false
-  xy: 515, 1012
+  xy: 515, 1018
   size: 506, 140
   orig: 506, 140
   offset: 0, 0
   index: -1
 EspiaHungaro_0
   rotate: false
-  xy: 1, 640
+  xy: 1, 646
   size: 512, 512
   orig: 512, 512
   offset: 0, 0
   index: -1
 EspiaHungaro_1
   rotate: false
-  xy: 1, 126
+  xy: 1, 132
   size: 512, 512
   orig: 512, 512
   offset: 0, 0
   index: -1
 PixelO10BottRegular
   rotate: false
-  xy: 1, 62
+  xy: 1, 68
   size: 506, 62
   orig: 506, 62
   offset: 0, 0
   index: -1
 activeSkill
   rotate: false
-  xy: 1, 28
+  xy: 1, 34
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
   index: -1
+button
+  rotate: false
+  xy: 1057, 1127
+  size: 9, 9
+  split: 1, 1, 1, 1
+  orig: 9, 9
+  offset: 0, 0
+  index: -1
+buttonDown
+  rotate: false
+  xy: 1, 1
+  size: 9, 9
+  split: 1, 1, 1, 1
+  orig: 9, 9
+  offset: 0, 0
+  index: -1
 health
   rotate: false
-  xy: 565, 928
+  xy: 787, 991
   size: 3, 3
   split: 1, 1, 1, 1
   pad: 0, 0, 0, 0
@@ -244,7 +260,7 @@ health
   index: -1
 health-bar
   rotate: false
-  xy: 35, 39
+  xy: 515, 882
   size: 5, 5
   split: 2, 2, 2, 2
   pad: 1, 1, 1, 1
@@ -253,14 +269,14 @@ health-bar
   index: -1
 skillField
   rotate: false
-  xy: 1023, 1120
+  xy: 1023, 1126
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
   index: -1
 skillFieldHover
   rotate: false
-  xy: 515, 899
+  xy: 515, 905
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
