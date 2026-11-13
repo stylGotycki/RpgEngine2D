@@ -3,11 +3,12 @@ package net.dp.rpg.engine.quest;
 import java.util.EnumMap;
 import java.util.Map;
 
+// How likely each kind of quest is; adaptation (E6) shifts these towards the player's style.
 public record QuestWeights(Map<GoalType, Double> weights) {
 
   public static final QuestWeights DEFAULTS = new QuestWeights(Map.of(
-      GoalType.KILL, 1.0, GoalType.COLLECT, 1.0, GoalType.REACH, 0.7,
-      GoalType.CHALLENGE, 0.8, GoalType.TALK, 0.9, GoalType.PUZZLE, 0.0));
+      GoalType.KILL, 1.0, GoalType.COLLECT, 0.0, GoalType.REACH, 0.7,
+      GoalType.CHALLENGE, 0.8, GoalType.TALK, 0.8, GoalType.PUZZLE, 1.0));
 
   public QuestWeights {
     weights = Map.copyOf(new EnumMap<>(weights));

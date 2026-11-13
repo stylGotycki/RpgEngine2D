@@ -15,6 +15,7 @@ import net.dp.rpg.engine.components.*;
 import net.dp.rpg.engine.Script;
 import net.dp.rpg.engine.content.ContentKind;
 import net.dp.rpg.engine.content.ContentSpot;
+import net.dp.rpg.engine.puzzle.PuzzleSpec;
 import net.dp.rpg.engine.quest.Quest;
 import net.dp.rpg.engine.quest.QuestGoal;
 import net.dp.rpg.engine.quest.QuestPlanner;
@@ -40,7 +41,10 @@ import net.dp.rpg.game.dialogue.NarratorDirector;
 import net.dp.rpg.game.enemy.EnemyRegistry;
 import net.dp.rpg.game.enemy.GameEnemies;
 import net.dp.rpg.game.events.GameMessageEvent;
+import net.dp.rpg.game.events.InteractEvent;
+import net.dp.rpg.game.events.HealthChangeEvent;
 import net.dp.rpg.game.item.GameItems;
+import net.dp.rpg.game.quest.QuestRewards;
 import net.dp.rpg.game.quest.QuestTexts;
 import net.dp.rpg.game.quest.QuestTracker;
 import net.dp.rpg.game.scripts.ItemPickupScript;
@@ -57,13 +61,17 @@ import net.dp.rpg.game.minimap.MinimapWidget;
 import net.dp.rpg.game.scripts.CameraScript;
 import net.dp.rpg.game.scripts.DoorScript;
 import net.dp.rpg.game.scripts.NpcScript;
+import net.dp.rpg.game.scripts.PuzzleScript;
+import net.dp.rpg.game.scripts.PlayerScript;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
 public class LevelBuilder
 {
+    /** System property with a seed to replay, e.g. {@code -Drpg.seed=42}. */
     public static final String SEED_PROPERTY = "rpg.seed";
 
     private final float playerMaxHealth = 100;
@@ -81,6 +89,7 @@ public class LevelBuilder
         this(seed, PlayerStats.rolled(RandomSource.derive(seed, "player-start")));
     }
 
+    /** The seed from {@link #SEED_PROPERTY}, or a random one. Logged, so a floor can be replayed. */
     public static LevelBuilder fromSystemProperty()
     {
         String value = System.getProperty(SEED_PROPERTY);
@@ -146,6 +155,32 @@ public class LevelBuilder
             }
         }
 
+        // Puzzles: floor sprites (underlay), drawn under the player and everything else.
+        List<PuzzleScript> puzzles = new ArrayList<>();
+        BodyDef puzzleBody = new BodyDef();
+        puzzleBody.type = BodyDef.BodyType.StaticBody;
+        for(TileRoom room : floor.getRooms())
+        {
+            for(PuzzleSpec spec : room.content().puzzles())
+            {
+                PuzzleScript puzzle = new PuzzleScript(spec, room, floor, atlas, solved -> puzzleReward(scene, atlas, solved));
+                // One entity per tile, built like an item pickup (the path every visible object
+                // takes): a static body at the tile's centre gives the transform the sprite
+                // follows. No fixture, so nothing collides with it. Rotation stays the script's.
+                for(Sprite sprite : puzzle.sprites())
+                {
+                    int tile = scene.createEntity();
+                    puzzleBody.position.set(sprite.getX() + sprite.getOriginX(), sprite.getY() + sprite.getOriginY());
+                    scene.createBodyComponent(tile, puzzleBody);
+                    scene.addComponent(tile, new SpriteComponent(sprite, true, true));
+                }
+                int entity = scene.createEntity();
+                scene.addComponent(entity, new ScriptComponent(puzzle));
+                Engine.eventBus.subscribe(puzzle, InteractEvent.class);
+                puzzles.add(puzzle);
+            }
+        }
+
         //create player entity
         DialogueController dialogues = new DialogueController();
         DialogueLibrary dialogueLibrary = GameDialogues.library();
@@ -153,6 +188,7 @@ public class LevelBuilder
         TileRoom start = floor.getStartRoom();
         int[] spawn = floor.walkableTileNear(start, RoomGeometry.CELL_WIDTH / 2, RoomGeometry.CELL_HEIGHT / 2);
         int player = playerCreator.create(worldX(start, spawn[0]), worldY(start, spawn[1]));
+        puzzles.forEach(puzzle -> puzzle.setPlayer(player));
 
         //camera
         float cameraHeight = 13;
@@ -217,12 +253,35 @@ public class LevelBuilder
             @Override
             public void reward(Quest quest)
             {
-                ItemDef item = questReward(quest, loot);
+                Random random = RandomSource.derive(seed, "reward:" + quest.id());
+                String text = switch(QuestRewards.roll(random))
+                {
+                    case POTION -> drop(loot.resolve(ContentTags.POTION, random, quest.depth()));
+                    case EQUIPMENT -> drop(questReward(quest, loot, random));
+                    case SKILL_POINT ->
+                    {
+                        if(scriptOf(scene, player) instanceof PlayerScript playerScript)
+                            playerScript.addSkillPoint();
+                        yield "darmowy punkt umiejętności (X)";
+                    }
+                    case HEAL ->
+                    {
+                        HealthComponent health = scene.getComponentStorage(HealthComponent.class).getByEntity(player);
+                        health.addHealth(health.maxHealth);
+                        Engine.eventBus.publish(HealthChangeEvent.class, e -> e.currentHealth = health.health);
+                        yield "pełne leczenie";
+                    }
+                };
+                Engine.eventBus.publish(GameMessageEvent.class, e -> e.text = "Nagroda: " + text);
+            }
+
+            private String drop(ItemDef item)
+            {
                 ItemPickupCreator creator = new ItemPickupCreator(scene, atlas);
                 Vector2 at = scene.getComponentStorage(TransformComponent.class).getByEntity(player).position;
                 creator.create(item, at.x, at.y, null);
                 creator.dispose();
-                Engine.eventBus.publish(GameMessageEvent.class, e -> e.text = "Nagroda: " + item.name());
+                return item.name();
             }
 
             @Override
@@ -274,7 +333,7 @@ public class LevelBuilder
                         {
                             String dialogueId = spot.tag().substring(ContentTags.TALKER_PREFIX.length());
                             NpcScript talker = new NpcScript(NpcScript.Role.TALK, TALKERS.getOrDefault(dialogueId, "Nieznajomy"), dialogueId, spot.questId());
-                            npcCreator.create(dialogueId.equals(QuestPlanner.RECIPIENT) ? "npc/villager" : "npc/sage", x, y, talker);
+                            npcCreator.create(dialogueId.equals("talk.q.sentinel") ? "npc/villager" : "npc/sage", x, y, talker);
                             quests.registerTalker(spot.questId(), talker);
                         }
                         else
@@ -314,6 +373,7 @@ public class LevelBuilder
         scene.setAmbientLight(new Color(0,0,0,0));
     }
 
+    // Until quests are generated (E5) the offer is a placeholder; the story is the giver's own.
     private NpcScript questGiver(ContentSpot spot, DialogueLibrary library)
     {
         List<Dialogue> stories = library.withPrefix("giver.story.");
@@ -324,12 +384,11 @@ public class LevelBuilder
 
     private static final Map<String, String> TALKERS = Map.of(
             "talk.q.sentinel", "Strażnik",
-            "talk.q.riddle", "Zagadkowy mędrzec",
-            QuestPlanner.RECIPIENT, "Kupiec Albin");
+            "talk.q.riddle", "Zagadkowy mędrzec");
 
-    private ItemDef questReward(Quest quest, LootTable loot)
+    // A reward the player can use now: an item whose requirements they meet.
+    private ItemDef questReward(Quest quest, LootTable loot, Random random)
     {
-        Random random = RandomSource.derive(seed, "reward:" + quest.id());
         for(int attempt = 0; attempt < 12; attempt++)
         {
             ItemDef item = loot.resolve(quest.rewardTag(), random, quest.depth());
@@ -339,12 +398,26 @@ public class LevelBuilder
         return loot.resolve(ContentTags.POTION, random, quest.depth());
     }
 
+    // A puzzle room's own puzzle pays out on the spot; a quest's puzzle pays through the quest.
+    private void puzzleReward(Scene scene, TextureAtlas atlas, PuzzleScript puzzle)
+    {
+        if(puzzle.spec().questId() != null)
+            return;
+        PuzzleSpec spec = puzzle.spec();
+        Random random = RandomSource.derive(seed, "puzzle-reward:" + puzzle.room().id());
+        ItemDef item = GameItems.loot().resolve(ContentTags.LOOT, random, 0.5);
+        ItemPickupCreator creator = new ItemPickupCreator(scene, atlas);
+        creator.create(item, worldX(puzzle.room(), spec.x() + spec.width() / 2), worldY(puzzle.room(), spec.y() + spec.height() / 2), null);
+        creator.dispose();
+    }
+
     private static Script scriptOf(Scene scene, int entity)
     {
         ScriptComponent component = scene.getComponentStorage(ScriptComponent.class).getByEntity(entity);
         return component == null ? null : component.script;
     }
 
+    /** World x of the centre of local tile x of the room. */
     private static float worldX(TileRoom room, int tileX)
     {
         return room.origin().x() * RoomGeometry.CELL_WIDTH + tileX + 0.5f;

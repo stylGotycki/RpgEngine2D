@@ -284,8 +284,21 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
                 pickUp(itemReached);
             else if(npcReached != null)
                 npcReached.talk(dialogues, GameDialogues.library());
-            else if(doorReached != null && !doorReached.open())
-                Gdx.app.log("Door", "Locked. K unlocks it (debug, until keys exist).");
+            else if(doorReached != null)
+            {
+                if(!doorReached.open())
+                    Gdx.app.log("Door", "Locked. K unlocks it (debug, until keys exist).");
+            }
+            else
+            {
+                // Nothing to pick up or talk to: whatever stands here (a circuit piece) may react.
+                Vector2 at = getComponent(TransformComponent.class).position;
+                Engine.eventBus.publish(InteractEvent.class, e ->
+                {
+                    e.x = at.x;
+                    e.y = at.y;
+                });
+            }
         }
         else if(keycode == Input.Keys.NUM_1 || keycode == Input.Keys.NUM_2 || keycode == Input.Keys.NUM_3)
         {

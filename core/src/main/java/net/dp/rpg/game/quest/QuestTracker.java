@@ -22,6 +22,7 @@ import net.dp.rpg.game.events.GameMessageEvent;
 import net.dp.rpg.game.events.ItemPickedEvent;
 import net.dp.rpg.game.events.NpcActionEvent;
 import net.dp.rpg.game.events.PlayerDamagedEvent;
+import net.dp.rpg.game.events.PuzzleSolvedEvent;
 import net.dp.rpg.game.events.QuestEvent;
 import net.dp.rpg.game.scripts.ItemPickupScript;
 import net.dp.rpg.game.scripts.NpcScript;
@@ -30,7 +31,7 @@ public class QuestTracker implements GameEventListener {
 
   public static final List<Class<? extends GameEvent>> EVENTS = List.of(EnterRoomEvent.class,
       EnemyKilledEvent.class, ItemPickedEvent.class, PlayerDamagedEvent.class,
-      NpcActionEvent.class);
+      NpcActionEvent.class, PuzzleSolvedEvent.class);
 
   public enum Status {
     OFFERED,
@@ -63,6 +64,8 @@ public class QuestTracker implements GameEventListener {
     private NpcScript talker;
 
     private boolean damaged;
+
+    private boolean puzzleSolved;
 
     private int challengeLeft;
 
@@ -161,6 +164,13 @@ public class QuestTracker implements GameEventListener {
           state.damaged = true;
         }
       }
+    } else if (event instanceof PuzzleSolvedEvent puzzle && puzzle.questId != null) {
+      State state = states.get(puzzle.questId);
+
+      if (state != null) {
+        state.puzzleSolved = true;
+        evaluate(state);
+      }
     } else if (event instanceof NpcActionEvent action && action.questId != null) {
       State state = states.get(action.questId);
 
@@ -223,6 +233,7 @@ public class QuestTracker implements GameEventListener {
         if (state.status == Status.OFFERED) {
           state.status = Status.ACTIVE;
           state.pickups.forEach(ItemPickupScript::unlock);
+          refreshTalker(state);
           publish(state, QuestEvent.Kind.ACCEPTED, null);
           evaluate(state);
         }
@@ -255,7 +266,8 @@ public class QuestTracker implements GameEventListener {
         case KILL, COLLECT -> state.progress.getOrDefault(goal.id(), 0) >= goal.count();
         case REACH -> visited.containsAll(goal.rooms());
         case TALK -> state.talker != null && state.talker.isTalkDone();
-        case CHALLENGE, PUZZLE -> false;
+        case PUZZLE -> state.puzzleSolved;
+        case CHALLENGE -> false;
       };
 
       if (complete) {

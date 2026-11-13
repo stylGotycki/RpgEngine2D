@@ -10,6 +10,7 @@ import net.dp.rpg.engine.AbstractGame;
 import net.dp.rpg.engine.Engine;
 import net.dp.rpg.engine.Scene;
 import net.dp.rpg.game.events.*;
+import net.dp.rpg.game.debug.AtlasCheck;
 import net.dp.rpg.game.level.gui.GameFonts;
 import net.dp.rpg.game.menu.MenuBuilder;
 import net.dp.rpg.game.scripts.GlobalScript;
@@ -44,10 +45,13 @@ public class Game extends AbstractGame
         Engine.poolManager.addPool(DialogueEndedEvent.class, DialogueEndedEvent::new);
         Engine.poolManager.addPool(NpcActionEvent.class, NpcActionEvent::new);
         Engine.poolManager.addPool(QuestEvent.class, QuestEvent::new);
+        Engine.poolManager.addPool(InteractEvent.class, InteractEvent::new);
+        Engine.poolManager.addPool(PuzzleSolvedEvent.class, PuzzleSolvedEvent::new);
 
         getEngine().getAssetManager().finishLoading();
 
         getEngine().setTextureFilters(Texture.TextureFilter.Linear, Texture.TextureFilter.Nearest);
+        AtlasCheck.report(atlasFile);
         GameFonts.register(getEngine().getAssetManager().get("skins/default/default.json", Skin.class),
                 getEngine().getAssetManager().get(GameFonts.FONT, BitmapFont.class));
 

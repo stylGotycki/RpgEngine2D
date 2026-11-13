@@ -19,14 +19,6 @@
       "right": { "speaker": "{name}", "text": "Brawo! Dawno nikt nie zgadł." },
       "wrong": { "speaker": "{name}", "text": "Pudło. Pomyśl jeszcze.", "next": "riddle" }
     } },
-    { "id": "talk.q.recipient", "start": "ask", "nodes": {
-      "ask": { "speaker": "{name}", "text": "Ktoś mówił, że niesiesz dla mnie list?", "choices": [
-        { "text": "Tak, proszę. To dla ciebie.", "action": "talk-correct", "next": "thanks" },
-        { "text": "Nie wiem, o czym mówisz.", "action": "talk-wrong", "next": "sigh" }
-      ] },
-      "thanks": { "speaker": "{name}", "text": "Wreszcie! Przekaż, że dotarł cały." },
-      "sigh": { "speaker": "{name}", "text": "Szkoda. Czekam na niego od miesięcy.", "next": "ask" }
-    } },
     { "id": "talk.locked", "start": "a", "nodes": {
       "a": { "speaker": "{name}", "text": "{locked}" }
     } },

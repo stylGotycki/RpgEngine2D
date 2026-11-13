@@ -10,13 +10,18 @@ import net.dp.rpg.engine.content.ContentTags;
 import net.dp.rpg.engine.content.FloorContent;
 import net.dp.rpg.engine.floor.FloorLayout;
 import net.dp.rpg.engine.floor.graph.RoomNode;
+import net.dp.rpg.engine.puzzle.PuzzleKind;
 
+// What the quests of a floor need in each room, and the goal counts once it has been placed.
 public final class QuestContent {
 
   public record ItemRequest(String questId, String itemId) {
   }
 
   public record TalkerRequest(String questId, String dialogueId) {
+  }
+
+  public record PuzzleRequest(String questId, PuzzleKind kind) {
   }
 
   private QuestContent() {
@@ -71,6 +76,20 @@ public final class QuestContent {
     return talkers;
   }
 
+  public static List<PuzzleRequest> puzzles(List<Quest> quests, int room) {
+    List<PuzzleRequest> puzzles = new ArrayList<>();
+
+    for (Quest quest : quests) {
+      for (QuestGoal goal : quest.goals()) {
+        if (goal.type() == GoalType.PUZZLE && goal.rooms().contains(room)) {
+          puzzles.add(new PuzzleRequest(quest.id(), PuzzleKind.valueOf(goal.target())));
+        }
+      }
+    }
+
+    return puzzles;
+  }
+
   // The count over the goal's rooms in order, the first rooms taking the remainder.
   private static int share(QuestGoal goal, int room) {
     int position = goal.rooms().indexOf(room);
@@ -114,12 +133,30 @@ public final class QuestContent {
 
         boolean counted = goal.type() == GoalType.KILL || goal.type() == GoalType.CHALLENGE
             || goal.type() == GoalType.COLLECT;
-        goals.add(counted ? goal.withCount(Math.max(1, placed)) : goal);
+
+        if (goal.type() == GoalType.PUZZLE) {
+          goals.add(placedPuzzle(quest, goal, layout, content));
+        } else {
+          goals.add(counted ? goal.withCount(Math.max(1, placed)) : goal);
+        }
       }
 
       result.add(quest.withGoals(goals));
     }
 
     return result;
+  }
+
+  // A tight room may hold another kind of puzzle than the planner chose.
+  private static QuestGoal placedPuzzle(Quest quest, QuestGoal goal, FloorLayout layout,
+      FloorContent content) {
+    RoomNode room = layout.graph().rooms().get(goal.rooms().get(0));
+
+    return content.of(room).puzzles().stream()
+        .filter(puzzle -> quest.id().equals(puzzle.questId()))
+        .findFirst()
+        .map(puzzle -> new QuestGoal(goal.id(), goal.type(), puzzle.kind().name(), 1,
+            goal.rooms(), goal.requires()))
+        .orElse(goal);
   }
 }

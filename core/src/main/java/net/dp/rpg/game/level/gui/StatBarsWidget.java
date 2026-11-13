@@ -28,8 +28,8 @@ public class StatBarsWidget extends Table {
 
   private static final Map<Stat, Color> COLOURS = Map.of(
       Stat.STRENGTH, new Color(0.85f, 0.27f, 0.22f, 1f),
-      Stat.AGILITY, new Color(0.27f, 0.52f, 0.95f, 1f),
-      Stat.WISDOM, new Color(0.32f, 0.78f, 0.36f, 1f),
+      Stat.AGILITY, new Color(0.32f, 0.78f, 0.36f, 1f),
+      Stat.WISDOM, new Color(0.27f, 0.52f, 0.95f, 1f),
       Stat.DEFENSE, new Color(0.72f, 0.72f, 0.76f, 1f));
 
   private final PlayerStats stats;

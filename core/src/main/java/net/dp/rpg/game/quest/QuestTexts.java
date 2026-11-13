@@ -3,7 +3,6 @@ package net.dp.rpg.game.quest;
 import net.dp.rpg.engine.quest.GoalType;
 import net.dp.rpg.engine.quest.Quest;
 import net.dp.rpg.engine.quest.QuestGoal;
-import net.dp.rpg.engine.quest.QuestPlanner;
 import net.dp.rpg.game.enemy.EnemyRegistry;
 import net.dp.rpg.game.item.ItemRegistry;
 
@@ -25,8 +24,7 @@ public class QuestTexts {
           : "Znajdź: " + items.get(goal.target()).name() + " x" + goal.count();
       case REACH -> "Dotrzyj do najdalszej komnaty";
       case CHALLENGE -> "Oczyść komnatę bez otrzymania obrażeń";
-      case TALK -> QuestPlanner.RECIPIENT.equals(goal.target()) ? "Oddaj list adresatowi"
-          : "Porozmawiaj z nieznajomym";
+      case TALK -> "Porozmawiaj z nieznajomym i odpowiedz mu właściwie";
       case PUZZLE -> "Rozwiąż zagadkę komnaty";
     };
   }
@@ -51,10 +49,9 @@ public class QuestTexts {
       case REACH -> "Nikt nie wie, co jest w najdalszej komnacie. Sprawdzisz to dla mnie?";
       case CHALLENGE ->
           "Pokaż, co potrafisz: oczyść komnatę dalej i nie daj się nawet drasnąć.";
-      case TALK -> quest.goals().size() > 1
-          ? "Gdzieś tu leży mój list. Znajdź go i oddaj adresatowi, czeka dalej."
-          : "Obok stoi ktoś dziwny. Porozmawiaj z nim, może się czegoś dowiesz.";
-      case PUZZLE -> "W komnacie obok jest zagadka. Rozwiąż ją.";
+      case TALK ->
+          "Dalej stoi ktoś dziwny i zadaje pytania. Odpowiedz mu, może się czegoś dowiesz.";
+      case PUZZLE -> "Dalej jest stara zagadka, której nikt nie rozwiązał. Spróbujesz?";
     };
 
     return ask + " Pomożesz?";

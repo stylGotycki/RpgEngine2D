@@ -90,6 +90,10 @@ public class NpcScript extends EntityScript {
     refreshMarker();
   }
 
+  public boolean isLocked() {
+    return locked != null;
+  }
+
   public boolean isTalkDone() {
     return talkDone;
   }

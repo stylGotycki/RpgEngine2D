@@ -17,6 +17,8 @@ import net.dp.rpg.engine.floor.graph.RoomNode;
 import net.dp.rpg.engine.floor.type.RoomType;
 import net.dp.rpg.engine.interior.GeneratedRoom;
 import net.dp.rpg.engine.interior.pass.RoomReachability;
+import net.dp.rpg.engine.puzzle.PuzzleKind;
+import net.dp.rpg.engine.puzzle.PuzzleSpec;
 import net.dp.rpg.engine.quest.Quest;
 import net.dp.rpg.engine.quest.QuestContent;
 import net.dp.rpg.engine.tile.TileGrid;
@@ -81,6 +83,20 @@ public final class ContentGenerator {
     QuestBundle quest = layout.questOf(room);
     boolean questGiver = quest != null && quest.entrance() == room;
 
+    List<PuzzleSpec> puzzles = new ArrayList<>();
+    Random puzzleRandom = RandomSource.derive(layout.seed(), "puzzle:" + room.index());
+
+    // A quest's puzzle in a puzzle room is that room's puzzle; one board per room.
+    List<QuestContent.PuzzleRequest> questPuzzles = QuestContent.puzzles(quests, room.index());
+    PuzzleKind ownKind = PuzzleKind.values()[puzzleRandom.nextInt(PuzzleKind.values().length)];
+
+    for (QuestContent.PuzzleRequest request : questPuzzles) {
+      placePuzzle(tiles, request.kind(), request.questId(), puzzleRandom, puzzles);
+    }
+    if (room.type() == RoomType.PUZZLE && questPuzzles.isEmpty()) {
+      placePuzzle(tiles, ownKind, null, puzzleRandom, puzzles);
+    }
+
     if (questGiver) {
       placeQuestGiver(tiles, entryDoors(layout, room, generated), quest.id(), random, spots);
     }
@@ -102,7 +118,32 @@ public final class ContentGenerator {
           QuestContent.enemies(quests, room.index()));
     }
 
-    return new RoomContent(spots);
+    return new RoomContent(spots, puzzles);
+  }
+
+  // Plain floor near the middle of the room, two tiles from every door; its tiles and a margin
+  // of one are kept free of anything else.
+  // The wanted kind first, then the others from the smallest, for rooms too tight for it.
+  private void placePuzzle(Tiles tiles, PuzzleKind kind, String questId, Random random,
+      List<PuzzleSpec> puzzles) {
+    long seed = random.nextLong();
+    List<PuzzleKind> kinds = new ArrayList<>(List.of(kind));
+
+    java.util.Arrays.stream(PuzzleKind.values())
+        .filter(other -> other != kind)
+        .sorted(Comparator.comparingInt(other -> other.width() * other.height()))
+        .forEach(kinds::add);
+
+    for (PuzzleKind candidate : kinds) {
+      int[] corner = tiles.area(candidate.width(), candidate.height());
+
+      if (corner != null) {
+        puzzles.add(new PuzzleSpec(candidate, corner[0], corner[1], seed, questId));
+        tiles.block(corner[0] - 1, corner[1] - 1, candidate.width() + 2,
+            candidate.height() + 2);
+        return;
+      }
+    }
   }
 
   private void placeQuestGiver(Tiles tiles, List<int[]> entries, String questId, Random random,
@@ -310,6 +351,8 @@ public final class ContentGenerator {
 
     private final List<int[]> floor = new ArrayList<>();
 
+    private final java.util.Set<Integer> blocked = new java.util.HashSet<>();
+
     Tiles(GeneratedRoom generated) {
       this.map = generated.map();
 
@@ -333,7 +376,7 @@ public final class ContentGenerator {
       List<int[]> pool = new ArrayList<>();
 
       for (int[] tile : floor) {
-        if (doorDistance(tile) >= clearance) {
+        if (doorDistance(tile) >= clearance && !blocked.contains(key(tile[0], tile[1]))) {
           pool.add(tile);
         }
       }
@@ -345,7 +388,56 @@ public final class ContentGenerator {
 
     boolean isFloor(int[] tile) {
       return tile[0] >= 0 && tile[1] >= 0 && tile[0] < map.width() && tile[1] < map.height()
-          && isPlainFloor(tile[0], tile[1]) && doorDistance(tile) > 0;
+          && isPlainFloor(tile[0], tile[1]) && doorDistance(tile) > 0
+          && !blocked.contains(key(tile[0], tile[1]));
+    }
+
+    private int key(int x, int y) {
+      return y * map.width() + x;
+    }
+
+    void block(int x, int y, int width, int height) {
+      for (int dy = 0; dy < height; dy++) {
+        for (int dx = 0; dx < width; dx++) {
+          blocked.add(key(x + dx, y + dy));
+        }
+      }
+    }
+
+    // The bottom-left corner of the free width x height rectangle closest to the middle of the
+    // room's floor, or null when none fits.
+    int[] area(int width, int height) {
+      double centerX = floor.stream().mapToInt(tile -> tile[0]).average().orElse(0);
+      double centerY = floor.stream().mapToInt(tile -> tile[1]).average().orElse(0);
+      int[] best = null;
+      double bestDistance = Double.MAX_VALUE;
+
+      for (int y = 0; y + height <= map.height(); y++) {
+        for (int x = 0; x + width <= map.width(); x++) {
+          double distance = Math.hypot(x + width / 2.0 - centerX, y + height / 2.0 - centerY);
+
+          if (distance < bestDistance && fits(x, y, width, height)) {
+            best = new int[] {x, y};
+            bestDistance = distance;
+          }
+        }
+      }
+
+      return best;
+    }
+
+    private boolean fits(int x, int y, int width, int height) {
+      for (int dy = 0; dy < height; dy++) {
+        for (int dx = 0; dx < width; dx++) {
+          int[] tile = {x + dx, y + dy};
+
+          if (!isFloor(tile) || doorDistance(tile) < 2) {
+            return false;
+          }
+        }
+      }
+
+      return true;
     }
 
     int doorDistance(int[] tile) {

@@ -23,7 +23,8 @@ public class MessageLabel extends Label implements GameEventListener {
   public void onEvent(GameEvent event) {
     if (event instanceof GameMessageEvent message) {
       setText(message.text);
-      remaining = SHOWN;
+      // Long hints stay longer: about 20 characters a second on top of the base time.
+      remaining = SHOWN + message.text.length() * 0.05f;
     }
   }
 

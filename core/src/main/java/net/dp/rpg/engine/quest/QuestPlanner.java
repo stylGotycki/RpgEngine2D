@@ -9,16 +9,13 @@ import net.dp.rpg.engine.floor.FloorLayout;
 import net.dp.rpg.engine.floor.QuestBundle;
 import net.dp.rpg.engine.floor.RandomSource;
 import net.dp.rpg.engine.floor.graph.RoomNode;
+import net.dp.rpg.engine.puzzle.PuzzleKind;
 
 public final class QuestPlanner {
 
-  public static final String LETTER = "quest_letter";
-
   public static final List<String> COLLECTIBLES = List.of("quest_relic", "quest_ore", "quest_herb");
 
-  public static final String RECIPIENT = "talk.q.recipient";
-
-  public static final List<String> RIDDLES = List.of("talk.q.sentinel", "talk.q.riddle");
+  public static final List<String> TALKS = List.of("talk.q.sentinel", "talk.q.riddle");
 
   private final QuestWeights weights;
 
@@ -68,15 +65,12 @@ public final class QuestPlanner {
           List.of(others.get(0).index()), List.of()));
       case CHALLENGE -> List.of(new QuestGoal("g1", GoalType.CHALLENGE, enemy, 3,
           List.of(others.get(random.nextInt(others.size())).index()), List.of()));
-      case TALK -> others.isEmpty()
-          ? List.of(new QuestGoal("g1", GoalType.TALK, RIDDLES.get(random.nextInt(RIDDLES.size())),
-              1, List.of(entrance.index()), List.of()))
-          : List.of(
-              new QuestGoal("g1", GoalType.COLLECT, LETTER, 1,
-                  List.of(others.get(others.size() - 1).index()), List.of()),
-              new QuestGoal("g2", GoalType.TALK, RECIPIENT, 1, List.of(others.get(0).index()),
-                  List.of("g1")));
-      case PUZZLE -> throw new IllegalStateException("PUZZLE quests come with E5b");
+      case TALK -> List.of(new QuestGoal("g1", GoalType.TALK,
+          TALKS.get(random.nextInt(TALKS.size())), 1,
+          List.of((others.isEmpty() ? entrance : others.get(0)).index()), List.of()));
+      case PUZZLE -> List.of(new QuestGoal("g1", GoalType.PUZZLE,
+          PuzzleKind.values()[random.nextInt(PuzzleKind.values().length)].name(), 1,
+          List.of((others.isEmpty() ? entrance : others.get(0)).index()), List.of()));
     };
 
     return new Quest(bundle.id(), type.name(), entrance.index(), goals, ContentTags.EQUIPMENT,
@@ -90,7 +84,7 @@ public final class QuestPlanner {
       boolean needsRooms = type == GoalType.KILL || type == GoalType.REACH
           || type == GoalType.CHALLENGE;
 
-      if (type != GoalType.PUZZLE && weights.of(type) > 0 && (hasOtherRooms || !needsRooms)) {
+      if (weights.of(type) > 0 && (hasOtherRooms || !needsRooms)) {
         feasible.add(type);
       }
     }

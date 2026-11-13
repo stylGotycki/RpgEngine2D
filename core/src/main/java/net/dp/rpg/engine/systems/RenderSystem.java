@@ -60,6 +60,14 @@ public class RenderSystem implements Disposable
         batch.setTransformMatrix(transformMatrix);
         batch.setProjectionMatrix(projMatrix);
         batch.begin();
+        ComponentStorage<SpriteComponent> spriteStorage = scene.getComponentStorage(SpriteComponent.class);
+        for(int i = 0; i < spriteStorage.size(); i++)
+        {
+            SpriteComponent underlay = spriteStorage.getByIndex(i);
+            if(underlay.underlay)
+                underlay.sprite.draw(batch);
+        }
+
         ComponentStorage<MultiSpriteComponent> multiSpriteStorage = scene.getComponentStorage(MultiSpriteComponent.class);
 
         int size = multiSpriteStorage.size();
@@ -71,11 +79,12 @@ public class RenderSystem implements Disposable
                 sprite.draw(batch);
         }
 
-        ComponentStorage<SpriteComponent> spriteStorage = scene.getComponentStorage(SpriteComponent.class);
         size = spriteStorage.size();
         for(int i = 0; i < size; i++)
         {
-            spriteStorage.getByIndex(i).sprite.draw(batch);
+            SpriteComponent spriteComponent = spriteStorage.getByIndex(i);
+            if(!spriteComponent.underlay)
+                spriteComponent.sprite.draw(batch);
         }
 
         batch.end();
