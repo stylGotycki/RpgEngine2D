@@ -22,6 +22,8 @@ public final class EnemyRegistry {
       EnemyDef enemy = new EnemyDef(
           entry.getString("id"),
           entry.getString("name", entry.getString("id")),
+          entry.getString("few", entry.getString("id")),
+          entry.getString("many", entry.getString("id")),
           entry.getFloat("health"),
           entry.getFloat("damage"),
           entry.getFloat("acceleration"),

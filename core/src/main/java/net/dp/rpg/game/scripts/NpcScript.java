@@ -3,10 +3,12 @@ package net.dp.rpg.game.scripts;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import java.util.HashMap;
 import java.util.Map;
+import net.dp.rpg.engine.Engine;
 import net.dp.rpg.engine.EntityScript;
 import net.dp.rpg.engine.dialogue.Dialogue;
 import net.dp.rpg.engine.dialogue.DialogueLibrary;
 import net.dp.rpg.game.dialogue.DialogueController;
+import net.dp.rpg.game.events.NpcActionEvent;
 
 public class NpcScript extends EntityScript {
 
@@ -15,6 +17,8 @@ public class NpcScript extends EntityScript {
   public static final String DECLINE = "quest-decline";
 
   public static final String REWARD = "quest-reward";
+
+  public static final String TALK_CORRECT = "talk-correct";
 
   public enum Role {
     QUEST_GIVER,
@@ -39,6 +43,10 @@ public class NpcScript extends EntityScript {
   private State state = State.OFFERING;
 
   private Sprite marker;
+
+  private String locked;
+
+  private boolean talkDone;
 
   public NpcScript(Role role, String name, String dialogueId, String questId) {
     this.role = role;
@@ -72,8 +80,24 @@ public class NpcScript extends EntityScript {
     refreshMarker();
   }
 
+  public void lock(String line) {
+    locked = line;
+    refreshMarker();
+  }
+
+  public void unlock() {
+    locked = null;
+    refreshMarker();
+  }
+
+  public boolean isTalkDone() {
+    return talkDone;
+  }
+
+  // The tracker only completes quests that were taken, so OFFERING here just means the accept
+  // reached the tracker before this NPC (it does not in the game, it can in tests).
   public void complete() {
-    if (state == State.ACCEPTED) {
+    if (state == State.ACCEPTED || state == State.OFFERING) {
       state = State.COMPLETED;
       refreshMarker();
     }
@@ -82,7 +106,7 @@ public class NpcScript extends EntityScript {
   // Declining changes nothing, so the next talk tells the story and asks again.
   public void talk(DialogueController dialogues, DialogueLibrary library) {
     String id = switch (role) {
-      case TALK -> dialogueId;
+      case TALK -> locked != null ? "talk.locked" : talkDone ? "talk.done" : dialogueId;
       case QUEST_GIVER -> switch (state) {
         case OFFERING -> dialogueId;
         case ACCEPTED -> "giver.waiting";
@@ -92,23 +116,34 @@ public class NpcScript extends EntityScript {
     };
     Dialogue dialogue = library.get(id);
 
+    variables.put("locked", locked == null ? "" : locked);
     dialogues.open(dialogue, variables, this::onAction);
   }
 
+  // The NPC changes first, then tells everyone: a listener may react by completing the quest.
   private void onAction(String action) {
-    if (ACCEPT.equals(action) && state == State.OFFERING) {
+    if (TALK_CORRECT.equals(action)) {
+      talkDone = true;
+    } else if (ACCEPT.equals(action) && state == State.OFFERING) {
       state = State.ACCEPTED;
     } else if (REWARD.equals(action) && state == State.COMPLETED) {
       state = State.REWARDED;
     }
     refreshMarker();
+
+    Engine.eventBus.publish(NpcActionEvent.class, e -> {
+      e.questId = questId;
+      e.action = action;
+      e.npcName = name();
+    });
   }
 
   // "!" while the player has something to do here: take the quest or collect the reward.
   private void refreshMarker() {
     if (marker != null) {
       boolean shown = role == Role.QUEST_GIVER
-          && (state == State.OFFERING || state == State.COMPLETED);
+          ? state == State.OFFERING || state == State.COMPLETED
+          : questId != null && locked == null && !talkDone;
       marker.setAlpha(shown ? 1f : 0f);
     }
   }

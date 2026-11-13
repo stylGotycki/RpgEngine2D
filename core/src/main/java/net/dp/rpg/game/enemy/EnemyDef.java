@@ -3,6 +3,8 @@ package net.dp.rpg.game.enemy;
 public record EnemyDef(
     String id,
     String name,
+    String few,
+    String many,
     float health,
     float damage,
     float acceleration,
@@ -11,6 +13,10 @@ public record EnemyDef(
     float frameTime,
     float spriteScale,
     boolean boss) {
+
+  public String countOf(int count) {
+    return count + " " + PolishPlural.choose(count, name.toLowerCase(), few, many);
+  }
 
   public EnemyDef {
     if (id == null || id.isBlank()) {

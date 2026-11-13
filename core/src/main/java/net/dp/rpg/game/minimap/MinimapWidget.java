@@ -7,6 +7,8 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import java.util.EnumMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.function.Supplier;
 import net.dp.rpg.engine.floor.FloorLayout;
 import net.dp.rpg.engine.floor.GridBounds;
 import net.dp.rpg.engine.floor.graph.RoomLink;
@@ -19,6 +21,15 @@ import net.dp.rpg.engine.tile.room.RoomCell;
 import net.dp.rpg.engine.tile.room.RoomGeometry;
 import net.dp.rpg.game.events.EnterRoomEvent;
 
+/**
+ * The minimap in the corner of the screen: the whole floor scaled into a fixed box, with only the
+ * rooms {@link MinimapModel} reveals. Visited rooms are light grey, rooms seen through a door dark
+ * grey, the player's room has a green frame and special rooms keep their icon in both states.
+ *
+ * <p>Drawn with one white atlas region tinted per rectangle, so it needs no ShapeRenderer and goes
+ * into the stage's batch with the rest of the GUI. Stage and floor are both y-up, so a floor cell
+ * maps to the widget without a flip.
+ */
 public class MinimapWidget extends Actor implements GameEventListener {
 
   private static final Color BACKGROUND = new Color(0f, 0f, 0f, 0.55f);
@@ -29,6 +40,7 @@ public class MinimapWidget extends Actor implements GameEventListener {
 
   private static final Color CURRENT = new Color(0.30f, 0.85f, 0.35f, 1f);
 
+  /** Gap between rooms, in pixels on each side of a room wall. */
   private static final int GAP = 1;
 
   private static final int PADDING = 6;
@@ -49,10 +61,19 @@ public class MinimapWidget extends Actor implements GameEventListener {
 
   private final Color tint = new Color();
 
+  private final TextureRegion questIcon;
+
+  private Supplier<Set<Integer>> questRooms = Set::of;
+
+  /**
+   * @param maxWidth widest the map may get on screen, in pixels
+   * @param maxHeight highest the map may get on screen, in pixels
+   */
   public MinimapWidget(FloorLayout layout, TextureAtlas atlas, int maxWidth, int maxHeight) {
     this.model = new MinimapModel(layout);
     this.pixel = atlas.findRegion(MinimapIcons.PIXEL);
     this.extent = layout.extent();
+    this.questIcon = atlas.findRegion(MinimapIcons.QUEST);
 
     if (pixel == null) {
       throw new IllegalStateException(MinimapIcons.PIXEL + " is missing from the atlas; repack "
@@ -67,6 +88,7 @@ public class MinimapWidget extends Actor implements GameEventListener {
       }
     });
 
+    // Cells keep the 19:13 shape of a room cell; the floor is scaled to fit the box.
     float scale = Math.min(
         (maxWidth - 2f * PADDING) / (extent.width() * RoomGeometry.CELL_WIDTH),
         (maxHeight - 2f * PADDING) / (extent.height() * RoomGeometry.CELL_HEIGHT));
@@ -74,6 +96,10 @@ public class MinimapWidget extends Actor implements GameEventListener {
     cellHeight = Math.max(6, Math.round(scale * RoomGeometry.CELL_HEIGHT));
 
     setSize(extent.width() * cellWidth + 2 * PADDING, extent.height() * cellHeight + 2 * PADDING);
+  }
+
+  public void setQuestRooms(Supplier<Set<Integer>> rooms) {
+    this.questRooms = rooms;
   }
 
   public MinimapModel model() {
@@ -104,8 +130,12 @@ public class MinimapWidget extends Actor implements GameEventListener {
 
     drawFrame(batch, parentAlpha, model.current());
 
+    Set<Integer> marked = questRooms.get();
     for (RoomNode room : model.revealedRooms()) {
       drawIcon(batch, parentAlpha, room);
+      if (marked.contains(room.index())) {
+        drawQuestMark(batch, parentAlpha, room);
+      }
     }
 
     batch.setColor(previous);
@@ -125,6 +155,7 @@ public class MinimapWidget extends Actor implements GameEventListener {
     }
   }
 
+  /** Green frame along the outer walls of the room, 2 px inside the gap. */
   private void drawFrame(Batch batch, float alpha, RoomNode room) {
     float thickness = 2;
 
@@ -147,6 +178,7 @@ public class MinimapWidget extends Actor implements GameEventListener {
     }
   }
 
+  /** A short bar across the gap between two rooms, in the middle of the cell side. */
   private void drawDoor(Batch batch, float alpha, RoomLink door) {
     RoomCell cell = door.edge().cell();
     Direction side = door.edge().direction();
@@ -186,6 +218,21 @@ public class MinimapWidget extends Actor implements GameEventListener {
     batch.draw(icon, Math.round(x), Math.round(y), size, size);
   }
 
+  /** The room cell closest to the middle of its cells, so an L-shaped room has its icon inside. */
+  // In the top right corner of the icon's cell, so it does not hide the room's own icon.
+  private void drawQuestMark(Batch batch, float alpha, RoomNode room) {
+    if (questIcon == null) {
+      return;
+    }
+
+    RoomCell cell = iconCell(room);
+    int size = ICON_SIZE * Math.max(1, Math.min(cellWidth, cellHeight) / 2 / ICON_SIZE);
+
+    batch.setColor(1f, 1f, 1f, alpha);
+    batch.draw(questIcon, cellX(cell) + cellWidth - size - GAP - 1,
+        cellY(cell) + cellHeight - size - GAP - 1, size, size);
+  }
+
   static RoomCell iconCell(RoomNode room) {
     double centerX = room.cells().stream().mapToInt(RoomCell::x).average().orElse(0);
     double centerY = room.cells().stream().mapToInt(RoomCell::y).average().orElse(0);
@@ -205,6 +252,7 @@ public class MinimapWidget extends Actor implements GameEventListener {
     return best;
   }
 
+  /** Bottom row first, then left to right: the same cell every frame for ties. */
   private static int compare(RoomCell first, RoomCell second) {
     return first.y() != second.y() ? Integer.compare(first.y(), second.y())
         : Integer.compare(first.x(), second.x());

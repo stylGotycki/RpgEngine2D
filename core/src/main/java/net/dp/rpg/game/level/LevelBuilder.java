@@ -12,7 +12,13 @@ import net.dp.rpg.engine.Engine;
 import net.dp.rpg.engine.EngineServices;
 import net.dp.rpg.engine.Scene;
 import net.dp.rpg.engine.components.*;
+import net.dp.rpg.engine.Script;
+import net.dp.rpg.engine.content.ContentKind;
 import net.dp.rpg.engine.content.ContentSpot;
+import net.dp.rpg.engine.quest.Quest;
+import net.dp.rpg.engine.quest.QuestGoal;
+import net.dp.rpg.engine.quest.QuestPlanner;
+import net.dp.rpg.engine.systems.gameEvent.GameEvent;
 import net.dp.rpg.engine.content.ContentTags;
 import net.dp.rpg.engine.dialogue.Dialogue;
 import net.dp.rpg.engine.dialogue.DialogueLibrary;
@@ -33,7 +39,11 @@ import net.dp.rpg.game.dialogue.GameDialogues;
 import net.dp.rpg.game.dialogue.NarratorDirector;
 import net.dp.rpg.game.enemy.EnemyRegistry;
 import net.dp.rpg.game.enemy.GameEnemies;
+import net.dp.rpg.game.events.GameMessageEvent;
 import net.dp.rpg.game.item.GameItems;
+import net.dp.rpg.game.quest.QuestTexts;
+import net.dp.rpg.game.quest.QuestTracker;
+import net.dp.rpg.game.scripts.ItemPickupScript;
 import net.dp.rpg.game.item.ItemDef;
 import net.dp.rpg.game.item.LootTable;
 import net.dp.rpg.game.item.PlayerStats;
@@ -54,7 +64,6 @@ import java.util.Random;
 
 public class LevelBuilder
 {
-
     public static final String SEED_PROPERTY = "rpg.seed";
 
     private final float playerMaxHealth = 100;
@@ -202,6 +211,34 @@ public class LevelBuilder
         ItemPickupCreator itemCreator = new ItemPickupCreator(scene, atlas);
         LootTable loot = GameItems.loot();
         int maxDepth = floor.getRooms().stream().mapToInt(room -> room.node().depth()).max().orElse(1);
+        QuestTracker quests = new QuestTracker(floor.getQuests(), floor.getLayout(),
+                new QuestTexts(enemies, GameItems.registry()), new QuestTracker.Hooks()
+        {
+            @Override
+            public void reward(Quest quest)
+            {
+                ItemDef item = questReward(quest, loot);
+                ItemPickupCreator creator = new ItemPickupCreator(scene, atlas);
+                Vector2 at = scene.getComponentStorage(TransformComponent.class).getByEntity(player).position;
+                creator.create(item, at.x, at.y, null);
+                creator.dispose();
+                Engine.eventBus.publish(GameMessageEvent.class, e -> e.text = "Nagroda: " + item.name());
+            }
+
+            @Override
+            public void respawnChallenge(Quest quest, QuestGoal goal)
+            {
+                TileRoom room = floor.getRooms().get(goal.rooms().get(0));
+                EnemyEntityCreator creator = new EnemyEntityCreator(scene, atlas, player, dialogues);
+                for(ContentSpot spot : room.content().ofKind(ContentKind.ENEMY))
+                    creator.create(enemies.get(spot.tag()), worldX(room, spot.x()), worldY(room, spot.y()), floor, room);
+                creator.dispose();
+                Engine.eventBus.publish(GameMessageEvent.class, e -> e.text = "Przeciwnicy wrócili. Spróbuj jeszcze raz!");
+            }
+        });
+        for(Class<? extends GameEvent> event : QuestTracker.EVENTS)
+            Engine.eventBus.subscribe(quests, event);
+
         for(TileRoom room : floor.getRooms())
         {
             double depth = maxDepth == 0 ? 0 : (double) room.node().depth() / maxDepth;
@@ -221,11 +258,32 @@ public class LevelBuilder
                     case ENEMY -> enemyCreator.create(enemies.get(spot.tag()), x, y, floor, room);
                     case ITEM ->
                     {
-                        if(!spot.tag().equals(ContentTags.SHOP_OFFER))
+                        if(spot.tag().startsWith(ContentTags.QUEST_ITEM_PREFIX))
+                        {
+                            ItemDef item = GameItems.registry().get(spot.tag().substring(ContentTags.QUEST_ITEM_PREFIX.length()));
+                            int entity = itemCreator.create(item, x, y, null, spot.questId());
+                            if(scriptOf(scene, entity) instanceof ItemPickupScript pickup)
+                                quests.registerPickup(pickup);
+                        }
+                        else if(!spot.tag().equals(ContentTags.SHOP_OFFER))
                             itemCreator.create(loot.resolve(spot.tag(), itemRandom, depth), x, y, null);
                     }
-                    // NPCs (E4) are coloured markers until they exist.
-                    case NPC -> npcCreator.create("npc/giver", x, y, questGiver(spot, dialogueLibrary));
+                    case NPC ->
+                    {
+                        if(spot.tag().startsWith(ContentTags.TALKER_PREFIX))
+                        {
+                            String dialogueId = spot.tag().substring(ContentTags.TALKER_PREFIX.length());
+                            NpcScript talker = new NpcScript(NpcScript.Role.TALK, TALKERS.getOrDefault(dialogueId, "Nieznajomy"), dialogueId, spot.questId());
+                            npcCreator.create(dialogueId.equals(QuestPlanner.RECIPIENT) ? "npc/villager" : "npc/sage", x, y, talker);
+                            quests.registerTalker(spot.questId(), talker);
+                        }
+                        else
+                        {
+                            NpcScript giver = questGiver(spot, dialogueLibrary);
+                            npcCreator.create("npc/giver", x, y, giver);
+                            quests.registerGiver(spot.questId(), giver);
+                        }
+                    }
                 }
             }
         }
@@ -241,7 +299,8 @@ public class LevelBuilder
         // Subscribed before the first EnterRoomEvent below, like the rest of the room listeners.
         MinimapWidget minimap = new MinimapWidget(floor.getLayout(), atlas, 260, 180);
         Engine.eventBus.subscribe(minimap, EnterRoomEvent.class);
-        LevelGui levelGui = new LevelGui(engine, scene, player, minimap, stats, atlas, dialogues);
+        minimap.setQuestRooms(quests::markedRooms);
+        LevelGui levelGui = new LevelGui(engine, scene, player, minimap, stats, atlas, dialogues, quests);
 
         NarratorDirector narrator = new NarratorDirector(floor, dialogues, dialogueLibrary,
                 Map.of("boss", GameEnemies.registry().get(ContentTags.BOSS).name()));
@@ -255,16 +314,35 @@ public class LevelBuilder
         scene.setAmbientLight(new Color(0,0,0,0));
     }
 
-    // Until quests are generated (E5) the offer is a placeholder; the story is the giver's own.
     private NpcScript questGiver(ContentSpot spot, DialogueLibrary library)
     {
         List<Dialogue> stories = library.withPrefix("giver.story.");
         Dialogue story = stories.get(RandomSource.derive(seed, "giver:" + spot.questId()).nextInt(stories.size()));
         String name = story.node(story.start()).speaker();
-        NpcScript npc = new NpcScript(NpcScript.Role.QUEST_GIVER, name, story.id(), spot.questId());
-        npc.setVariable("quest", "Pomożesz mi? Treść zadania pojawi się, gdy powstaną questy (E5).");
-        npc.setVariable("progress", "");
-        return npc;
+        return new NpcScript(NpcScript.Role.QUEST_GIVER, name, story.id(), spot.questId());
+    }
+
+    private static final Map<String, String> TALKERS = Map.of(
+            "talk.q.sentinel", "Strażnik",
+            "talk.q.riddle", "Zagadkowy mędrzec",
+            QuestPlanner.RECIPIENT, "Kupiec Albin");
+
+    private ItemDef questReward(Quest quest, LootTable loot)
+    {
+        Random random = RandomSource.derive(seed, "reward:" + quest.id());
+        for(int attempt = 0; attempt < 12; attempt++)
+        {
+            ItemDef item = loot.resolve(quest.rewardTag(), random, quest.depth());
+            if(stats.missingRequirement(item).isEmpty())
+                return item;
+        }
+        return loot.resolve(ContentTags.POTION, random, quest.depth());
+    }
+
+    private static Script scriptOf(Scene scene, int entity)
+    {
+        ScriptComponent component = scene.getComponentStorage(ScriptComponent.class).getByEntity(entity);
+        return component == null ? null : component.script;
     }
 
     private static float worldX(TileRoom room, int tileX)

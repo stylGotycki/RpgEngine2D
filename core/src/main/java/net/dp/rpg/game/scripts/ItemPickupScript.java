@@ -9,9 +9,34 @@ public class ItemPickupScript extends EntityScript {
 
   private final String group;
 
-  public ItemPickupScript(ItemDef item, String group) {
+  private final String questId;
+
+  private String lockedMessage;
+
+  public ItemPickupScript(ItemDef item, String group, String questId) {
     this.item = item;
     this.group = group;
+    this.questId = questId;
+  }
+
+  public String questId() {
+    return questId;
+  }
+
+  public void lock(String message) {
+    this.lockedMessage = message;
+  }
+
+  public void unlock() {
+    lockedMessage = null;
+  }
+
+  public boolean isLocked() {
+    return lockedMessage != null;
+  }
+
+  public String lockedMessage() {
+    return lockedMessage;
   }
 
   public ItemDef item() {

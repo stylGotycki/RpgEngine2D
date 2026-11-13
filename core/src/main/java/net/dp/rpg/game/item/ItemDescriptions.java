@@ -22,7 +22,9 @@ public final class ItemDescriptions {
     lines.add(item.name());
     lines.add(GREY + category(item) + END);
 
-    if (item.category() == ItemCategory.POTION) {
+    if (item.category() == ItemCategory.QUEST) {
+      lines.add(GREEN + "Potrzebne do zadania" + END);
+    } else if (item.category() == ItemCategory.POTION) {
       lines.add(GREEN + potion(item) + END);
     } else {
       String bonuses = bonuses(item);
@@ -65,6 +67,7 @@ public final class ItemDescriptions {
       case ARMOR -> "Zbroja";
       case RING -> "Pierścień";
       case POTION -> item.big() ? "Duża mikstura (50 s)" : "Mała mikstura (20 s)";
+      case QUEST -> "Przedmiot z zadania";
     };
   }
 

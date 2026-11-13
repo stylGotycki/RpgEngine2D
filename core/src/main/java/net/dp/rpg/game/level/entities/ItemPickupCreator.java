@@ -39,6 +39,10 @@ public class ItemPickupCreator implements Disposable {
   }
 
   public int create(ItemDef item, float x, float y, String group) {
+    return create(item, x, y, group, null);
+  }
+
+  public int create(ItemDef item, float x, float y, String group, String questId) {
     bodyDef.position.set(x, y);
 
     int entity = scene.createEntity();
@@ -53,7 +57,7 @@ public class ItemPickupCreator implements Disposable {
     sprite.setOriginCenter();
     sprite.setCenter(x, y);
     scene.addComponent(entity, new SpriteComponent(sprite, true));
-    scene.addComponent(entity, new ScriptComponent(new ItemPickupScript(item, group)));
+    scene.addComponent(entity, new ScriptComponent(new ItemPickupScript(item, group, questId)));
 
     return entity;
   }

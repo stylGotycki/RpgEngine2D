@@ -34,7 +34,8 @@ public record ItemDef(
   }
 
   public boolean isEquipment() {
-    return category != ItemCategory.POTION;
+    return category == ItemCategory.WEAPON || category == ItemCategory.ARMOR
+        || category == ItemCategory.RING;
   }
 
   public String icon() {

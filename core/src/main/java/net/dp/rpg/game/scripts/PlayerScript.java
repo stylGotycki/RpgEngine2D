@@ -22,6 +22,7 @@ import net.dp.rpg.game.TileRoom;
 import net.dp.rpg.game.dialogue.DialogueController;
 import net.dp.rpg.game.dialogue.GameDialogues;
 import net.dp.rpg.game.enemy.EnemyDef;
+import net.dp.rpg.game.item.ItemCategory;
 import net.dp.rpg.game.item.ItemDef;
 import net.dp.rpg.game.item.PlayerStats;
 import net.dp.rpg.game.item.Stat;
@@ -436,7 +437,16 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
     private void pickUp(ItemPickupScript pickup)
     {
         ItemDef item = pickup.item();
-        if(item.isEquipment())
+        if(pickup.isLocked())
+        {
+            message(pickup.lockedMessage());
+            return;
+        }
+        if(item.category() == ItemCategory.QUEST)
+        {
+            // Quest items take no slot; the quest tracker counts them.
+        }
+        else if(item.isEquipment())
         {
             Optional<String> missing = stats.missingRequirement(item);
             if(missing.isPresent())
@@ -457,10 +467,12 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
         itemReached = null;
         hover(null);
         boolean fromShop = pickup.group() != null;
+        String questId = pickup.questId();
         Engine.eventBus.publish(ItemPickedEvent.class, e ->
         {
             e.item = item;
             e.fromShop = fromShop;
+            e.questId = questId;
         });
         message("Podniesiono: " + item.name());
     }

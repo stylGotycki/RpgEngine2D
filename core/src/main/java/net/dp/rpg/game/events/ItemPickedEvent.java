@@ -9,9 +9,12 @@ public class ItemPickedEvent implements GameEvent {
 
   public boolean fromShop;
 
+  public String questId;
+
   @Override
   public void reset() {
     item = null;
     fromShop = false;
+    questId = null;
   }
 }

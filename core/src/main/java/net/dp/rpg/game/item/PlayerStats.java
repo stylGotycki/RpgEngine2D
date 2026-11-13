@@ -199,7 +199,7 @@ public final class PlayerStats {
       case WEAPON -> weapon;
       case ARMOR -> armor;
       case RING -> ring;
-      case POTION -> null;
+      case POTION, QUEST -> null;
     };
   }
 

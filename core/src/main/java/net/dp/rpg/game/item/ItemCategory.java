@@ -4,5 +4,6 @@ public enum ItemCategory {
   WEAPON,
   ARMOR,
   RING,
-  POTION
+  POTION,
+  QUEST
 }

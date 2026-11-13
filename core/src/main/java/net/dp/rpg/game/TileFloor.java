@@ -18,6 +18,10 @@ import net.dp.rpg.engine.interior.GeneratedRoom;
 import net.dp.rpg.engine.interior.InteriorContext;
 import net.dp.rpg.engine.interior.InteriorGenerator;
 import net.dp.rpg.engine.interior.pass.RoomReachability;
+import net.dp.rpg.engine.quest.Quest;
+import net.dp.rpg.engine.quest.QuestContent;
+import net.dp.rpg.engine.quest.QuestPlanner;
+import net.dp.rpg.engine.quest.QuestWeights;
 import net.dp.rpg.engine.systems.gameEvent.GameEvent;
 import net.dp.rpg.engine.systems.gameEvent.GameEventListener;
 import net.dp.rpg.engine.tile.TileSystem;
@@ -27,7 +31,6 @@ import net.dp.rpg.engine.tile.room.RoomCell;
 import net.dp.rpg.engine.tile.room.RoomEdge;
 import net.dp.rpg.game.events.EnterRoomEvent;
 import net.dp.rpg.game.level.PlaceholderInterior;
-
 
 public class TileFloor implements GameEventListener {
 
@@ -56,12 +59,15 @@ public class TileFloor implements GameEventListener {
   @Getter
   private final FloorContent content;
 
+  @Getter
+  private final List<Quest> quests;
+
   public TileFloor(FloorArchetype archetype, FloorSettings settings, long seed, Scene scene) {
-    this(archetype, settings, ContentSettings.DEFAULTS, seed, scene);
+    this(archetype, settings, ContentSettings.DEFAULTS, QuestWeights.DEFAULTS, seed, scene);
   }
 
   public TileFloor(FloorArchetype archetype, FloorSettings settings,
-      ContentSettings contentSettings, long seed, Scene scene) {
+      ContentSettings contentSettings, QuestWeights questWeights, long seed, Scene scene) {
     this.scene = scene;
     this.tileSystem = tiles();
     this.walkability = new RoomReachability(tileSystem.types());
@@ -76,8 +82,10 @@ public class TileFloor implements GameEventListener {
       generated.put(node, interiors.generate(layout.blueprintOf(node)));
     }
 
+    List<Quest> planned = new QuestPlanner(questWeights).plan(layout);
     content = new ContentGenerator(tileSystem.types(), contentSettings)
-        .generate(layout, generated::get);
+        .generate(layout, generated::get, planned);
+    quests = QuestContent.reconcile(planned, layout, content);
 
     for (RoomNode node : layout.graph().rooms()) {
       rooms.add(new TileRoom(node.index(), node, generated.get(node), content.of(node)));
@@ -160,7 +168,8 @@ public class TileFloor implements GameEventListener {
 
     logger.log("Floor %s seed %d: %d rooms, critical path %d, %d fallback interiors%n%s%n%s"
         .formatted(layout.archetypeId(), seed, rooms.size(), layout.criticalLength(), fallbacks,
-            layout.summary(), "content " + content.totals()));
+            layout.summary(), "content " + content.totals() + ", quests " + quests.stream()
+                .map(quest -> quest.id() + "=" + quest.template()).toList()));
   }
 
   @Override

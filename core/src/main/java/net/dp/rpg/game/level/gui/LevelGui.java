@@ -18,6 +18,7 @@ import net.dp.rpg.game.events.SkillPointUsedEvent;
 import net.dp.rpg.game.events.SkillPointsAvailableEvent;
 import net.dp.rpg.game.events.SkillWindowToggleEvent;
 import net.dp.rpg.game.minimap.MinimapWidget;
+import net.dp.rpg.game.quest.QuestTracker;
 
 public class LevelGui
 {
@@ -27,7 +28,7 @@ public class LevelGui
 
     private final SkillWindow skillWindow;
 
-    public LevelGui(EngineServices engine, Scene scene, int playerId, MinimapWidget minimap, PlayerStats stats, TextureAtlas atlas, DialogueController dialogues)
+    public LevelGui(EngineServices engine, Scene scene, int playerId, MinimapWidget minimap, PlayerStats stats, TextureAtlas atlas, DialogueController dialogues, QuestTracker quests)
     {
         this.scene = scene;
         this.gui = scene.getGui();
@@ -40,7 +41,8 @@ public class LevelGui
         stack.add(table);
         Table minimapTable = new Table();
         minimapTable.top().right();
-        minimapTable.add(minimap).pad(16).size(minimap.getWidth(), minimap.getHeight());
+        minimapTable.add(minimap).pad(16).padBottom(8).size(minimap.getWidth(), minimap.getHeight()).right().row();
+        minimapTable.add(new QuestListWidget(quests, skin)).padRight(16).right();
         stack.add(minimapTable);
         Table messageTable = new Table();
         messageTable.bottom();

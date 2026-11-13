@@ -42,6 +42,8 @@ public class Game extends AbstractGame
         Engine.poolManager.addPool(ItemHoverEvent.class, ItemHoverEvent::new);
         Engine.poolManager.addPool(DialogueChoiceEvent.class, DialogueChoiceEvent::new);
         Engine.poolManager.addPool(DialogueEndedEvent.class, DialogueEndedEvent::new);
+        Engine.poolManager.addPool(NpcActionEvent.class, NpcActionEvent::new);
+        Engine.poolManager.addPool(QuestEvent.class, QuestEvent::new);
 
         getEngine().getAssetManager().finishLoading();
 
