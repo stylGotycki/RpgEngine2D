@@ -59,7 +59,7 @@ default-rect-pad
   index: -1
 default-pane-noborder
   rotate: false
-  xy: 549, 914
+  xy: 771, 971
   size: 1, 1
   split: 0, 0, 0, 0
   orig: 1, 1
@@ -75,7 +75,7 @@ default-rect
   index: -1
 default-rect-down
   rotate: false
-  xy: 35, 41
+  xy: 51, 57
   size: 3, 3
   split: 1, 1, 1, 1
   orig: 3, 3
@@ -125,7 +125,7 @@ default-select
   index: -1
 default-select-selection
   rotate: false
-  xy: 51, 57
+  xy: 515, 878
   size: 3, 3
   split: 1, 1, 1, 1
   orig: 3, 3
@@ -156,7 +156,7 @@ default-splitpane
   index: -1
 default-splitpane-vertical
   rotate: false
-  xy: 515, 876
+  xy: 531, 892
   size: 3, 5
   split: 0, 0, 0, 5
   orig: 3, 5
@@ -172,7 +172,7 @@ default-window
   index: -1
 selection
   rotate: false
-  xy: 565, 930
+  xy: 787, 987
   size: 1, 1
   orig: 1, 1
   offset: 0, 0
@@ -193,7 +193,7 @@ tree-plus
   index: -1
 white
   rotate: false
-  xy: 531, 894
+  xy: 549, 912
   size: 3, 3
   orig: 3, 3
   offset: 0, 0
@@ -231,6 +231,24 @@ activeSkill
   xy: 1, 28
   size: 32, 32
   orig: 32, 32
+  offset: 0, 0
+  index: -1
+health
+  rotate: false
+  xy: 565, 928
+  size: 3, 3
+  split: 1, 1, 1, 1
+  pad: 0, 0, 0, 0
+  orig: 3, 3
+  offset: 0, 0
+  index: -1
+health-bar
+  rotate: false
+  xy: 35, 39
+  size: 5, 5
+  split: 2, 2, 2, 2
+  pad: 1, 1, 1, 1
+  orig: 5, 5
   offset: 0, 0
   index: -1
 skillField

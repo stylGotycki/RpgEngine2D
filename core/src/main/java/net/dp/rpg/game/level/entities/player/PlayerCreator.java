@@ -24,6 +24,7 @@ public class PlayerCreator extends EntityCreator implements Disposable
     private final int health = 100;
     private final float damage = 20;
     private final float knockback = 8;
+    private final float afterDamageInvincibility = 0.5f;
 
     private final BodyDef bodyDef = new BodyDef();
     private final FixtureDef bodyFixtureDef = new FixtureDef();
@@ -120,7 +121,7 @@ public class PlayerCreator extends EntityCreator implements Disposable
         Light light = scene.createPointLightComponent(entityId, 128, new Color(1f, 0.6f, 0.1f, 0.8f), size * 32, false);
         light.setContactFilter(lightContactFilter);
 
-        scene.addComponent(entityId, new HealthComponent(health,health, 1f));
+        scene.addComponent(entityId, new HealthComponent(health,health, afterDamageInvincibility));
         scene.addComponent(entityId, new AttackComponent(damage,knockback));
         scene.addComponent(entityId, new FractionComponent(Fraction.PLAYER));
         scene.addComponent(entityId, spriteComponent);

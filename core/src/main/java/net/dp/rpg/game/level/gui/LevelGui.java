@@ -39,6 +39,7 @@ public class LevelGui
         HealthComponent playerHealth = scene.getComponentStorage(HealthComponent.class).getByEntity(playerId);
         HealthBar healthBar = new HealthBar(playerHealth.maxHealth, skin);
         Engine.eventBus.subscribe(healthBar, HealthChangeEvent.class);
-        table.add(healthBar).pad(16).width(playerHealth.maxHealth*4);
+        table.add(healthBar).pad(16);
+        healthBar.update(playerHealth.health);
     }
 }
