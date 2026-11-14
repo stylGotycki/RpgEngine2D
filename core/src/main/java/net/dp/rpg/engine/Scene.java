@@ -12,10 +12,7 @@ import com.badlogic.gdx.utils.Disposable;
 import lombok.Getter;
 import net.dp.rpg.engine.components.*;
 import net.dp.rpg.engine.components.Component;
-import net.dp.rpg.engine.systems.AnimationSystem;
-import net.dp.rpg.engine.systems.CollisionDispatcher;
-import net.dp.rpg.engine.systems.HealthSystem;
-import net.dp.rpg.engine.systems.MovementSystem;
+import net.dp.rpg.engine.systems.*;
 import net.dp.rpg.engine.systems.input.EngineInputAdapter;
 import net.dp.rpg.engine.systems.input.InputListener;
 import net.dp.rpg.engine.tile.TileMapData;
@@ -23,13 +20,14 @@ import net.dp.rpg.engine.tile.TileSystem;
 import net.dp.rpg.engine.tile.room.RoomGeometry;
 
 import java.util.ArrayList;
+import java.util.BitSet;
 
 public class Scene implements Disposable
 {
     private final EngineServices engine;
     @Getter
     private final World physicalWorld = new World(new Vector2(0, 0), true);
-    CollisionDispatcher collisionDispatcher = new CollisionDispatcher(this);
+    private final CollisionDispatcher collisionDispatcher;
 
     @Getter
     private TileSystem tileSystem;
@@ -48,6 +46,7 @@ public class Scene implements Disposable
 
     private int nextEntity = 0;
     private final ArrayList<Integer> freeEntity = new ArrayList<>();
+    private final BitSet validEntities = new BitSet();
     private final ArrayList<ComponentStorage<? extends Component>> componentStorages = new ArrayList<>();
     private final ArrayList<Integer> toDeleteEntities = new ArrayList<>();
     private final ArrayList<Fixture> toDeleteFixtures = new ArrayList<>();
@@ -59,6 +58,7 @@ public class Scene implements Disposable
     private final MovementSystem movementSystem = new MovementSystem();
     private final AnimationSystem animationSystem = new AnimationSystem();
     private final HealthSystem healthSystem = new HealthSystem();
+    private final CombatSystem combatSystem;
 
     @Getter
     private final RayHandler rayHandler = new RayHandler(physicalWorld);
@@ -67,8 +67,6 @@ public class Scene implements Disposable
     {
         this.engine = engine;
         this.inputAdapter = inputAdapter;
-
-        physicalWorld.setContactListener(collisionDispatcher);
 
         componentStorages.add(new ComponentStorage<>(MoveComponent.class));
         componentStorages.add(new ComponentStorage<>(TransformComponent.class));
@@ -83,6 +81,17 @@ public class Scene implements Disposable
         componentStorages.add(new ComponentStorage<>(MultiAnimationComponent.class));
         componentStorages.add(new ComponentStorage<>(SpriteComponent.class));
         componentStorages.add(new ComponentStorage<>(AnimationComponent.class));
+        componentStorages.add(new ComponentStorage<>(AttackComponent.class));
+        componentStorages.add(new ComponentStorage<>(FractionComponent.class));
+        componentStorages.add(new ComponentStorage<>(PeriodicAttackComponent.class));
+
+        combatSystem = new CombatSystem(getComponentStorage(HealthComponent.class),
+            getComponentStorage(AttackComponent.class),
+            getComponentStorage(PhysicalBodyComponent.class),
+            getComponentStorage(PeriodicAttackComponent.class),
+            getComponentStorage(ScriptComponent.class));
+        collisionDispatcher = new CollisionDispatcher(this, combatSystem);
+        physicalWorld.setContactListener(collisionDispatcher);
 
         RayHandler.useDiffuseLight(true);
     }
@@ -149,6 +158,11 @@ public class Scene implements Disposable
         }
     }
 
+    public <T extends Component> Component getComponent(int entity, Class<T> componentClass)
+    {
+        return getComponentStorage(componentClass).getByEntity(entity);
+    }
+
     /**
      * creates Body using parameters set in bodyDef and adds it as Component
      */
@@ -202,10 +216,15 @@ public class Scene implements Disposable
 
     public int createEntity()
     {
+        int entity;
+        // Removing the id matters: getFirst() alone handed the same id to every new entity.
         if(!freeEntity.isEmpty())
-            return freeEntity.getFirst();
+            entity = freeEntity.removeFirst();
+        else
+            entity = nextEntity++;
 
-        return nextEntity++;
+        validEntities.set(entity);
+        return entity;
     }
 
     public void setToDelete(int entityId)
@@ -234,6 +253,7 @@ public class Scene implements Disposable
     private void deleteEntity(int entityId)
     {
         freeEntity.add(entityId);
+        validEntities.clear(entityId);
         for(ComponentStorage<? extends Component> componentStorage : componentStorages)
         {
             if(componentStorage.getComponentClass() == PhysicalBodyComponent.class && componentStorage.hasComponent(entityId))
@@ -243,6 +263,13 @@ public class Scene implements Disposable
             }
             componentStorage.remove(entityId);
         }
+    }
+
+    public boolean entityExists(int entity)
+    {
+        if(entity >= nextEntity)
+            return false;
+        return validEntities.get(entity);
     }
 
     public void setSceneScript(SceneScript script)
@@ -262,15 +289,35 @@ public class Scene implements Disposable
             this.activeCamera = component.camera;
     }
 
-    public void setTileMap(TileMapData tileMap, TileSystem tileSystem, float xPos, float yPos, int gridHeight)
+    public void setTileMap(TileMapData tileMap, TileSystem tileSystem, float cellX, float cellY)
     {
         if(tileMap != null && tileSystem != null)
         {
             this.tileSystem = tileSystem;
             this.tileMap = tileMap;
-            this.tileTransformX = xPos * RoomGeometry.CELL_WIDTH;
-            this.tileTransformY = (gridHeight - yPos) * RoomGeometry.CELL_HEIGHT - tileMap.height();
+            this.tileTransformX = cellX * RoomGeometry.CELL_WIDTH;
+            this.tileTransformY = cellY * RoomGeometry.CELL_HEIGHT;
         }
+    }
+
+    public void setAttackCategories(short... categories)
+    {
+        short mask = 0;
+        for(short category : categories)
+        {
+            mask |= category;
+        }
+        collisionDispatcher.setAttackMask(mask);
+    }
+
+    public void setBodyCategories(short... categories)
+    {
+        short mask = 0;
+        for(short category : categories)
+        {
+            mask |= category;
+        }
+        collisionDispatcher.setBodyMask(mask);
     }
 
     public void setAmbientLight(Color light)
@@ -292,9 +339,10 @@ public class Scene implements Disposable
         }
 
         movementSystem.transformToBody(getComponentStorage(PhysicalBodyComponent.class), getComponentStorage(TransformComponent.class));
-        healthSystem.updateInvincibility(getComponentStorage(HealthComponent.class), delta);
         //todo make less physics steps on higher refresh rate (fix to const refresh rate)
         physicalWorld.step(delta, 6, 2);
+        healthSystem.updateInvincibility(getComponentStorage(HealthComponent.class), delta);
+        combatSystem.updatePeriodicAttack(delta);
 
         movementSystem.updatePositions(getComponentStorage(TransformComponent.class), getComponentStorage(MoveComponent.class), delta);
         movementSystem.bodyToTransform(getComponentStorage(PhysicalBodyComponent.class), getComponentStorage(TransformComponent.class));
