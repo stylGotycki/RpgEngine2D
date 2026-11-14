@@ -1,32 +1,21 @@
 package net.dp.rpg.game.level.gui;
 
-import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.graphics.g2d.NinePatch;
 import com.badlogic.gdx.scenes.scene2d.ui.ProgressBar;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
-import com.badlogic.gdx.scenes.scene2d.utils.NinePatchDrawable;
 import net.dp.rpg.engine.systems.gameEvent.GameEvent;
 import net.dp.rpg.engine.systems.gameEvent.GameEventListener;
+import net.dp.rpg.game.UiConfig;
 import net.dp.rpg.game.level.events.HealthChangeEvent;
 
 public class HealthBar extends ProgressBar implements GameEventListener
 {
-    private final float scale = 8;
-    private final Drawable fillDrawable;
+    private final float scale = UiConfig.HEALTH_BAR_SCALE;
+    private boolean knobBeforeDisable = false;
 
     public HealthBar(float max, Skin skin)
     {
         super(0, max, 1, false, skin, "health-bar");
-        fillDrawable = getKnobBeforeDrawable();
-        NinePatchDrawable patchDrawable = (NinePatchDrawable)getStyle().background;
-        NinePatch patch = patchDrawable.getPatch();
-        patch.scale(scale,scale);
-        patchDrawable.setPatch(patch);
-        patchDrawable = (NinePatchDrawable)getStyle().knobBefore;
-        patch = patchDrawable.getPatch();
-        patch.scale(scale,scale);
-        patchDrawable.setPatch(patch);
         getBackgroundDrawable().setMinHeight(8*scale);
         getKnobBeforeDrawable().setMinHeight(6*scale);
         getBackgroundDrawable().setMinWidth((max+2)*scale);
@@ -39,10 +28,18 @@ public class HealthBar extends ProgressBar implements GameEventListener
     public void update(float value)
     {
         if(value <= 1)
-            getStyle().knobBefore = null;
+            knobBeforeDisable = true;
         else
-            getStyle().knobBefore = fillDrawable;
+            knobBeforeDisable = false;
         this.setValue(value);
+    }
+
+    @Override
+    protected Drawable getKnobBeforeDrawable ()
+    {
+        if(knobBeforeDisable)
+            return null;
+        return super.getKnobBeforeDrawable();
     }
 
     @Override

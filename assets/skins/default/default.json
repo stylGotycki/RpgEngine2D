@@ -205,6 +205,8 @@ com.badlogic.gdx.scenes.scene2d.ui.TextButton$TextButtonStyle: {
 		parent: default
 		font: PixelO10BottRegular
 		fontColor: white
+		up: button
+		down: buttonDown
 	}
 	toggle: {
 		parent: default

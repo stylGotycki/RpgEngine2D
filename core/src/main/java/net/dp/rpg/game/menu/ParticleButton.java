@@ -31,14 +31,6 @@ public class ParticleButton extends Stack
         particleActor.setTouchable(Touchable.disabled);
 
         button = new TextButton(name, skin);
-        NinePatchDrawable patchDrawable = (NinePatchDrawable) button.getStyle().up;
-        NinePatch patch = patchDrawable.getPatch();
-        patch.scale(scale,scale);
-        patchDrawable.setPatch(patch);
-        patchDrawable = (NinePatchDrawable) button.getStyle().down;
-        patch = patchDrawable.getPatch();
-        patch.scale(scale,scale);
-        patchDrawable.setPatch(patch);
 
         ParticleButton particleButton = this;
 
