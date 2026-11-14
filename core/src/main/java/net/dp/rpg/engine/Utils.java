@@ -9,4 +9,9 @@ public class Utils
     {
         return vector2.set(direction.getDeltaX(), direction.getDeltaY());
     }
+
+    public static float getFrameChance(float chancePerSecond, float deltaTime)
+    {
+        return (float)(1 - Math.pow(1 - chancePerSecond, deltaTime));
+    }
 }

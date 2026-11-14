@@ -5,12 +5,12 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
 import net.dp.rpg.engine.Engine;
 import net.dp.rpg.engine.EntityScript;
+import net.dp.rpg.engine.Utils;
 import net.dp.rpg.engine.components.AnimationComponent;
 import net.dp.rpg.engine.components.PhysicalBodyComponent;
 import net.dp.rpg.engine.components.ScriptComponent;
 import net.dp.rpg.engine.components.TransformComponent;
 import net.dp.rpg.game.TileFloor;
-import net.dp.rpg.game.animations.EnemyAnimationId;
 import net.dp.rpg.game.TileRoom;
 import net.dp.rpg.game.animations.SpiderAnimationId;
 import net.dp.rpg.game.dialogue.DialogueController;
@@ -26,7 +26,13 @@ public class EnemyScript extends EntityScript
     private final int playerEntity;
     private int playerDetected = -1;
     private final Vector2 target = new Vector2();
-    private final Vector2 direction = new Vector2();
+    private final Vector2 targetDirection = new Vector2();
+    private final Vector2 currentDirection = new Vector2(1,0);
+    private final Vector2 frontRayEnd = new Vector2();
+    private final Vector2 leftRayEnd = new Vector2();
+    private final Vector2 rightRayEnd = new Vector2();
+    private final float changeTargetChance = 0.25f;
+    private final float maxMoveDistance = 5f;
     private final TileFloor floor;
     private final TileRoom home;
     private final EnemyDef enemy;
@@ -71,26 +77,55 @@ public class EnemyScript extends EntityScript
             TransformComponent transform = (TransformComponent) getScene().getComponent(playerDetected, TransformComponent.class);
             target.set(transform.position);
         }
-        else if(MathUtils.random(1000) == 0)
+        else if(MathUtils.randomBoolean(Utils.getFrameChance(changeTargetChance, delta)))
         {
-            target.set(position).add(MathUtils.random(-5,5), MathUtils.random(-5,5));
+            setRandomTarget();
         }
         if(target.dst(position) > 0.3)
         {
-            direction.set(target).sub(position).setLength(1);
-            getComponent(TransformComponent.class).setRotation(direction.angleRad());
+            targetDirection.set(target).sub(position).setLength(1);
+            if(playerDetected >= 0)
+            {
+                leftRayEnd.set(currentDirection).rotateDeg(-45).setLength(enemy.size()).add(position);
+                rightRayEnd.set(currentDirection).rotateDeg(45).setLength(enemy.size()).add(position);
+                if(isCategory(getScene().rayCastCategory(position, leftRayEnd), WALL, OBSTACLE))
+                {
+                    targetDirection.set(currentDirection).rotateDeg(5);
+                }
+                else if(isCategory(getScene().rayCastCategory(position, rightRayEnd), WALL, OBSTACLE))
+                {
+                    targetDirection.set(currentDirection).rotateDeg(-5);
+                }
+                else
+                {
+                    currentDirection.rotateDeg(currentDirection.crs(targetDirection) > 0 ? 5 : -5);
+                    targetDirection.set(currentDirection);
+                }
+            }
+            getComponent(TransformComponent.class).setRotation(targetDirection.angleRad());
+            currentDirection.set(targetDirection);
             Body body = getComponent(PhysicalBodyComponent.class).body;
-            body.applyForce(direction.scl(speed), body.getPosition(), true);
+            body.applyForce(targetDirection.scl(speed), body.getPosition(), true);
             if(!walking)
             {
                 getComponent(AnimationComponent.class).animationSet.play(SpiderAnimationId.WALK);
                 walking = true;
             }
+            else if(playerDetected < 0)
+            {
+                frontRayEnd.set(targetDirection).setLength(enemy.size()/1.5f).add(position);
+                if(isCategory(getScene().rayCastCategory(position, frontRayEnd), WALL, OBSTACLE))
+                    target.set(position);
+            }
         }
-        else if(walking)
+        else
         {
-            getComponent(AnimationComponent.class).animationSet.stop();
-            walking = false;
+            target.set(position);
+            if(walking)
+            {
+                getComponent(AnimationComponent.class).animationSet.stop();
+                walking = false;
+            }
         }
     }
 
@@ -136,5 +171,10 @@ public class EnemyScript extends EntityScript
         if(scriptComponent != null && scriptComponent.script instanceof PlayerScript playerScript)
             return playerScript.getStats();
         return null;
+    }
+
+    private void setRandomTarget()
+    {
+        target.set(getComponent(TransformComponent.class).position).add(MathUtils.random(-maxMoveDistance,maxMoveDistance), MathUtils.random(-maxMoveDistance,maxMoveDistance));
     }
 }

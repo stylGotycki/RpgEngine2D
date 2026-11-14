@@ -325,6 +325,17 @@ public class Scene implements Disposable
         rayHandler.setAmbientLight(light);
     }
 
+    public short rayCastCategory(Vector2 start, Vector2 end)
+    {
+        short[] categoryBits = {0};
+        physicalWorld.rayCast((fixture, point, normal, fraction) ->
+        {
+            categoryBits[0] = fixture.getFilterData().categoryBits;
+            return 0;
+        }, start, end);
+        return categoryBits[0];
+    }
+
     public void update(float delta)
     {
         if(sceneScript != null)
