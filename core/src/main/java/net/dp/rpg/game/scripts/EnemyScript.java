@@ -1,5 +1,6 @@
 package net.dp.rpg.game.scripts;
 
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
 import net.dp.rpg.engine.Engine;
@@ -11,15 +12,20 @@ import net.dp.rpg.engine.components.TransformComponent;
 import net.dp.rpg.game.TileFloor;
 import net.dp.rpg.game.animations.EnemyAnimationId;
 import net.dp.rpg.game.TileRoom;
+import net.dp.rpg.game.animations.SpiderAnimationId;
 import net.dp.rpg.game.dialogue.DialogueController;
 import net.dp.rpg.game.enemy.EnemyDef;
 import net.dp.rpg.game.level.events.EnemyKilledEvent;
 import net.dp.rpg.game.level.events.GameMessageEvent;
 import net.dp.rpg.game.item.PlayerStats;
 
+import static net.dp.rpg.game.FixtureCategory.*;
+
 public class EnemyScript extends EntityScript
 {
     private final int playerEntity;
+    private int playerDetected = -1;
+    private final Vector2 target = new Vector2();
     private final Vector2 direction = new Vector2();
     private final TileFloor floor;
     private final TileRoom home;
@@ -57,19 +63,52 @@ public class EnemyScript extends EntityScript
 
         // Acceleration, not force, so a heavy boss is not slower than its numbers say.
         float speed = enemy.acceleration() * getComponent(PhysicalBodyComponent.class).body.getMass();
-        Vector2 playerPosition = getScene().getComponentStorage(TransformComponent.class).getByEntity(playerEntity).position;
         Vector2 position = getComponent(TransformComponent.class).position;
-        direction.set(playerPosition).sub(position).setLength(1);
-        getComponent(TransformComponent.class).setRotation(direction.angleRad());
-
-        Body body = getComponent(PhysicalBodyComponent.class).body;
-        body.applyForce(direction.scl(speed), body.getPosition(), true);
 
         // AnimationSet only advances after play() (dev).
-        if(!walking)
+        if(playerDetected >= 0)
         {
-            getComponent(AnimationComponent.class).animationSet.play(EnemyAnimationId.WALK);
-            walking = true;
+            TransformComponent transform = (TransformComponent) getScene().getComponent(playerDetected, TransformComponent.class);
+            target.set(transform.position);
+        }
+        else if(MathUtils.random(1000) == 0)
+        {
+            target.set(position).add(MathUtils.random(-5,5), MathUtils.random(-5,5));
+        }
+        if(target.dst(position) > 0.3)
+        {
+            direction.set(target).sub(position).setLength(1);
+            getComponent(TransformComponent.class).setRotation(direction.angleRad());
+            Body body = getComponent(PhysicalBodyComponent.class).body;
+            body.applyForce(direction.scl(speed), body.getPosition(), true);
+            if(!walking)
+            {
+                getComponent(AnimationComponent.class).animationSet.play(SpiderAnimationId.WALK);
+                walking = true;
+            }
+        }
+        else if(walking)
+        {
+            getComponent(AnimationComponent.class).animationSet.stop();
+            walking = false;
+        }
+    }
+
+    @Override
+    public void onCollision(int otherEntity, short category, short otherCategory)
+    {
+        if(isCategory(otherCategory, PLAYER) && isCategory(category, SENSOR))
+        {
+            playerDetected = otherEntity;
+        }
+    }
+
+    @Override
+    public void onEndCollision(int otherEntity, short category, short otherCategory)
+    {
+        if(isCategory(otherCategory, PLAYER) && isCategory(category, SENSOR))
+        {
+            playerDetected = -1;
         }
     }
 

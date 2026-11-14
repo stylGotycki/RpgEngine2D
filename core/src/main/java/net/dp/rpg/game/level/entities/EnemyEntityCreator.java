@@ -38,24 +38,28 @@ public class EnemyEntityCreator implements Disposable {
 
   private final TextureAtlas atlas;
 
-  private final int playerId;
+  private final int player;
 
   private final DialogueController dialogues;
 
   private final BodyDef bodyDef = new BodyDef();
 
+  private final FixtureDef sensorFixtureDef = new FixtureDef();
+
   private final FixtureDef fixtureDef = new FixtureDef();
 
   private final CircleShape circle = new CircleShape();
 
+  private final CircleShape sensorCircle = new CircleShape();
+
   private final Map<String, Animation<TextureRegion>> animations = new HashMap<>();
 
-  public EnemyEntityCreator(Scene scene, TextureAtlas atlas, int playerId,
+  public EnemyEntityCreator(Scene scene, TextureAtlas atlas, int player,
       DialogueController dialogues) {
     this.dialogues = dialogues;
     this.scene = scene;
     this.atlas = atlas;
-    this.playerId = playerId;
+    this.player = player;
 
     bodyDef.type = BodyDef.BodyType.DynamicBody;
     bodyDef.fixedRotation = true;
@@ -69,11 +73,18 @@ public class EnemyEntityCreator implements Disposable {
     fixtureDef.filter.categoryBits = (short) (FixtureCategory.ENEMY | FixtureCategory.ENEMY_ATTACK);
     fixtureDef.isSensor = false;
     fixtureDef.shape = circle;
+
+    sensorFixtureDef.density = 0f;
+    sensorFixtureDef.filter.categoryBits = FixtureCategory.SENSOR;
+    sensorFixtureDef.isSensor = true;
+    sensorFixtureDef.shape = sensorCircle;
   }
 
   public int create(EnemyDef enemy, float x, float y, TileFloor floor, TileRoom home) {
     bodyDef.position.set(x, y);
     circle.setRadius(enemy.size() / 2);
+    float playerDetectionSensorSize = enemy.size() * 12;
+    sensorCircle.setRadius(playerDetectionSensorSize);
 
     AnimationSet<EnemyAnimationId> animationSet = new AnimationSet<>();
     animationSet.addAnimation(animation(enemy), EnemyAnimationId.WALK);
@@ -86,6 +97,7 @@ public class EnemyEntityCreator implements Disposable {
     int entityId = scene.createEntity();
     scene.createBodyComponent(entityId, bodyDef);
     scene.createFixture(entityId, fixtureDef);
+    scene.createFixture(entityId, sensorFixtureDef);
     scene.addComponent(entityId, new HealthComponent(enemy.health(), enemy.health()));
     scene.addComponent(entityId, new SpriteComponent(sprite, false));
     scene.addComponent(entityId, new AnimationComponent(animationSet));
@@ -93,7 +105,7 @@ public class EnemyEntityCreator implements Disposable {
         new PeriodicAttackComponent(enemy.damage(), KNOCKBACK, DAMAGE_DELAY));
     scene.addComponent(entityId, new FractionComponent(Fraction.ENEMY));
     scene.addComponent(entityId,
-        new ScriptComponent(new EnemyScript(playerId, enemy, floor, home, dialogues)));
+        new ScriptComponent(new EnemyScript(player, enemy, floor, home, dialogues)));
 
     return entityId;
   }
@@ -113,5 +125,6 @@ public class EnemyEntityCreator implements Disposable {
   @Override
   public void dispose() {
     circle.dispose();
+    sensorCircle.dispose();
   }
 }
