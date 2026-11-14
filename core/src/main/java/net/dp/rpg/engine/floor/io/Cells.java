@@ -7,7 +7,7 @@ import net.dp.rpg.engine.tile.room.RoomCell;
 
 public final class Cells {
 
-  public static final Comparator<RoomCell> READING_ORDER =
+  public static final Comparator<RoomCell> ROW_ORDER =
       Comparator.comparingInt(RoomCell::y).thenComparingInt(RoomCell::x);
 
   private Cells() {
@@ -32,7 +32,7 @@ public final class Cells {
     List<RoomCell> sorted = new ArrayList<>();
 
     cells.forEach(sorted::add);
-    sorted.sort(READING_ORDER);
+    sorted.sort(ROW_ORDER);
 
     List<String> written = new ArrayList<>();
 

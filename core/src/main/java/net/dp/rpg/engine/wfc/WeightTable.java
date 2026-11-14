@@ -21,8 +21,7 @@ public final class WeightTable {
       double weight = weights[token];
 
       if (!Double.isFinite(weight) || weight < 0.0) {
-        throw new IllegalArgumentException("Weight of token %d must be finite and non-negative: %s"
-            .formatted(token, weight));
+        throw new IllegalArgumentException("Weight of token %d must be finite and non-negative: %s".formatted(token, weight));
       }
 
       if (weight > 0.0) {

@@ -1,162 +1,182 @@
 package net.dp.rpg.game;
 
+import java.util.ArrayList;
+import java.util.IdentityHashMap;
+import java.util.List;
+import java.util.Map;
 import lombok.Getter;
 import net.dp.rpg.engine.Scene;
-import net.dp.rpg.engine.floor.*;
+import net.dp.rpg.engine.content.ContentGenerator;
+import net.dp.rpg.engine.content.ContentSettings;
+import net.dp.rpg.engine.content.FloorContent;
+import net.dp.rpg.engine.floor.FloorArchetype;
+import net.dp.rpg.engine.floor.FloorGenerator;
+import net.dp.rpg.engine.floor.FloorLayout;
+import net.dp.rpg.engine.floor.FloorSettings;
+import net.dp.rpg.engine.floor.graph.RoomNode;
+import net.dp.rpg.engine.interior.GeneratedRoom;
+import net.dp.rpg.engine.interior.InteriorContext;
+import net.dp.rpg.engine.interior.InteriorGenerator;
+import net.dp.rpg.engine.interior.pass.RoomReachability;
+import net.dp.rpg.engine.quest.Quest;
+import net.dp.rpg.engine.quest.QuestContent;
+import net.dp.rpg.engine.quest.QuestPlanner;
+import net.dp.rpg.engine.quest.QuestWeights;
 import net.dp.rpg.engine.systems.gameEvent.GameEvent;
 import net.dp.rpg.engine.systems.gameEvent.GameEventListener;
-import net.dp.rpg.engine.tile.TileMapData;
 import net.dp.rpg.engine.tile.TileSystem;
 import net.dp.rpg.engine.tile.debug.GdxTileLogger;
 import net.dp.rpg.engine.tile.debug.TileLogger;
-import net.dp.rpg.engine.tile.exception.TileException;
-import net.dp.rpg.engine.tile.render.TileMapRenderer;
-import net.dp.rpg.engine.tile.room.*;
+import net.dp.rpg.engine.tile.room.RoomCell;
+import net.dp.rpg.engine.tile.room.RoomEdge;
 import net.dp.rpg.game.level.events.EnterRoomEvent;
+import net.dp.rpg.game.level.PlaceholderInterior;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+public class TileFloor implements GameEventListener {
 
-public class TileFloor implements GameEventListener
-{
-    private static final String[] TILESET_PATHS = {"tiles/terrain.tsx", "tiles/basement.tsx"};
-    private static final String MAP_PATH = "export/floor1/room-00.tmx";
+  private static TileSystem sharedTiles;
 
-    @Getter
-    private final int gridWidth = 9;
-    @Getter
-    private final int gridHeight = 7;
+  private static InteriorContext sharedContext;
 
-    private final int roomCount;
+  private final TileLogger logger = new GdxTileLogger("Floor");
 
-    @Getter
-    private final List<TileRoom> rooms = new ArrayList<>();
+  @Getter
+  private final List<TileRoom> rooms = new ArrayList<>();
 
-    private int activeRoom = 0;
+  @Getter
+  private final FloorLayout layout;
 
-    private boolean mapLoaded;
+  @Getter
+  private final TileSystem tileSystem;
 
-    private final FloorGenerator generator = new FloorGenerator();
+  @Getter
+  private final RoomReachability walkability;
 
-    @Getter
-    private TileSystem tileSystem;
+  private final Scene scene;
 
-    private List<String> tilesetIds;
+  private int activeRoom;
 
-    private TileMapRenderer renderer;
+  @Getter
+  private final FloorContent content;
 
-    private TileLogger logger;
+  @Getter
+  private final List<Quest> quests;
 
-    private FloorArchetype archetype = FloorArchetypes.CAVES;
+  public TileFloor(FloorArchetype archetype, FloorSettings settings, long seed, Scene scene) {
+    this(archetype, settings, ContentSettings.DEFAULTS, QuestWeights.DEFAULTS, seed, scene);
+  }
 
-    private FloorLayout layout;
+  public TileFloor(FloorArchetype archetype, FloorSettings settings,
+      ContentSettings contentSettings, QuestWeights questWeights, long seed, Scene scene) {
+    this.scene = scene;
+    this.tileSystem = tiles();
+    this.walkability = new RoomReachability(tileSystem.types());
 
-    private TileMapData map;
+    InteriorGenerator interiors = PlaceholderInterior.generator(sharedContext, tileSystem);
 
-    private Scene scene;
+    layout = new FloorGenerator().generate(archetype, settings, seed);
 
-    private long seed;
+    Map<RoomNode, GeneratedRoom> generated = new IdentityHashMap<>();
 
-    public TileFloor(long seed, int roomCount, Scene scene)
-    {
-        this.scene = scene;
-        this.seed = seed;
-        this.roomCount = roomCount;
-
-        logger = new GdxTileLogger("Floor");
-
-        tileSystem = new TileSystem(seed);
-        tileSystem.loadTilesets(TILESET_PATHS);
-        tilesetIds = tileSystem.tilesetIds();
-
-        generate(seed);
-
-        logger.log(tileSystem.debug().describeCatalog());
-
-        scene.setTileMap(getActiveRoom().map(), getTileSystem(), getActiveRoom().origin().x(), getActiveRoom().origin().y(), this.gridHeight);
+    for (RoomNode node : layout.graph().rooms()) {
+      generated.put(node, interiors.generate(layout.blueprintOf(node)));
     }
 
-    public TileRoom getActiveRoom()
-    {
-        return rooms.get(activeRoom);
+    List<Quest> planned = new QuestPlanner(questWeights).plan(layout);
+    content = new ContentGenerator(tileSystem.types(), contentSettings)
+        .generate(layout, generated::get, planned);
+    quests = QuestContent.reconcile(planned, layout, content);
+
+    for (RoomNode node : layout.graph().rooms()) {
+      rooms.add(new TileRoom(node.index(), node, generated.get(node), content.of(node)));
     }
 
-    public void nextRoomActive(Direction direction)
-    {
-        TileRoom currentRoom = rooms.get(activeRoom);
-        RoomCell currentCell = currentRoom.origin();
-        for(TileRoom room : rooms)
-        {
-            if(room.containsCell(currentCell.neighbour(direction)))
-            {
-                this.activeRoom = room.id();
-                break;
-            }
+    activeRoom = layout.graph().start().index();
+    logSummary(seed);
+    showActiveRoom();
+  }
+
+  private static synchronized TileSystem tiles() {
+    if (sharedTiles == null) {
+      sharedTiles = new TileSystem(1L);
+      sharedTiles.loadTileset(PlaceholderInterior.TILESET);
+      sharedContext = PlaceholderInterior.load(sharedTiles);
+    }
+
+    return sharedTiles;
+  }
+
+  public TileRoom getActiveRoom() {
+    return rooms.get(activeRoom);
+  }
+
+  public TileRoom getStartRoom() {
+    return rooms.get(layout.graph().start().index());
+  }
+
+  public TileRoom roomBehind(TileRoom room, RoomEdge localEdge) {
+    RoomCell outside = room.toFloorCell(localEdge.cell()).neighbour(localEdge.direction());
+    RoomNode node = layout.graph().roomAt(outside);
+
+    return node == null ? null : rooms.get(node.index());
+  }
+
+  public boolean owns(TileRoom room) {
+    return room != null && room.id() < rooms.size() && rooms.get(room.id()) == room;
+  }
+
+  public void setRoomActive(TileRoom room) {
+    if (!owns(room)) {
+      return;
+    }
+
+    activeRoom = room.id();
+    showActiveRoom();
+  }
+
+  public int[] walkableTileNear(TileRoom room, int x, int y) {
+    int limit = Math.max(room.map().width(), room.map().height());
+
+    for (int radius = 0; radius < limit; radius++) {
+      for (int dy = -radius; dy <= radius; dy++) {
+        for (int dx = -radius; dx <= radius; dx++) {
+          boolean onRing = Math.abs(dx) == radius || Math.abs(dy) == radius;
+
+          if (onRing && walkability.isWalkable(room.map(), x + dx, y + dy)
+              && !isDoorTile(room, x + dx, y + dy)) {
+            return new int[] {x + dx, y + dy};
+          }
         }
-        scene.setTileMap(getActiveRoom().map(), getTileSystem(), getActiveRoom().origin().x(), getActiveRoom().origin().y(), this.gridHeight);
+      }
     }
 
-    public void setRoomActive(TileRoom room)
-    {
-        this.activeRoom = room.id();
-        scene.setTileMap(getActiveRoom().map(), getTileSystem(), getActiveRoom().origin().x(), getActiveRoom().origin().y(), this.getGridHeight());
+    return new int[] {x, y};
+  }
+
+  private static boolean isDoorTile(TileRoom room, int x, int y) {
+    return room.doors().stream().anyMatch(edge -> edge.doorTileX() == x && edge.doorTileY() == y);
+  }
+
+  private void showActiveRoom() {
+    TileRoom room = getActiveRoom();
+
+    scene.setTileMap(room.map(), tileSystem, room.origin().x(), room.origin().y());
+  }
+
+  private void logSummary(long seed) {
+    long fallbacks = rooms.stream().filter(room -> room.generated().isFallback()).count();
+
+    logger.log("Floor %s seed %d: %d rooms, critical path %d, %d fallback interiors%n%s%n%s"
+        .formatted(layout.archetypeId(), seed, rooms.size(), layout.criticalLength(), fallbacks,
+            layout.summary(), "content " + content.totals() + ", quests " + quests.stream()
+                .map(quest -> quest.id() + "=" + quest.template()).toList()));
+  }
+
+  @Override
+  public void onEvent(GameEvent event) {
+    // The event bus outlives scenes, so a floor of an earlier game may still be listening.
+    if (event instanceof EnterRoomEvent roomEvent && owns(roomEvent.room)) {
+      setRoomActive(roomEvent.room);
     }
-
-    private void generate(long newSeed)
-    {
-        seed = newSeed;
-        layout = generator.generate(archetype, seed);
-
-        TileRoomPainter painter = new TileRoomPainter(tileSystem.types());
-
-        new TileFloorGenerator(gridWidth, gridHeight).generate(seed, roomCount)
-            .forEach(draft -> rooms.add(painter.paint(draft, seed)));
-
-        logger.log("Generated floor: %d rooms, %d cells total".formatted(rooms.size(),
-            rooms.stream().mapToInt(room -> room.shape().size()).sum()));
-
-        for(TileRoom room : rooms)
-        {
-            logger.log("  %s at %s: %dx%d cells, %d door(s) -> %s".formatted(room.label(),
-                room.origin(), room.shape().cellsAcross(), room.shape().cellsDown(),
-                room.doors().size(), room.doors().stream().map(RoomEdge::direction).toList()));
-        }
-    }
-
-    public void loadRoomFromFile() {
-        if (mapLoaded) {
-            logger.log("Map already loaded as room %d".formatted(rooms.size() - 1));
-
-            return;
-        }
-
-        TileMapData map = tileSystem.loadMap(MAP_PATH);
-        RoomShape shape;
-
-        try {
-            shape = TileRoomShapes.of(map);
-        } catch (TileException exception) {
-            logger.log("Cannot recover a room shape from %s, treating it as one cell: %s".formatted(MAP_PATH, exception.getMessage()));
-
-            shape = RoomShape.single();
-        }
-
-        rooms.add(new TileRoom(rooms.size(), shape, RoomCell.ORIGIN, Set.of(), map));
-        mapLoaded = true;
-
-        logger.log("Loaded %s as room %d: %dx%d tiles, shape %s".formatted(MAP_PATH,
-            rooms.size() - 1, map.width(), map.height(), TileRoomShapes.encode(shape)));
-
-        activeRoom = (rooms.size() - 1);
-    }
-
-    @Override
-    public void onEvent(GameEvent event)
-    {
-        if(event instanceof EnterRoomEvent doorEvent)
-        {
-            setRoomActive(doorEvent.room);
-        }
-    }
+  }
 }

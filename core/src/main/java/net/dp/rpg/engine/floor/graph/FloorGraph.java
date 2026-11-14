@@ -248,4 +248,46 @@ public final class FloorGraph {
   public RoomNode start() {
     return start;
   }
+
+  public RoomCell minCorner() {
+    if (occupied.isEmpty()) {
+      return RoomCell.ORIGIN;
+    }
+
+    int minX = Integer.MAX_VALUE;
+    int minY = Integer.MAX_VALUE;
+
+    for (RoomCell cell : occupied.keySet()) {
+      minX = Math.min(minX, cell.x());
+      minY = Math.min(minY, cell.y());
+    }
+
+    return new RoomCell(minX, minY);
+  }
+
+  public FloorGraph translated(int deltaX, int deltaY) {
+    FloorGraph copy = new FloorGraph();
+
+    for (RoomNode room : rooms) {
+      RoomNode moved = copy.place(room.variant(), room.origin().translated(deltaX, deltaY));
+
+      moved.setPhase(room.phase());
+      moved.setType(room.type());
+      moved.setQuestId(room.questId());
+    }
+
+    for (RoomLink link : links) {
+      RoomEdge edge = link.edge();
+      RoomEdge movedEdge = new RoomEdge(edge.cell().translated(deltaX, deltaY), edge.direction());
+
+      copy.connect(copy.rooms.get(link.from().index()), copy.rooms.get(link.to().index()),
+          movedEdge, link.doorType());
+    }
+
+    reserved.forEach(cell -> copy.reserve(cell.translated(deltaX, deltaY)));
+    copy.exemptCells = exemptCells;
+    copy.computeDepths();
+
+    return copy;
+  }
 }

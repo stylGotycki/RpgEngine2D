@@ -39,8 +39,8 @@ public record RoomCell(int x, int y) {
   public int doorTileY(Direction direction) {
     return switch (direction) {
       case WEST, EAST -> tileOriginY() + RoomGeometry.CENTER_Y;
-      case NORTH -> tileOriginY();
-      case SOUTH -> tileOriginY() + RoomGeometry.CELL_HEIGHT - 1;
+      case NORTH -> tileOriginY() + RoomGeometry.CELL_HEIGHT - 1;
+      case SOUTH -> tileOriginY();
     };
   }
 }

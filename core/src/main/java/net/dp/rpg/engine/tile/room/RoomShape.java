@@ -12,7 +12,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-public record RoomShape(Set<RoomCell> cells, int cellsAcross, int cellsDown) {
+public record RoomShape(Set<RoomCell> cells, int cellsAcross, int cellsHigh) {
 
   public RoomShape {
     if (cells == null || cells.isEmpty()) {
@@ -32,9 +32,9 @@ public record RoomShape(Set<RoomCell> cells, int cellsAcross, int cellsDown) {
     requireConnected(normalised);
 
     int across = normalised.stream().mapToInt(RoomCell::x).max().orElseThrow() + 1;
-    int down = normalised.stream().mapToInt(RoomCell::y).max().orElseThrow() + 1;
+    int high = normalised.stream().mapToInt(RoomCell::y).max().orElseThrow() + 1;
 
-    return new RoomShape(normalised, across, down);
+    return new RoomShape(normalised, across, high);
   }
 
   public static RoomShape single() {
@@ -44,11 +44,12 @@ public record RoomShape(Set<RoomCell> cells, int cellsAcross, int cellsDown) {
   public static RoomShape parse(String... rows) {
     List<RoomCell> cells = new ArrayList<>();
 
-    for (int y = 0; y < rows.length; y++) {
-      String row = rows[y];
+    for (int row = 0; row < rows.length; row++) {
+      String text = rows[row];
+      int y = rows.length - 1 - row;
 
-      for (int x = 0; x < row.length(); x++) {
-        char symbol = row.charAt(x);
+      for (int x = 0; x < text.length(); x++) {
+        char symbol = text.charAt(x);
 
         if (symbol != ' ' && symbol != '.') {
           cells.add(new RoomCell(x, y));
@@ -72,13 +73,29 @@ public record RoomShape(Set<RoomCell> cells, int cellsAcross, int cellsDown) {
   }
 
   public int tileHeight() {
-    return RoomGeometry.tileHeight(cellsDown);
+    return RoomGeometry.tileHeight(cellsHigh);
   }
 
-  public RoomCell topLeftCell() {
+  public RoomCell anchorCell() {
     return cells.stream()
         .min(Comparator.comparingInt(RoomCell::y).thenComparingInt(RoomCell::x))
         .orElseThrow();
+  }
+
+  public List<String> toRows() {
+    List<String> rows = new ArrayList<>();
+
+    for (int y = cellsHigh - 1; y >= 0; y--) {
+      StringBuilder row = new StringBuilder(cellsAcross);
+
+      for (int x = 0; x < cellsAcross; x++) {
+        row.append(contains(new RoomCell(x, y)) ? '#' : '.');
+      }
+
+      rows.add(row.toString());
+    }
+
+    return rows;
   }
 
   public List<RoomEdge> outerEdges() {

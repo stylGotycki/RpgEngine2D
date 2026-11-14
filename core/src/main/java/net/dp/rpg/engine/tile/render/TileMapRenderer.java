@@ -62,28 +62,24 @@ public final class TileMapRenderer implements Disposable {
   }
 
   private void renderLayers(TileMapData map, OrthographicCamera camera) {
-    int height = map.height();
-
     float halfWidth = camera.viewportWidth * camera.zoom * 0.5f;
     float halfHeight = camera.viewportHeight * camera.zoom * 0.5f;
 
     int minX = clamp((int) Math.floor(camera.position.x - halfWidth), map.width());
     int maxX = clamp((int) Math.ceil(camera.position.x + halfWidth), map.width());
 
-    int minY = clamp(height - 1 - (int) Math.ceil(camera.position.y + halfHeight), height);
-    int maxY = clamp(height - 1 - (int) Math.floor(camera.position.y - halfHeight), height);
+    int minY = clamp((int) Math.floor(camera.position.y - halfHeight), map.height());
+    int maxY = clamp((int) Math.ceil(camera.position.y + halfHeight), map.height());
 
     for (TileLayer layer : map.layers()) {
-      renderLayer(layer, height, minX, maxX, minY, maxY);
+      renderLayer(layer, minX, maxX, minY, maxY);
     }
   }
 
-  private void renderLayer(TileLayer layer, int mapHeight, int minX, int maxX, int minY, int maxY) {
+  private void renderLayer(TileLayer layer, int minX, int maxX, int minY, int maxY) {
     TileGrid grid = layer.grid();
 
     for (int y = minY; y <= maxY; y++) {
-      float worldY = mapHeight - 1 - y;
-
       for (int x = minX; x <= maxX; x++) {
         int runtimeId = grid.get(x, y);
 
@@ -97,7 +93,7 @@ public final class TileMapRenderer implements Disposable {
           continue;
         }
 
-        batch.draw(region, x, worldY, 1f, 1f);
+        batch.draw(region, x, y, 1f, 1f);
       }
     }
   }

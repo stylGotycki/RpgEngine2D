@@ -37,19 +37,27 @@ public final class AppendixPhase {
 
     int wanted = context.plan().appendixRooms();
     int attached = 0;
+    RoomNode boss = attachBoss(graph, context, shapes, shapeRandom);
+    double chaining = context.plan().branches().chaining();
+    // Drawn only when chaining is on, so floors without it keep their streams.
+    Random chainRandom = chaining > 0 ? context.stream("chain") : null;
+    RoomNode last = null;
 
     for (int index = 0; index < wanted - 1; index++) {
       int opportunities = Math.max(1, wanted - 1 - index);
       RoomType type = context.loadout().next(AbilityPhase.APPENDIX, opportunities, typeRandom);
+      RoomNode preferred = chainRandom != null && last != null
+          && chainRandom.nextDouble() < chaining ? last : null;
+      RoomNode room = attachOne(graph, context, type, shapes, anchorRandom, shapeRandom,
+          preferred);
 
-      if (attachOne(graph, context, type, shapes, anchorRandom, shapeRandom) != null) {
+      if (room != null) {
         attached++;
       }
+      last = room;
     }
 
     attached += spendRemaining(graph, context, shapes, anchorRandom, shapeRandom);
-
-    RoomNode boss = attachBoss(graph, context, shapes, shapeRandom);
 
     return new Result(attached, boss);
   }
@@ -75,7 +83,25 @@ public final class AppendixPhase {
 
   private RoomNode attachOne(FloorGraph graph, FloorContext context, RoomType type, ShapeDrawContext shapes,
                              Random anchorRandom, Random shapeRandom) {
+    return attachOne(graph, context, type, shapes, anchorRandom, shapeRandom, null);
+  }
+
+  // A preferred anchor (the end of the branch being grown) is tried first; it must stay
+  // shallower than the boss, so the boss remains the end of the floor.
+  private RoomNode attachOne(FloorGraph graph, FloorContext context, RoomType type, ShapeDrawContext shapes,
+                             Random anchorRandom, Random shapeRandom, RoomNode preferred) {
     ShapePool pool = context.types().poolFor(type);
+
+    if (preferred != null && canExtend(graph, preferred, context)) {
+      RoomNode room = attach(graph, preferred, pool, context, shapes, shapeRandom);
+
+      if (room != null) {
+        room.setType(type);
+        context.loadout().spend(AbilityPhase.APPENDIX, type);
+
+        return room;
+      }
+    }
 
     for (int retry = 0; retry < ANCHOR_RETRIES; retry++) {
       RoomNode anchor = pickAnchor(graph, context.bounds(), anchorRandom);
@@ -125,15 +151,35 @@ public final class AppendixPhase {
     return null;
   }
 
+  private boolean canExtend(FloorGraph graph, RoomNode room, FloorContext context) {
+    graph.computeDepths();
+
+    int bossDepth = graph.rooms().stream()
+        .filter(other -> other.type() == RoomType.BOSS)
+        .mapToInt(RoomNode::depth)
+        .findFirst()
+        .orElse(Integer.MAX_VALUE);
+
+    return room.depth() + 1 < bossDepth && !freeNeighbourCells(graph, room, context.bounds()).isEmpty();
+  }
+
   private RoomNode pickAnchor(FloorGraph graph, GridBounds bounds, Random anchorRandom) {
     graph.computeDepths();
 
     List<RoomNode> candidates = new ArrayList<>();
     List<Double> weights = new ArrayList<>();
     double total = 0.0;
+    int bossDepth = graph.rooms().stream()
+        .filter(room -> room.type() == RoomType.BOSS)
+        .mapToInt(RoomNode::depth)
+        .findFirst()
+        .orElse(Integer.MAX_VALUE);
 
     for (RoomNode room : graph.rooms()) {
-      if (freeNeighbourCells(graph, room, bounds).isEmpty()) {
+      boolean tooDeep = room.depth() >= bossDepth;
+
+      if (room.type() == RoomType.BOSS || tooDeep
+          || freeNeighbourCells(graph, room, bounds).isEmpty()) {
         continue;
       }
 

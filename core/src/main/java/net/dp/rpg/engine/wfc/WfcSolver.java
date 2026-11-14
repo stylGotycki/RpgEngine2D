@@ -50,7 +50,7 @@ public final class WfcSolver {
     return new WfcResult(WfcResult.Status.CONTRADICTION, maxAttempts, observations, last);
   }
 
-  /** Runs one attempt on the given state in place and returns the number of observations. */
+
   public int run(WfcState state, Random random) {
     double[] noise = new double[state.cellCount()];
 

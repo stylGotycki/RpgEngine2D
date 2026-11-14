@@ -12,6 +12,8 @@ import net.dp.rpg.engine.Scene;
 import net.dp.rpg.engine.animation.AnimationSet;
 import net.dp.rpg.engine.components.*;
 import net.dp.rpg.game.FixtureCategory;
+import net.dp.rpg.game.dialogue.DialogueController;
+import net.dp.rpg.game.item.PlayerStats;
 import net.dp.rpg.game.animations.PlayerAnimationId;
 import net.dp.rpg.game.level.entities.DefaultEntityProperties;
 import net.dp.rpg.game.level.entities.EntityCreator;
@@ -40,12 +42,16 @@ public class PlayerCreator extends EntityCreator implements Disposable
     private final Animation<TextureRegion> deathAnimation;
 
     private final TextureAtlas atlas;
+    private final PlayerStats stats;
+    private final DialogueController dialogues;
 
-    public PlayerCreator(Scene scene, TextureAtlas atlas)
+    public PlayerCreator(Scene scene, TextureAtlas atlas, PlayerStats stats, DialogueController dialogues)
     {
         super(scene);
 
         this.atlas = atlas;
+        this.stats = stats;
+        this.dialogues = dialogues;
 
         //player Box2D body
         bodyDef.type = BodyDef.BodyType.DynamicBody;
@@ -131,7 +137,7 @@ public class PlayerCreator extends EntityCreator implements Disposable
 
         scene.addComponent(entityId, animationComponent);
 
-        scene.addComponent(entityId, new ScriptComponent(new PlayerScript(bodyFixture, attackFixtureDef, sensorFixture)));
+        scene.addComponent(entityId, new ScriptComponent(new PlayerScript(bodyFixture, attackFixtureDef, sensorFixture, stats, dialogues)));
 
         return entityId;
     }

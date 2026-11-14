@@ -217,8 +217,9 @@ public class Scene implements Disposable
     public int createEntity()
     {
         int entity;
+        // Removing the id matters: getFirst() alone handed the same id to every new entity.
         if(!freeEntity.isEmpty())
-            entity = freeEntity.getFirst();
+            entity = freeEntity.removeFirst();
         else
             entity = nextEntity++;
 
@@ -288,14 +289,14 @@ public class Scene implements Disposable
             this.activeCamera = component.camera;
     }
 
-    public void setTileMap(TileMapData tileMap, TileSystem tileSystem, float xPos, float yPos, int gridHeight)
+    public void setTileMap(TileMapData tileMap, TileSystem tileSystem, float cellX, float cellY)
     {
         if(tileMap != null && tileSystem != null)
         {
             this.tileSystem = tileSystem;
             this.tileMap = tileMap;
-            this.tileTransformX = xPos * RoomGeometry.CELL_WIDTH;
-            this.tileTransformY = (gridHeight - yPos) * RoomGeometry.CELL_HEIGHT - tileMap.height();
+            this.tileTransformX = cellX * RoomGeometry.CELL_WIDTH;
+            this.tileTransformY = cellY * RoomGeometry.CELL_HEIGHT;
         }
     }
 

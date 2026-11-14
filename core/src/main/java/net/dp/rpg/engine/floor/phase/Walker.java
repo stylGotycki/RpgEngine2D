@@ -14,14 +14,17 @@ public final class Walker {
 
   private final WalkerSettings settings;
 
+  private final int targetDepth;
+
   private RoomCell cell;
 
   private Direction heading;
 
-  public Walker(RoomCell start, GridBounds bounds, WalkerSettings settings) {
+  public Walker(RoomCell start, GridBounds bounds, WalkerSettings settings, int targetDepth) {
     this.cell = start;
     this.bounds = bounds;
     this.settings = settings;
+    this.targetDepth = targetDepth;
   }
 
   public RoomCell cell() {
@@ -98,7 +101,14 @@ public final class Walker {
     RoomNode targetRoom = graph.roomAt(target);
 
     if (targetRoom == null) {
-      return graph.isReserved(target) ? 0.0 : settings.freeCellWeight();
+      if (graph.isReserved(target)) {
+        return 0.0;
+      }
+
+      RoomNode here = graph.roomAt(cell);
+      boolean tooDeep = here != null && here.depth() + 1 > targetDepth;
+
+      return settings.freeCellWeight() * (tooDeep ? settings.beyondTargetWeight() : 1.0);
     }
 
     return targetRoom == graph.roomAt(cell) ? settings.sameRoomWeight() : settings.otherRoomWeight();

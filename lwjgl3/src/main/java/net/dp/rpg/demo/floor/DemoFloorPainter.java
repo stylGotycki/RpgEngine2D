@@ -113,9 +113,9 @@ public final class DemoFloorPainter {
   private void paintQuestCorners(TileGrid details, RoomCell cell) {
     int questId = registry.requireRuntimeId(QUEST);
     int left = cell.tileOriginX() + QUEST_INSET;
-    int top = cell.tileOriginY() + QUEST_INSET;
+    int bottom = cell.tileOriginY() + QUEST_INSET;
     int right = cell.tileOriginX() + RoomGeometry.CELL_WIDTH - 1 - QUEST_INSET;
-    int bottom = cell.tileOriginY() + RoomGeometry.CELL_HEIGHT - 1 - QUEST_INSET;
+    int top = cell.tileOriginY() + RoomGeometry.CELL_HEIGHT - 1 - QUEST_INSET;
 
     details.set(left, top, questId);
     details.set(right, top, questId);
@@ -131,8 +131,8 @@ public final class DemoFloorPainter {
     int lastY = originY + RoomGeometry.CELL_HEIGHT - 1;
 
     switch (edge.direction()) {
-      case NORTH -> paintRun(ground, originX, originY, RoomGeometry.CELL_WIDTH, 1, wallId, wornId);
-      case SOUTH -> paintRun(ground, originX, lastY, RoomGeometry.CELL_WIDTH, 1, wallId, wornId);
+      case NORTH -> paintRun(ground, originX, lastY, RoomGeometry.CELL_WIDTH, 1, wallId, wornId);
+      case SOUTH -> paintRun(ground, originX, originY, RoomGeometry.CELL_WIDTH, 1, wallId, wornId);
       case WEST -> paintRun(ground, originX, originY, 1, RoomGeometry.CELL_HEIGHT, wallId, wornId);
       case EAST -> paintRun(ground, lastX, originY, 1, RoomGeometry.CELL_HEIGHT, wallId, wornId);
     }

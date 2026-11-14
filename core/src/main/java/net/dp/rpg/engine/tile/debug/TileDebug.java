@@ -72,8 +72,8 @@ public final class TileDebug {
         .sum();
 
     return "tileset '%s': %d tiles %dx%d in %d columns, %d types, %d variants, image %s"
-        .formatted(tileset.id(), tileset.tileCount(), tileset.tileWidth(), tileset.tileHeight(),
-            tileset.columns(), tileset.binding().size(), variants, tileset.imagePath());
+        .formatted(tileset.id(), tileset.tileCount(), tileset.tileWidth(), tileset.tileHeight(), tileset.columns(),
+            tileset.binding().size(), variants, tileset.imagePath());
   }
 
   public String describeMap(TileMapData map, String label) {
@@ -81,7 +81,8 @@ public final class TileDebug {
 
     out.append("Map '%s': %dx%d, %d layer(s), %d object(s), %d distinct types used"
         .formatted(label, map.width(), map.height(), map.layers().size(), map.objects().size(),
-            map.usedRuntimeIds().size())).append(NEW_LINE);
+            map.usedRuntimeIds().size()))
+        .append(NEW_LINE);
 
     int cells = map.width() * map.height();
 
@@ -89,14 +90,14 @@ public final class TileDebug {
       int filled = layer.grid().countNonEmpty();
 
       out.append("  layer '%s' (%s): %d/%d cells filled (%.1f%%)"
-              .formatted(layer.name(), layer.kind(), filled, cells, 100.0 * filled / cells))
+          .formatted(layer.name(), layer.kind(), filled, cells, 100.0 * filled / cells))
           .append(NEW_LINE);
     }
 
     for (TileMapObject object : map.objects()) {
       out.append("  object #%d %s '%s' at (%.1f, %.1f)%s"
-              .formatted(object.id(), object.type(), object.name(), object.x(), object.y(),
-                  object.isPoint() ? "" : " size %.1fx%.1f".formatted(object.width(), object.height())))
+          .formatted(object.id(), object.type(), object.name(), object.x(), object.y(),
+              object.isPoint() ? "" : " size %.1fx%.1f".formatted(object.width(), object.height())))
           .append(NEW_LINE);
     }
 

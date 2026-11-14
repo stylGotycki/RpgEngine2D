@@ -26,6 +26,13 @@ public abstract class EntityScript extends Script
     {
     }
 
+    // Called by CombatSystem before the damage lands, so a script can scale it (armour).
+    // Returns the damage unchanged unless overridden.
+    public float modifyIncomingDamage(int attacker, float damage)
+    {
+        return damage;
+    }
+
     public void onDamage()
     {
     }

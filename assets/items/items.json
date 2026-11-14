@@ -1,0 +1,60 @@
+{
+  "items": [
+    { "id": "sword", "name": "Zwykły miecz", "category": "WEAPON", "weapon": "SWORD", "tier": 1,
+      "bonus": { "STRENGTH": 1 } },
+    { "id": "greatsword", "name": "Mieczysko", "category": "WEAPON", "weapon": "SWORD", "tier": 2,
+      "bonus": { "STRENGTH": 3 }, "requires": { "STRENGTH": 2 } },
+    { "id": "royal_lance", "name": "Królewska kopia", "category": "WEAPON", "weapon": "SWORD", "tier": 3,
+      "bonus": { "STRENGTH": 6 }, "requires": { "STRENGTH": 4 } },
+
+    { "id": "staff", "name": "Kostur", "category": "WEAPON", "weapon": "STAFF", "tier": 1,
+      "bonus": { "WISDOM": 1 } },
+    { "id": "wand", "name": "Różdżka", "category": "WEAPON", "weapon": "STAFF", "tier": 2,
+      "bonus": { "WISDOM": 3 }, "requires": { "WISDOM": 2 } },
+    { "id": "dragon_yawn", "name": "Smoczy ziew", "category": "WEAPON", "weapon": "STAFF", "tier": 3,
+      "bonus": { "WISDOM": 6 }, "requires": { "WISDOM": 4 } },
+
+    { "id": "knives", "name": "Noże", "category": "WEAPON", "weapon": "KNIVES", "tier": 1,
+      "bonus": { "AGILITY": 1 } },
+    { "id": "enchanted_blade", "name": "Zaklęte ostrze", "category": "WEAPON", "weapon": "KNIVES", "tier": 2,
+      "bonus": { "AGILITY": 3, "WISDOM": 1 }, "requires": { "AGILITY": 2 } },
+    { "id": "weightless_sabre", "name": "Nieważka szabla", "category": "WEAPON", "weapon": "KNIVES", "tier": 3,
+      "bonus": { "AGILITY": 6 }, "requires": { "AGILITY": 4 } },
+
+    { "id": "balance_breaker", "name": "Balance breaker", "category": "WEAPON", "weapon": "UNIQUE", "tier": 4,
+      "bonus": { "STRENGTH": 5, "AGILITY": 5, "WISDOM": 5 },
+      "requires": { "STRENGTH": 3, "AGILITY": 3, "WISDOM": 3 }, "attackSpeed": 1.2 },
+
+    { "id": "leather_tunic", "name": "Skórzana tunika", "category": "ARMOR", "tier": 1,
+      "bonus": { "DEFENSE": 1 } },
+    { "id": "chainmail", "name": "Kolczuga", "category": "ARMOR", "tier": 1,
+      "bonus": { "DEFENSE": 2 } },
+    { "id": "magic_robe", "name": "Magiczne ubranie", "category": "ARMOR", "tier": 2,
+      "bonus": { "DEFENSE": 3, "WISDOM": 2 } },
+    { "id": "silent_trousers", "name": "Ciche spodnie", "category": "ARMOR", "tier": 2,
+      "bonus": { "DEFENSE": 4, "AGILITY": 1 } },
+    { "id": "plate_armor", "name": "Płytowa zbroja", "category": "ARMOR", "tier": 3,
+      "bonus": { "DEFENSE": 8, "STRENGTH": -2 } },
+
+    { "id": "ring_knowledge", "name": "Pierścień wiedzy", "category": "RING", "tier": 2,
+      "bonus": { "WISDOM": 3 } },
+    { "id": "ring_might", "name": "Pierścień krzepy", "category": "RING", "tier": 2,
+      "bonus": { "STRENGTH": 3 } },
+    { "id": "ring_thief", "name": "Pierścień złodzieja", "category": "RING", "tier": 2,
+      "bonus": { "AGILITY": 3 } },
+
+    { "id": "potion_heal_small", "name": "Mała mikstura leczenia", "category": "POTION", "potion": "HEAL", "big": false },
+    { "id": "potion_heal_big", "name": "Duża mikstura leczenia", "category": "POTION", "potion": "HEAL", "big": true },
+    { "id": "potion_strength_small", "name": "Mała mikstura siły", "category": "POTION", "potion": "STRENGTH", "big": false },
+    { "id": "potion_strength_big", "name": "Duża mikstura siły", "category": "POTION", "potion": "STRENGTH", "big": true },
+    { "id": "potion_invisibility_small", "name": "Mała mikstura niewidzialności", "category": "POTION", "potion": "INVISIBILITY", "big": false },
+    { "id": "potion_invisibility_big", "name": "Duża mikstura niewidzialności", "category": "POTION", "potion": "INVISIBILITY", "big": true },
+    { "id": "potion_speed_small", "name": "Mała mikstura szybkości", "category": "POTION", "potion": "SPEED", "big": false },
+    { "id": "potion_speed_big", "name": "Duża mikstura szybkości", "category": "POTION", "potion": "SPEED", "big": true },
+    { "id": "potion_wisdom_small", "name": "Mała mikstura inteligencji", "category": "POTION", "potion": "WISDOM", "big": false },
+    { "id": "potion_wisdom_big", "name": "Duża mikstura inteligencji", "category": "POTION", "potion": "WISDOM", "big": true },
+    { "id": "quest_relic", "name": "Relikwia", "category": "QUEST" },
+    { "id": "quest_ore", "name": "Bryłka srebra", "category": "QUEST" },
+    { "id": "quest_herb", "name": "Ziele z głębin", "category": "QUEST" }
+  ]
+}

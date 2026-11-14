@@ -10,6 +10,8 @@ import net.dp.rpg.engine.systems.gameEvent.GameEventListener;
 import net.dp.rpg.game.SkillType;
 import net.dp.rpg.game.level.events.SkillPointsAvailableEvent;
 import net.dp.rpg.game.level.events.SkillWindowToggleEvent;
+import net.dp.rpg.game.item.PlayerStats;
+import net.dp.rpg.game.item.Stat;
 
 public class SkillWindow extends WidgetGroup implements GameEventListener
 {
@@ -29,6 +31,22 @@ public class SkillWindow extends WidgetGroup implements GameEventListener
                 skillFields.add(skillField);
                 addActor(skillField);
                 currentParent = skillField;
+            }
+        }
+    }
+
+    // Marks the points the player already has (rolled at start, or spent on an earlier floor),
+    // without publishing SkillPointUsedEvent for them.
+    public void showLevels(PlayerStats stats)
+    {
+        for(SkillField field : skillFields)
+        {
+            if(field.skillLevel <= stats.base(Stat.of(field.skillType)))
+            {
+                field.setProgrammaticChangeEvents(false);
+                field.setChecked(true);
+                field.setProgrammaticChangeEvents(true);
+                field.setTouchable(Touchable.disabled);
             }
         }
     }

@@ -21,6 +21,7 @@ import net.dp.rpg.engine.tile.TileTypeRegistry;
 import net.dp.rpg.engine.tile.exception.InvalidRoomShapeException;
 import net.dp.rpg.engine.tile.room.RoomEdge;
 import net.dp.rpg.engine.tile.room.RoomShape;
+import net.dp.rpg.engine.tile.tiled.TiledAxis;
 
 public final class CorpusScanner {
 
@@ -50,7 +51,6 @@ public final class CorpusScanner {
     return new Scan(source, map).run();
   }
 
-  /** The sample, or null when the map had errors, plus every issue found. */
   public record ScanResult(CorpusSample sample, List<CorpusIssue> issues) {
 
     public ScanResult {
@@ -100,6 +100,8 @@ public final class CorpusScanner {
       Set<RoomType> roomTypes = readRoomTypes();
       List<PrefabRegion> prefabs = readPrefabs(zones);
       List<TileMapObject> markers = readMarkers(zones, prefabs);
+
+      checkLooseWalls(ground, zones, prefabs);
 
       if (issues.stream().anyMatch(CorpusIssue::isError)) {
         return reject();
@@ -155,23 +157,54 @@ public final class CorpusScanner {
           }
 
           if (id == TileGrid.EMPTY) {
-            issues.add(CorpusIssue.errorAt(source, x, y, "Ground tile is missing"));
+            issues.add(CorpusIssue.errorAt(source, x, tiledRow(y), "Ground tile is missing"));
             continue;
           }
 
           TileType type = types.require(id);
 
           if (zone == Zone.WALL && type.role() == TileRole.DOOR) {
-            issues.add(CorpusIssue.errorAt(source, x, y,
+            issues.add(CorpusIssue.errorAt(source, x, tiledRow(y),
                 "Door %s is not in the middle of its wall".formatted(type.id())));
           } else if (zone == Zone.WALL && type.role() != TileRole.WALL) {
-            issues.add(CorpusIssue.errorAt(source, x, y,
+            issues.add(CorpusIssue.errorAt(source, x, tiledRow(y),
                 "Wall band must hold a wall or a door, found %s".formatted(type.id())));
           } else if (zone == Zone.INTERIOR && type.role() == TileRole.DOOR) {
-            issues.add(CorpusIssue.errorAt(source, x, y,
+            issues.add(CorpusIssue.errorAt(source, x, tiledRow(y),
                 "Door %s stands inside the room instead of in its wall".formatted(type.id())));
           }
         }
+      }
+    }
+
+    private void checkLooseWalls(TileGrid ground, ZoneMap zones, List<PrefabRegion> prefabs) {
+      int loose = 0;
+      int firstX = 0;
+      int firstY = 0;
+
+      for (int y = 0; y < zones.height(); y++) {
+        for (int x = 0; x < zones.width(); x++) {
+          int id = ground.get(x, y);
+          int column = x;
+          int row = y;
+          boolean wall = zones.zoneAt(x, y) == Zone.INTERIOR && id != TileGrid.EMPTY
+              && types.require(id).role() == TileRole.WALL;
+
+          if (wall && prefabs.stream().noneMatch(prefab -> prefab.contains(column, row))) {
+            if (loose == 0) {
+              firstX = x;
+              firstY = y;
+            }
+
+            loose++;
+          }
+        }
+      }
+
+      if (loose > 0) {
+        issues.add(CorpusIssue.warningAt(source, firstX, tiledRow(firstY), ("%d wall tile(s) "
+            + "inside the room are not part of any PREFAB and are ignored; mark the structure "
+            + "as a PREFAB region").formatted(loose)));
       }
     }
 
@@ -207,7 +240,8 @@ public final class CorpusScanner {
       }
 
       tally.forEach((message, entry) -> issues.add(
-          CorpusIssue.warningAt(source, entry[1], entry[2], message.formatted(entry[0]))));
+          CorpusIssue.warningAt(source, entry[1], tiledRow(entry[2]),
+              message.formatted(entry[0]))));
     }
 
     private void checkShapeHint(RoomShape shape) {
@@ -274,7 +308,7 @@ public final class CorpusScanner {
 
         for (PrefabRegion other : regions) {
           if (region.overlaps(other)) {
-            issues.add(CorpusIssue.errorAt(source, region.x(), region.y(),
+            issues.add(CorpusIssue.errorAt(source, region.x(), tiledTop(region),
                 "PREFAB '%s' overlaps PREFAB '%s'".formatted(region.group(), other.group())));
           }
         }
@@ -286,11 +320,11 @@ public final class CorpusScanner {
     }
 
     private PrefabRegion readPrefab(TileMapObject object, ZoneMap zones) {
-      int nearX = tileOf(object.x());
-      int nearY = tileOf(object.y());
+      int nearX = object.tileX();
+      int nearY = object.tileY();
 
       if (object.isPoint()) {
-        issues.add(CorpusIssue.errorAt(source, nearX, nearY,
+        issues.add(CorpusIssue.errorAt(source, nearX, tiledRow(nearY),
             "PREFAB must be a rectangle, not a point"));
 
         return null;
@@ -298,7 +332,7 @@ public final class CorpusScanner {
 
       if (!onGrid(object.x()) || !onGrid(object.y()) || !onGrid(object.width())
           || !onGrid(object.height())) {
-        issues.add(CorpusIssue.errorAt(source, nearX, nearY,
+        issues.add(CorpusIssue.errorAt(source, nearX, tiledRow(nearY),
             "PREFAB is not aligned to the tile grid"));
 
         return null;
@@ -307,7 +341,7 @@ public final class CorpusScanner {
       Object group = object.properties().get(PREFAB_GROUP_PROPERTY);
 
       if (!(group instanceof String name) || name.isBlank()) {
-        issues.add(CorpusIssue.errorAt(source, nearX, nearY,
+        issues.add(CorpusIssue.errorAt(source, nearX, tiledRow(nearY),
             "PREFAB needs a '%s' property naming its group".formatted(PREFAB_GROUP_PROPERTY)));
 
         return null;
@@ -322,7 +356,8 @@ public final class CorpusScanner {
           if (!zones.isInside(tileX, tileY) || zones.zoneAt(tileX, tileY) != Zone.INTERIOR) {
             String message = "PREFAB '%s' must lie inside the room interior, off the wall band";
 
-            issues.add(CorpusIssue.errorAt(source, tileX, tileY, message.formatted(name)));
+            issues.add(CorpusIssue.errorAt(source, tileX, tiledRow(tileY),
+                message.formatted(name)));
 
             return null;
           }
@@ -334,16 +369,16 @@ public final class CorpusScanner {
 
     private List<TileMapObject> objectsWithin(TileMapObject prefab) {
       int left = Math.round(prefab.x());
-      int top = Math.round(prefab.y());
+      int bottom = Math.round(prefab.y());
       int right = left + Math.round(prefab.width());
-      int bottom = top + Math.round(prefab.height());
+      int top = bottom + Math.round(prefab.height());
       List<TileMapObject> inside = new ArrayList<>();
 
       for (TileMapObject candidate : map.objects()) {
-        int x = tileOf(candidate.x());
-        int y = tileOf(candidate.y());
+        int x = candidate.tileX();
+        int y = candidate.tileY();
 
-        if (!candidate.isType(PREFAB_TYPE) && x >= left && x < right && y >= top && y < bottom) {
+        if (!candidate.isType(PREFAB_TYPE) && x >= left && x < right && y >= bottom && y < top) {
           inside.add(candidate);
         }
       }
@@ -359,17 +394,19 @@ public final class CorpusScanner {
           continue;
         }
 
-        int x = tileOf(object.x());
-        int y = tileOf(object.y());
+        int x = object.tileX();
+        int y = object.tileY();
 
         if (prefabs.stream().anyMatch(prefab -> prefab.contains(x, y))) {
           continue;
         }
 
         if (object.isType(ACCESS_TYPE)) {
-          issues.add(CorpusIssue.warningAt(source, x, y, "ACCESS outside any PREFAB is ignored"));
+          issues.add(CorpusIssue.warningAt(source, x, tiledRow(y),
+              "ACCESS outside any PREFAB is ignored"));
         } else if (!zones.isInside(x, y) || !zones.zoneAt(x, y).isInsideRoom()) {
-          issues.add(CorpusIssue.warningAt(source, x, y, "Marker %s lies outside the room shape and is ignored".formatted(object.type())));
+          issues.add(CorpusIssue.warningAt(source, x, tiledRow(y),
+              "Marker %s lies outside the room shape and is ignored".formatted(object.type())));
         } else {
           markers.add(object);
         }
@@ -382,8 +419,12 @@ public final class CorpusScanner {
       tally.computeIfAbsent(message, key -> new int[] {0, x, y})[0]++;
     }
 
-    private int tileOf(float coordinate) {
-      return (int) Math.floor(coordinate);
+    private int tiledRow(int y) {
+      return TiledAxis.flipRow(y, map.height());
+    }
+
+    private int tiledTop(PrefabRegion region) {
+      return tiledRow(region.y() + region.height() - 1);
     }
 
     private boolean onGrid(float coordinate) {

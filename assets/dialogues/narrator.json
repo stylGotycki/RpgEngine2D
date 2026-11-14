@@ -1,0 +1,21 @@
+{
+  "dialogues": [
+    { "id": "narrator.floor-start", "start": "a", "nodes": {
+      "a": { "text": "Schodzisz w głąb lochu. Powietrze jest ciężkie od kurzu i starej magii.", "next": "b" },
+      "b": { "text": "Gdzieś na dole czeka {boss}. Lepiej się do tego przygotować." }
+    } },
+    { "id": "narrator.room.SHOP", "start": "a", "nodes": {
+      "a": { "text": "Ktoś rozłożył tu towary. Weźmiesz tylko jedną rzecz, więc wybieraj mądrze." }
+    } },
+    { "id": "narrator.room.VAULT", "start": "a", "nodes": {
+      "a": { "text": "Skarbiec. Ktoś bardzo nie chciał, żeby to znaleziono." }
+    } },
+    { "id": "narrator.room.MINIBOSS", "start": "a", "nodes": {
+      "a": { "text": "Pajęczyny drgają. Coś dużego wyczuło twoje kroki." }
+    } },
+    { "id": "narrator.room.BOSS", "start": "a", "nodes": {
+      "a": { "text": "Ziemia drży. {boss} wie, że tu jesteś.", "next": "b" },
+      "b": { "text": "Nie ma odwrotu." }
+    } }
+  ]
+}

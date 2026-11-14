@@ -2,12 +2,14 @@ package net.dp.rpg.engine.interior;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import net.dp.rpg.engine.floor.RandomSource;
 import net.dp.rpg.engine.floor.RoomBlueprint;
 import net.dp.rpg.engine.floor.type.RoomType;
 import net.dp.rpg.engine.interior.detail.LearnedDetailPass;
 import net.dp.rpg.engine.interior.pass.PrefabPhase;
 import net.dp.rpg.engine.interior.pass.RoomCanvas;
+import net.dp.rpg.engine.interior.pass.RoomReachability;
 import net.dp.rpg.engine.interior.pass.SkeletonPass;
 import net.dp.rpg.engine.interior.prefab.PrefabPlacer;
 import net.dp.rpg.engine.interior.prefab.PrefabRequirement;
@@ -15,22 +17,8 @@ import net.dp.rpg.engine.tile.TileMapData;
 import net.dp.rpg.engine.tile.TileTypeRegistry;
 import net.dp.rpg.engine.wfc.WfcState;
 
-/**
- * The single entry point for turning a {@link RoomBlueprint} into a finished room: prefabs,
- * walkable spine, WFC and the learned details, wired once from an {@link InteriorContext}. Later
- * layers (enemies, collectibles, quests) hang off the {@link GeneratedRoom} this returns instead
- * of rebuilding the pipeline.
- *
- * <p>A room never fails the floor. An attempt that cannot be solved, finds no route between two
- * doors or cannot place a mandatory fixed element is retried with a seed derived from the
- * blueprint's own ({@code interior.retry#n}), so the retry sequence is as reproducible as the room;
- * after {@link Settings#roomAttempts()} failures the room becomes an {@link EmergencyRoom} and the
- * reason is kept in {@link GeneratedRoom#note()}. This is the "local degradation before anything
- * escalates" rule the floor generator already follows.
- */
 public final class InteriorGenerator {
 
-  /** Limits of one room: WFC restarts per attempt, and whole-room attempts before falling back. */
   public record Settings(int wfcAttempts, int roomAttempts) {
 
     public static final Settings DEFAULTS = new Settings(30, 4);
@@ -47,6 +35,8 @@ public final class InteriorGenerator {
   private final SkeletonPass skeleton;
 
   private final LearnedDetailPass details;
+
+  private final RoomReachability reachability;
 
   private final Settings settings;
 
@@ -65,6 +55,7 @@ public final class InteriorGenerator {
         prefabs, settings.wfcAttempts());
     this.details = new LearnedDetailPass(context.details(),
         runtimeId -> !types.require(runtimeId).walkable());
+    this.reachability = new RoomReachability(types);
   }
 
   public InteriorContext context() {
@@ -81,11 +72,19 @@ public final class InteriorGenerator {
       try {
         SkeletonPass.Result result = skeleton.generate(used);
 
-        if (result.isSolved()) {
-          return finish(used, result, attempt + 1);
+        if (!result.isSolved()) {
+          lastFailure = describe(result);
+          continue;
         }
 
-        lastFailure = describe(result);
+        GeneratedRoom room = finish(used, result, attempt + 1);
+        Optional<String> problem = reachability.problem(room.canvas(), room.map());
+
+        if (problem.isEmpty()) {
+          return room;
+        }
+
+        lastFailure = problem.get();
       } catch (IllegalStateException exception) {
         lastFailure = exception.getMessage();
       }
@@ -94,7 +93,6 @@ public final class InteriorGenerator {
     return emergency(blueprint, lastFailure);
   }
 
-  /** Details go on after WFC, so the map is built here, once, rather than taken from the pass. */
   private GeneratedRoom finish(RoomBlueprint used, SkeletonPass.Result result, int attempts) {
     RoomCanvas canvas = result.canvas();
     WfcState ground = result.ground().state();
@@ -120,7 +118,7 @@ public final class InteriorGenerator {
 
   private static String describe(SkeletonPass.Result result) {
     if (result.ground() == null) {
-      return "the walkable spine found no route between two doors";
+      return "the walkable spine could not join the doors with walkable tiles";
     }
 
     return "WFC did not solve (%s)".formatted(result.ground().status());

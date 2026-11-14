@@ -10,6 +10,9 @@ public final class FixtureCategory
     public static short LIGHT = 0x0020;
     public static short PLAYER = 0x0040;
     public static short ENEMY_ATTACK = 0x0080;
+    // Moved off 0x0080 when ENEMY_ATTACK came in on dev: a shared bit made items enemy attacks.
+    public static short ITEM = 0x0200;
+    public static short NPC = 0x0400;
 
     public static boolean isCategory(short bits, short... categories)
     {

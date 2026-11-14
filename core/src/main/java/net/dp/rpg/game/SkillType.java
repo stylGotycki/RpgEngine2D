@@ -12,8 +12,8 @@ public enum SkillType
         switch(this)
         {
             case STRENGTH -> color = "red";
-            case AGILITY -> color = "blue";
-            case WISDOM -> color = "green";
+            case AGILITY -> color = "green";
+            case WISDOM -> color = "blue";
         }
         return color;
     }

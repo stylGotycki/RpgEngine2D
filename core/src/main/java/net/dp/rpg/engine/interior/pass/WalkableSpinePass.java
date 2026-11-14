@@ -5,13 +5,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.PriorityQueue;
 import java.util.Random;
-import net.dp.rpg.engine.floor.RoomBlueprint;
 import net.dp.rpg.engine.interior.corpus.Zone;
 import net.dp.rpg.engine.interior.model.WalkableClasses;
 import net.dp.rpg.engine.tile.TileMapObject;
 import net.dp.rpg.engine.tile.room.Direction;
 import net.dp.rpg.engine.wfc.TokenSet;
-import net.dp.rpg.engine.wfc.WfcGrid;
 
 
 public final class WalkableSpinePass {
@@ -20,7 +18,6 @@ public final class WalkableSpinePass {
 
   private final WalkableClasses walkable;
 
-  /** How strongly noise can outweigh a step's cost of 1; see {@link #DEFAULT_WANDER_WEIGHT}. */
   private final double wanderWeight;
 
   public WalkableSpinePass(WalkableClasses walkable, double wanderWeight) {
@@ -33,10 +30,12 @@ public final class WalkableSpinePass {
   }
 
   public boolean apply(RoomCanvas canvas, List<TileMapObject> extraPoints, Random random) {
-    List<int[]> targets = SpineTargets.of(canvas.blueprint(), extraPoints);
+    List<int[]> targets = SpineTargets.of(canvas, walkable, extraPoints);
+
+    canvas.markConnectors(targets);
 
     if (targets.size() < 2) {
-      return true;
+      return restrict(canvas, targets);
     }
 
     List<int[]> connected = new ArrayList<>();
@@ -47,11 +46,10 @@ public final class WalkableSpinePass {
       int[] nearest = nearestTo(target, connected);
       List<int[]> path = findPath(canvas, nearest, target, random);
 
-      if (path == null) {
+      if (path == null || !restrict(canvas, path)) {
         return false;
       }
 
-      restrict(canvas, path);
       connected.add(target);
     }
 
@@ -153,26 +151,40 @@ public final class WalkableSpinePass {
         && !walkable.walkableSubsetOf(canvas.ground().startingDomain(x, y)).isEmpty();
   }
 
-  private void restrict(RoomCanvas canvas, List<int[]> path) {
+  private boolean restrict(RoomCanvas canvas, List<int[]> path) {
     for (int[] tile : path) {
       int x = tile[0];
       int y = tile[1];
 
+      if (!canvas.zones().isInside(x, y) || canvas.isVoid(x, y)) {
+        return false;
+      }
+
       canvas.reserve(x, y);
 
-      if (canvas.zones().zoneAt(x, y) != Zone.INTERIOR || canvas.ground().isFixed(x, y)) {
+      if (canvas.zones().zoneAt(x, y) != Zone.INTERIOR) {
         continue;
       }
 
       TokenSet current = canvas.ground().startingDomain(x, y);
       TokenSet narrowed = walkable.walkableSubsetOf(current);
 
-      if (narrowed.isEmpty() || !stillConsistentIfRestricted(canvas, x, y, narrowed)) {
+      if (narrowed.isEmpty()) {
+        return false;
+      }
+
+      if (canvas.ground().isFixed(x, y)) {
         continue;
+      }
+
+      if (!stillConsistentIfRestricted(canvas, x, y, narrowed)) {
+        return false;
       }
 
       canvas.ground().restrict(x, y, narrowed);
     }
+
+    return true;
   }
 
   private boolean stillConsistentIfRestricted(RoomCanvas canvas, int x, int y, TokenSet narrowed) {

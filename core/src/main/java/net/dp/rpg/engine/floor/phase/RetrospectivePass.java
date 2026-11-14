@@ -11,6 +11,7 @@ import net.dp.rpg.engine.floor.graph.RoomNode;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 public final class RetrospectivePass {
 
@@ -21,13 +22,20 @@ public final class RetrospectivePass {
     int relocated = 0;
 
     for (Loadout.Charge charge : context.loadout().charges(AbilityPhase.RETROSPECTIVE)) {
-      if (charge.remaining() <= 0) {
-        continue;
-      }
+      int total = charge.remaining();
 
-      RoomNode room = findSlot(graph, context, charge.definition(), criticalPath);
+      // Several rooms of one type spread along the critical path; one keeps the old midpoint.
+      for (int index = 0; index < total; index++) {
+        RoomNode room = findSlot(graph, context, charge.definition(), criticalPath, index, total);
 
-      if (room != null) {
+        if (room == null && index > 0) {
+          room = anyFiller(graph, context, criticalPath);
+        }
+
+        if (room == null) {
+          break;
+        }
+
         room.setType(charge.type());
         context.loadout().spend(AbilityPhase.RETROSPECTIVE, charge.type());
         assigned.add(charge.type());
@@ -40,25 +48,74 @@ public final class RetrospectivePass {
       }
     }
 
+    assigned.addAll(deadEndMinibosses(graph, context, criticalPath));
+
     return new Result(List.copyOf(assigned), relocated);
   }
 
+  // After the shops took their dead ends: each remaining dead end off the critical path may end
+  // its branch with a miniboss. Any shape will do, a branch end is rarely an arena.
+  private List<RoomType> deadEndMinibosses(FloorGraph graph, FloorContext context,
+                                           List<RoomNode> criticalPath) {
+    double chance = context.plan().branches().deadEndMinibosses();
+    List<RoomType> placed = new ArrayList<>();
+
+    if (chance <= 0) {
+      return placed;
+    }
+
+    Random random = context.stream("deadEndMiniboss");
+
+    for (RoomNode room : graph.rooms()) {
+      boolean candidate = room.isDeadEnd() && !criticalPath.contains(room)
+          && context.types().definition(room.type()).isFiller();
+
+      if (candidate && random.nextDouble() < chance) {
+        room.setType(RoomType.MINIBOSS);
+        placed.add(RoomType.MINIBOSS);
+      }
+    }
+
+    return placed;
+  }
+
+  // Off the critical path first, so an extra miniboss does not block the way twice.
+  private RoomNode anyFiller(FloorGraph graph, FloorContext context, List<RoomNode> criticalPath) {
+    RoomNode fallback = null;
+
+    for (RoomNode room : graph.rooms()) {
+      if (room.type() == RoomType.START || !context.types().definition(room.type()).isFiller()) {
+        continue;
+      }
+
+      if (!criticalPath.contains(room)) {
+        return room;
+      }
+
+      fallback = fallback == null ? room : fallback;
+    }
+
+    return fallback;
+  }
+
   private RoomNode findSlot(FloorGraph graph, FloorContext context, RoomTypeDefinition definition,
-                            List<RoomNode> criticalPath) {
+                            List<RoomNode> criticalPath, int index, int total) {
+    double ratio = total <= 1 ? MIDPOINT_RATIO : 0.30 + 0.55 * index / (total - 1);
+
     return switch (definition.slot()) {
-      case CRITICAL_MIDPOINT -> alongCriticalPath(context, definition, criticalPath);
+      case CRITICAL_MIDPOINT -> alongCriticalPath(context, definition, criticalPath, ratio);
       case BRANCH_TERMINAL -> bestBranchTerminal(graph, context, definition, criticalPath);
       default -> firstFiller(graph, context, definition);
     };
   }
 
   private RoomNode alongCriticalPath(FloorContext context, RoomTypeDefinition definition,
-                                     List<RoomNode> criticalPath) {
+                                     List<RoomNode> criticalPath, double ratio) {
     if (criticalPath.size() < 3) {
       return null;
     }
 
-    int target = (int) Math.round(MIDPOINT_RATIO * (criticalPath.size() - 1));
+    int target = (int) Math.round(ratio * (criticalPath.size() - 1));
 
     for (int offset = 0; offset < criticalPath.size(); offset++) {
       for (int step : new int[] {target - offset, target + offset}) {

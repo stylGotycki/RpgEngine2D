@@ -29,13 +29,15 @@ public final class Loadout {
         case TypePolicy.Exactly exactly -> exactly.count();
         case TypePolicy.AtMost atMost -> atMost.count();
         case TypePolicy.PerFloorChance chance -> random.nextDouble() < chance.chance() ? 1 : 0;
+        case TypePolicy.Expected expected -> expected.roll(random);
         case TypePolicy.FillerWeight ignored -> 0;
         case TypePolicy.Disabled ignored -> 0;
       };
 
       if (count > 0) {
         boolean mandatory = definition.policy() instanceof TypePolicy.Exactly
-            || definition.policy() instanceof TypePolicy.PerFloorChance;
+            || definition.policy() instanceof TypePolicy.PerFloorChance
+            || definition.policy() instanceof TypePolicy.Expected;
 
         loadout.charges.get(definition.phase()).add(new Charge(definition, count, mandatory));
       }

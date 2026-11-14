@@ -135,7 +135,6 @@ public final class FloorInteriorDemoApp extends ApplicationAdapter {
     refreshView(true);
   }
 
-  /** Rebuilds what is drawn; {@code refit} also frames the whole floor, which a reroll must not. */
   private void refreshView(boolean refit) {
     TileMapData full = floor.map();
 
@@ -177,25 +176,23 @@ public final class FloorInteriorDemoApp extends ApplicationAdapter {
   }
 
   private void renderOverlays() {
-    int mapHeight = floor.map().height();
     RoomNode node = selectedNode();
     GeneratedRoom room = floor.room(selected);
 
     if (showZones) {
       zoneOverlay.render(room.canvas().zones(), camera, floor.tileOffsetX(node),
-          floor.tileOffsetY(node), mapHeight);
+          floor.tileOffsetY(node));
     }
 
     if (showRoute) {
-      overlays.route(room.canvas(), floor.tileOffsetX(node), floor.tileOffsetY(node), mapHeight,
-          camera);
+      overlays.route(room.canvas(), floor.tileOffsetX(node), floor.tileOffsetY(node), camera);
     }
 
     if (showMarkers) {
-      overlays.markers(floor.map().objects(), mapHeight, camera);
+      overlays.markers(floor.map().objects(), camera);
     }
 
-    overlays.selection(node, floor.minCellX(), floor.minCellY(), mapHeight, camera);
+    overlays.selection(node, floor.minCellX(), floor.minCellY(), camera);
   }
 
   @Override
@@ -304,7 +301,7 @@ public final class FloorInteriorDemoApp extends ApplicationAdapter {
   private void selectRoomUnderCursor() {
     Vector2 world = viewport.unproject(new Vector2(Gdx.input.getX(), Gdx.input.getY()));
     int tileX = (int) Math.floor(world.x);
-    int tileY = floor.map().height() - 1 - (int) Math.floor(world.y);
+    int tileY = (int) Math.floor(world.y);
     RoomNode hit = floor.roomAtTile(tileX, tileY);
 
     if (hit != null) {

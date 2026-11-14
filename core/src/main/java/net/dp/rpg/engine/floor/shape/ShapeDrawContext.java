@@ -6,24 +6,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
-/**
- * Draws shapes for one floor.
- *
- * <p>The group lock lives here rather than in a pool, because a signature shape is meant to appear once per floor
- * and there are many pools. Once a group is locked its mass renormalises proportionally over what is left.
- *
- * <p>A draw does not lock anything; only {@link #confirm} does. A caller may discard a draw that does not fit,
- * and locking on the draw would let a discarded signature shape silence signatures for the rest of the floor.
- *
- * <p>Large shapes are throttled by {@code budgetFactor^(size-1)}: a single cell keeps full weight at exponent
- * zero, while a ring at exponent seven loses a factor of 128 once the factor halves. Cost penalises itself.
- *
- * <p>The factor stays at one while most of the slack is untouched and only falls over the last
- * {@link #THROTTLE_START} of it. An earlier-biting curve suppressed large shapes throughout a walk even though
- * the budget was never close to binding: measured over 3000 floors it cost about 15 points of signature rate
- * while average use sat at 21 cells of a 29-cell budget. Overrun is already prevented outright by the hard
- * reserve in {@link #draw}, so the throttle only has to make the soft limit graceful near the end.
- */
+
 public final class ShapeDrawContext {
 
   public static final double THROTTLE_START = 0.5;

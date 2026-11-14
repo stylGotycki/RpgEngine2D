@@ -24,7 +24,6 @@ public class ButtonTable extends Table implements ButtonStateListener
     {
         this.skin = skin;
         this.particle = particle;
-        LevelBuilder levelBuilder = new LevelBuilder();
 
         addButton("Play", new ChangeListener()
         {
@@ -32,7 +31,7 @@ public class ButtonTable extends Table implements ButtonStateListener
             public void changed(ChangeEvent event, Actor actor)
             {
                 Scene scene = engine.createScene();
-                levelBuilder.build(engine, scene);
+                LevelBuilder.fromSystemProperty().build(engine, scene);
                 engine.switchScene(scene);
             }
         });

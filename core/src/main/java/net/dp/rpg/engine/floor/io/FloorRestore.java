@@ -24,13 +24,14 @@ public final class FloorRestore {
   private FloorRestore() {
   }
 
-  public static Result read(FloorDocument document) {
-    if (document.format() > FloorDocument.FORMAT) {
+  public static Result read(FloorDocument original) {
+    if (original.format() > FloorDocument.FORMAT) {
       throw new IllegalArgumentException("Floor format %d is newer than %d"
-          .formatted(document.format(), FloorDocument.FORMAT));
+          .formatted(original.format(), FloorDocument.FORMAT));
     }
 
     List<String> warnings = new ArrayList<>();
+    FloorDocument document = FloorDocumentMigration.toCurrent(original, warnings);
 
     if (!FloorDocuments.GENERATOR_VERSION.equals(document.generator())) {
       warnings.add("generator %s, file says %s".formatted(FloorDocuments.GENERATOR_VERSION,
@@ -172,7 +173,6 @@ public final class FloorRestore {
     }
   }
 
-  /** A restored floor keeps the coordinates it was saved with, so placement is not bounded here. */
   private static GridBounds unlimited() {
     return new GridBounds(Integer.MAX_VALUE, Integer.MAX_VALUE);
   }

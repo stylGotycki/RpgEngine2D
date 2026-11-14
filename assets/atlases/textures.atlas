@@ -1,146 +1,566 @@
 
 textures.png
-size: 256, 128
+size: 512, 128
 format: RGBA8888
 filter: Nearest, Nearest
 repeat: none
 attack
   rotate: false
-  xy: 2, 2
+  xy: 2, 8
   size: 32, 16
   orig: 32, 16
   offset: 0, 0
   index: -1
+boss/walk
+  rotate: false
+  xy: 138, 26
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: 1
+boss/walk
+  rotate: false
+  xy: 240, 94
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: 2
 box
   rotate: false
-  xy: 2, 88
+  xy: 2, 94
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
   index: -1
 enemy/walk
   rotate: false
-  xy: 138, 88
+  xy: 172, 94
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
   index: 1
 enemy/walk
   rotate: false
-  xy: 138, 54
+  xy: 206, 60
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
   index: 2
+items/balance_breaker
+  rotate: false
+  xy: 274, 30
+  size: 10, 10
+  orig: 10, 10
+  offset: 0, 0
+  index: -1
+items/chainmail
+  rotate: false
+  xy: 326, 82
+  size: 10, 10
+  orig: 10, 10
+  offset: 0, 0
+  index: -1
+items/dragon_yawn
+  rotate: false
+  xy: 396, 116
+  size: 10, 10
+  orig: 10, 10
+  offset: 0, 0
+  index: -1
+items/enchanted_blade
+  rotate: false
+  xy: 90, 14
+  size: 10, 10
+  orig: 10, 10
+  offset: 0, 0
+  index: -1
+items/greatsword
+  rotate: false
+  xy: 90, 2
+  size: 10, 10
+  orig: 10, 10
+  offset: 0, 0
+  index: -1
+items/knives
+  rotate: false
+  xy: 286, 30
+  size: 10, 10
+  orig: 10, 10
+  offset: 0, 0
+  index: -1
+items/leather_tunic
+  rotate: false
+  xy: 354, 98
+  size: 10, 10
+  orig: 10, 10
+  offset: 0, 0
+  index: -1
+items/magic_robe
+  rotate: false
+  xy: 408, 116
+  size: 10, 10
+  orig: 10, 10
+  offset: 0, 0
+  index: -1
+items/plate_armor
+  rotate: false
+  xy: 102, 2
+  size: 10, 10
+  orig: 10, 10
+  offset: 0, 0
+  index: -1
+items/potion_heal_big
+  rotate: false
+  xy: 366, 98
+  size: 10, 10
+  orig: 10, 10
+  offset: 0, 0
+  index: -1
+items/potion_heal_small
+  rotate: false
+  xy: 420, 116
+  size: 10, 10
+  orig: 10, 10
+  offset: 0, 0
+  index: -1
+items/potion_invisibility_big
+  rotate: false
+  xy: 114, 14
+  size: 10, 10
+  orig: 10, 10
+  offset: 0, 0
+  index: -1
+items/potion_invisibility_small
+  rotate: false
+  xy: 114, 2
+  size: 10, 10
+  orig: 10, 10
+  offset: 0, 0
+  index: -1
+items/potion_speed_big
+  rotate: false
+  xy: 378, 98
+  size: 10, 10
+  orig: 10, 10
+  offset: 0, 0
+  index: -1
+items/potion_speed_small
+  rotate: false
+  xy: 432, 116
+  size: 10, 10
+  orig: 10, 10
+  offset: 0, 0
+  index: -1
+items/potion_strength_big
+  rotate: false
+  xy: 126, 14
+  size: 10, 10
+  orig: 10, 10
+  offset: 0, 0
+  index: -1
+items/potion_strength_small
+  rotate: false
+  xy: 126, 2
+  size: 10, 10
+  orig: 10, 10
+  offset: 0, 0
+  index: -1
+items/potion_wisdom_big
+  rotate: false
+  xy: 444, 116
+  size: 10, 10
+  orig: 10, 10
+  offset: 0, 0
+  index: -1
+items/potion_wisdom_small
+  rotate: false
+  xy: 138, 14
+  size: 10, 10
+  orig: 10, 10
+  offset: 0, 0
+  index: -1
+items/quest_herb
+  rotate: false
+  xy: 150, 2
+  size: 10, 10
+  orig: 10, 10
+  offset: 0, 0
+  index: -1
+items/quest_letter
+  rotate: false
+  xy: 468, 116
+  size: 10, 10
+  orig: 10, 10
+  offset: 0, 0
+  index: -1
+items/quest_ore
+  rotate: false
+  xy: 162, 14
+  size: 10, 10
+  orig: 10, 10
+  offset: 0, 0
+  index: -1
+items/quest_relic
+  rotate: false
+  xy: 162, 2
+  size: 10, 10
+  orig: 10, 10
+  offset: 0, 0
+  index: -1
+items/ring_knowledge
+  rotate: false
+  xy: 480, 116
+  size: 10, 10
+  orig: 10, 10
+  offset: 0, 0
+  index: -1
+items/ring_might
+  rotate: false
+  xy: 174, 14
+  size: 10, 10
+  orig: 10, 10
+  offset: 0, 0
+  index: -1
+items/ring_thief
+  rotate: false
+  xy: 174, 2
+  size: 10, 10
+  orig: 10, 10
+  offset: 0, 0
+  index: -1
+items/royal_lance
+  rotate: false
+  xy: 492, 116
+  size: 10, 10
+  orig: 10, 10
+  offset: 0, 0
+  index: -1
+items/silent_trousers
+  rotate: false
+  xy: 186, 2
+  size: 10, 10
+  orig: 10, 10
+  offset: 0, 0
+  index: -1
+items/staff
+  rotate: false
+  xy: 198, 14
+  size: 10, 10
+  orig: 10, 10
+  offset: 0, 0
+  index: -1
+items/sword
+  rotate: false
+  xy: 210, 14
+  size: 10, 10
+  orig: 10, 10
+  offset: 0, 0
+  index: -1
+items/wand
+  rotate: false
+  xy: 222, 14
+  size: 10, 10
+  orig: 10, 10
+  offset: 0, 0
+  index: -1
+items/weightless_sabre
+  rotate: false
+  xy: 222, 2
+  size: 10, 10
+  orig: 10, 10
+  offset: 0, 0
+  index: -1
+miniboss/walk
+  rotate: false
+  xy: 206, 94
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: 1
+miniboss/walk
+  rotate: false
+  xy: 240, 60
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: 2
+minimap/boss
+  rotate: false
+  xy: 308, 64
+  size: 10, 10
+  orig: 10, 10
+  offset: 0, 0
+  index: -1
+minimap/collectible
+  rotate: false
+  xy: 342, 98
+  size: 10, 10
+  orig: 10, 10
+  offset: 0, 0
+  index: -1
+minimap/miniboss
+  rotate: false
+  xy: 102, 14
+  size: 10, 10
+  orig: 10, 10
+  offset: 0, 0
+  index: -1
+minimap/pixel
+  rotate: false
+  xy: 2, 2
+  size: 4, 4
+  orig: 4, 4
+  offset: 0, 0
+  index: -1
+minimap/power_field
+  rotate: false
+  xy: 138, 2
+  size: 10, 10
+  orig: 10, 10
+  offset: 0, 0
+  index: -1
+minimap/puzzle
+  rotate: false
+  xy: 456, 116
+  size: 10, 10
+  orig: 10, 10
+  offset: 0, 0
+  index: -1
+minimap/quest
+  rotate: false
+  xy: 150, 14
+  size: 10, 10
+  orig: 10, 10
+  offset: 0, 0
+  index: -1
+minimap/shop
+  rotate: false
+  xy: 186, 14
+  size: 10, 10
+  orig: 10, 10
+  offset: 0, 0
+  index: -1
+minimap/start
+  rotate: false
+  xy: 198, 2
+  size: 10, 10
+  orig: 10, 10
+  offset: 0, 0
+  index: -1
+minimap/vault
+  rotate: false
+  xy: 210, 2
+  size: 10, 10
+  orig: 10, 10
+  offset: 0, 0
+  index: -1
+npc/exclaim
+  rotate: false
+  xy: 292, 42
+  size: 8, 16
+  orig: 8, 16
+  offset: 0, 0
+  index: -1
+npc/giver
+  rotate: false
+  xy: 36, 26
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: -1
+npc/sage
+  rotate: false
+  xy: 138, 94
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: -1
+npc/villager
+  rotate: false
+  xy: 104, 26
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: -1
 pixel_particle
   rotate: false
-  xy: 172, 51
+  xy: 302, 57
   size: 1, 1
   orig: 1, 1
   offset: 0, 0
   index: -1
 player/death
   rotate: false
-  xy: 2, 54
+  xy: 2, 60
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
   index: 1
 player/death
   rotate: false
-  xy: 36, 88
+  xy: 36, 94
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
   index: 2
 player/death
   rotate: false
-  xy: 2, 20
+  xy: 2, 26
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
   index: 3
 player/death
   rotate: false
-  xy: 36, 54
+  xy: 36, 60
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
   index: 4
 player/death
   rotate: false
-  xy: 70, 88
+  xy: 70, 94
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
   index: 5
 player/idle
   rotate: false
-  xy: 36, 20
+  xy: 70, 60
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
   index: 1
 player/idle
   rotate: false
-  xy: 70, 54
+  xy: 104, 94
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
   index: 2
 player/idle
   rotate: false
-  xy: 104, 88
+  xy: 70, 26
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
   index: 3
 player/idle
   rotate: false
-  xy: 70, 20
+  xy: 104, 60
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
   index: 4
 player/walk
   rotate: false
-  xy: 104, 54
+  xy: 172, 60
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
   index: 1
 player/walk
   rotate: false
-  xy: 104, 20
+  xy: 206, 26
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
   index: 2
 player/walk
   rotate: false
-  xy: 172, 88
+  xy: 274, 94
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
   index: 3
 player/walk
   rotate: false
-  xy: 138, 20
+  xy: 240, 26
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
   index: 4
 player/walk
   rotate: false
-  xy: 172, 54
+  xy: 274, 60
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
   index: 5
 player/walk
   rotate: false
-  xy: 206, 88
+  xy: 308, 94
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
   index: 6
+puzzle/crystal
+  rotate: false
+  xy: 274, 42
+  size: 16, 16
+  orig: 16, 16
+  offset: 0, 0
+  index: -1
+puzzle/pipe_corner
+  rotate: false
+  xy: 308, 76
+  size: 16, 16
+  orig: 16, 16
+  offset: 0, 0
+  index: -1
+puzzle/pipe_straight
+  rotate: false
+  xy: 342, 110
+  size: 16, 16
+  orig: 16, 16
+  offset: 0, 0
+  index: -1
+puzzle/plate_off
+  rotate: false
+  xy: 36, 8
+  size: 16, 16
+  orig: 16, 16
+  offset: 0, 0
+  index: -1
+puzzle/plate_on
+  rotate: false
+  xy: 360, 110
+  size: 16, 16
+  orig: 16, 16
+  offset: 0, 0
+  index: -1
+puzzle/plate_reset
+  rotate: false
+  xy: 54, 8
+  size: 16, 16
+  orig: 16, 16
+  offset: 0, 0
+  index: -1
+puzzle/plate_rune
+  rotate: false
+  xy: 378, 110
+  size: 16, 16
+  orig: 16, 16
+  offset: 0, 0
+  index: -1
+puzzle/plate_start
+  rotate: false
+  xy: 72, 8
+  size: 16, 16
+  orig: 16, 16
+  offset: 0, 0
+  index: -1
+skeleton/walk
+  rotate: false
+  xy: 138, 60
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: 1
+skeleton/walk
+  rotate: false
+  xy: 172, 26
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: 2

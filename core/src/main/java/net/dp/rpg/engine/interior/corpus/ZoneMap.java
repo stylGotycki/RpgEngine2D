@@ -70,7 +70,7 @@ public final class ZoneMap {
   public String toDebugString() {
     StringBuilder builder = new StringBuilder((width + 1) * height);
 
-    for (int y = 0; y < height; y++) {
+    for (int y = height - 1; y >= 0; y--) {
       for (int x = 0; x < width; x++) {
         builder.append(switch (zones[x + y * width]) {
           case VOID -> ' ';
@@ -111,13 +111,35 @@ public final class ZoneMap {
       }
     }
 
-    return onBand ? Zone.WALL : Zone.INTERIOR;
+    if (onBand || isConcaveCorner(shape, cell, localX, localY)) {
+      return Zone.WALL;
+    }
+
+    return Zone.INTERIOR;
+  }
+
+  private static boolean isConcaveCorner(RoomShape shape, RoomCell cell, int localX,
+      int localY) {
+    for (Direction across : new Direction[] {Direction.WEST, Direction.EAST}) {
+      if (!onEdge(across, localX, localY)) {
+        continue;
+      }
+
+      for (Direction along : new Direction[] {Direction.SOUTH, Direction.NORTH}) {
+        if (onEdge(along, localX, localY)
+            && !shape.contains(cell.neighbour(across).neighbour(along))) {
+          return true;
+        }
+      }
+    }
+
+    return false;
   }
 
   private static boolean onEdge(Direction direction, int localX, int localY) {
     return switch (direction) {
-      case NORTH -> localY == 0;
-      case SOUTH -> localY == RoomGeometry.CELL_HEIGHT - 1;
+      case NORTH -> localY == RoomGeometry.CELL_HEIGHT - 1;
+      case SOUTH -> localY == 0;
       case WEST -> localX == 0;
       case EAST -> localX == RoomGeometry.CELL_WIDTH - 1;
     };

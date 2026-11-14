@@ -16,21 +16,6 @@ import net.dp.rpg.engine.tile.TileMapObject;
 import net.dp.rpg.engine.tile.room.RoomCell;
 import net.dp.rpg.engine.tile.room.RoomGeometry;
 
-/**
- * A whole floor with the interior of every room generated and stitched into one
- * {@link TileMapData}. Immutable: {@link #withRoom} returns a new floor with one room replaced (a
- * reroll), re-stitching only the tile maps, never the layout.
- *
- * <p>Each room's map is placed at its origin cell and blitted skipping empty tiles, so a room with
- * a VOID hole (a ring) leaves the hole free for the room standing inside it. Stitching refuses to
- * overwrite a tile another room already filled and throws instead: two rooms never share a cell,
- * so an overlap means a blueprint or an offset is wrong, and silently letting one room paint over
- * another would hide exactly that.
- *
- * <p>Walls between neighbouring rooms are two tiles thick because every cell paints its own band,
- * and a door tile exists on both sides of that double wall; both belong to the same link in the
- * floor graph, which is what keeps two rooms generated independently consistent at their border.
- */
 public final class FloorInterior {
 
   private final FloorLayout layout;
@@ -43,22 +28,21 @@ public final class FloorInterior {
 
   private final int cellsAcross;
 
-  private final int cellsDown;
+  private final int cellsHigh;
 
   private final TileMapData map;
 
   private FloorInterior(FloorLayout layout, List<GeneratedRoom> rooms, int minCellX, int minCellY,
-      int cellsAcross, int cellsDown) {
+      int cellsAcross, int cellsHigh) {
     this.layout = layout;
     this.rooms = List.copyOf(rooms);
     this.minCellX = minCellX;
     this.minCellY = minCellY;
     this.cellsAcross = cellsAcross;
-    this.cellsDown = cellsDown;
+    this.cellsHigh = cellsHigh;
     this.map = stitch();
   }
 
-  /** Generates every room of the layout, each from the blueprint the floor graph defines for it. */
   public static FloorInterior assemble(FloorLayout layout, InteriorGenerator generator) {
     List<RoomNode> nodes = layout.graph().rooms();
     List<GeneratedRoom> rooms = new ArrayList<>(nodes.size());
@@ -78,13 +62,12 @@ public final class FloorInterior {
     return new FloorInterior(layout, rooms, bounds[0], bounds[1], bounds[2], bounds[3]);
   }
 
-  /** The same floor with one room's interior replaced, e.g. by a reroll. */
   public FloorInterior withRoom(int roomIndex, GeneratedRoom replacement) {
     List<GeneratedRoom> replaced = new ArrayList<>(rooms);
 
     replaced.set(roomIndex, replacement);
 
-    return new FloorInterior(layout, replaced, minCellX, minCellY, cellsAcross, cellsDown);
+    return new FloorInterior(layout, replaced, minCellX, minCellY, cellsAcross, cellsHigh);
   }
 
   public FloorLayout layout() {
@@ -119,7 +102,6 @@ public final class FloorInterior {
     return minCellY;
   }
 
-  /** Tile x of the room's origin cell in the stitched floor map. */
   public int tileOffsetX(RoomNode room) {
     return RoomGeometry.originXOf(rooms.get(room.index()).blueprint().origin().x() - minCellX);
   }
@@ -128,7 +110,6 @@ public final class FloorInterior {
     return RoomGeometry.originYOf(rooms.get(room.index()).blueprint().origin().y() - minCellY);
   }
 
-  /** The room covering a tile of the stitched map, or null on empty ground or off the map. */
   public RoomNode roomAtTile(int tileX, int tileY) {
     if (tileX < 0 || tileY < 0 || tileX >= map.width() || tileY >= map.height()) {
       return null;
@@ -160,7 +141,7 @@ public final class FloorInterior {
 
   private TileMapData stitch() {
     int width = RoomGeometry.tileWidth(cellsAcross);
-    int height = RoomGeometry.tileHeight(cellsDown);
+    int height = RoomGeometry.tileHeight(cellsHigh);
     TileGrid ground = new TileGrid(width, height);
     TileGrid details = new TileGrid(width, height);
     List<TileMapObject> objects = new ArrayList<>();

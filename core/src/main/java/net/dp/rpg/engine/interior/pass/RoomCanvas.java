@@ -18,6 +18,8 @@ import net.dp.rpg.engine.tile.TileLayer;
 import net.dp.rpg.engine.tile.TileLayerKind;
 import net.dp.rpg.engine.tile.TileMapData;
 import net.dp.rpg.engine.tile.TileMapObject;
+import net.dp.rpg.engine.tile.TileRole;
+import net.dp.rpg.engine.wfc.TokenSet;
 import net.dp.rpg.engine.wfc.WeightTable;
 import net.dp.rpg.engine.wfc.WfcGrid;
 import net.dp.rpg.engine.wfc.WfcState;
@@ -39,6 +41,8 @@ public final class RoomCanvas {
 
   private final List<TileMapObject> objects = new ArrayList<>();
 
+  private List<int[]> connectors = List.of();
+
   private RoomCanvas(RoomBlueprint blueprint, InteriorModel model, ZoneMap zones, WfcGrid ground) {
     this.blueprint = blueprint;
     this.model = model;
@@ -52,13 +56,20 @@ public final class RoomCanvas {
     ZoneMap zones = ZoneMap.of(blueprint.shape(), blueprint::hasDoor);
     WfcGrid ground = new WfcGrid(zones.width(), zones.height(), model.rules(),
         weightTables(blueprint, model));
+    TokenSet floorClasses = interiorClasses(model.classes());
 
     for (int y = 0; y < zones.height(); y++) {
       for (int x = 0; x < zones.width(); x++) {
         Zone zone = zones.zoneAt(x, y);
 
-        if (zone != Zone.VOID) {
+        if (zone == Zone.VOID) {
+          ground.fix(x, y, TileClasses.VOID);
+        } else {
           ground.setTable(x, y, zoneTableIndex(zone));
+        }
+
+        if (zone == Zone.INTERIOR) {
+          ground.restrict(x, y, floorClasses);
         }
       }
     }
@@ -66,6 +77,24 @@ public final class RoomCanvas {
     fixDoors(blueprint, doors, ground);
 
     return new RoomCanvas(blueprint, model, zones, ground);
+  }
+
+  private static TokenSet interiorClasses(TileClasses classes) {
+    List<Integer> allowed = new ArrayList<>();
+
+    for (int token = 0; token < classes.tokenCount(); token++) {
+      if (classes.isVoid(token)) {
+        continue;
+      }
+
+      TileRole role = classes.representativeOf(token).role();
+
+      if (role != TileRole.WALL && role != TileRole.DOOR) {
+        allowed.add(token);
+      }
+    }
+
+    return TokenSet.of(classes.tokenCount(), allowed);
   }
 
   public RoomBlueprint blueprint() {
@@ -116,6 +145,21 @@ public final class RoomCanvas {
     requireInsideRoom(x, y);
 
     return reserved[x + y * zones.width()];
+  }
+
+  public void markConnectors(List<int[]> tiles) {
+    List<int[]> copy = new ArrayList<>(tiles.size());
+
+    tiles.forEach(tile -> copy.add(tile.clone()));
+    connectors = List.copyOf(copy);
+  }
+
+  public List<int[]> connectors() {
+    List<int[]> copy = new ArrayList<>(connectors.size());
+
+    connectors.forEach(tile -> copy.add(tile.clone()));
+
+    return copy;
   }
 
   public void addObject(TileMapObject object) {

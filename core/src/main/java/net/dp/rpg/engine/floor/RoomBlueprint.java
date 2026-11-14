@@ -47,15 +47,14 @@ public record RoomBlueprint(
     return RandomSource.deriveSeed(floorSeed, "room:" + anchor.x() + "," + anchor.y());
   }
 
-  /** The same room with another seed: a retry or a reroll of its interior, nothing else changes. */
   public RoomBlueprint withSeed(long newSeed) {
     return new RoomBlueprint(origin, variant, type, doors, questId, depth, newSeed);
   }
 
   public RoomCell anchor() {
-    RoomCell topLeft = variant.shape().topLeftCell();
+    RoomCell anchor = variant.shape().anchorCell();
 
-    return origin.translated(topLeft.x(), topLeft.y());
+    return origin.translated(anchor.x(), anchor.y());
   }
 
   public RoomShape shape() {
@@ -88,9 +87,7 @@ public record RoomBlueprint(
       boolean facesOut = !shape.contains(edge.cell().neighbour(edge.direction()));
 
       if (!inside || !facesOut) {
-        throw new IllegalArgumentException(
-            "Door %s is not an outer edge of the room shape; is it in floor cells instead of local?"
-                .formatted(edge));
+        throw new IllegalArgumentException("Door %s is not an outer edge of the room shape; is it in floor cells instead of local?".formatted(edge));
       }
     }
   }

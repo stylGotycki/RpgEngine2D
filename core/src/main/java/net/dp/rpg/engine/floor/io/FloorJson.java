@@ -5,6 +5,12 @@ import com.badlogic.gdx.utils.JsonValue;
 import com.badlogic.gdx.utils.JsonWriter;
 import java.util.ArrayList;
 import java.util.List;
+import net.dp.rpg.engine.floor.FloorDescriptor;
+import net.dp.rpg.engine.floor.BranchSettings;
+import net.dp.rpg.engine.floor.FloorSettings;
+import net.dp.rpg.engine.floor.QuestSettings;
+import net.dp.rpg.engine.floor.RoomMix;
+import net.dp.rpg.engine.floor.LoopSettings;
 
 public final class FloorJson {
 
@@ -22,6 +28,11 @@ public final class FloorJson {
     root.addChild("archetype", new JsonValue(document.archetype()));
     root.addChild("seed", new JsonValue(document.seed()));
     root.addChild("descriptor", new JsonValue(document.descriptor()));
+    root.addChild("attempt", new JsonValue((long) document.attempt()));
+
+    if (document.settings() != null) {
+      root.addChild("settings", settings(document.settings()));
+    }
     root.addChild("preview", strings(document.preview()));
 
     JsonValue rooms = array();
@@ -122,11 +133,70 @@ public final class FloorJson {
         root.getString("archetype", "default"),
         root.getLong("seed", 0L),
         root.getString("descriptor", ""),
+        root.getInt("attempt", FloorDescriptor.DIRECT),
+        settings(root.get("settings")),
         strings(root.get("preview")),
         rooms,
         doors,
         quests,
         state(root.get("state")));
+  }
+
+  private static JsonValue settings(FloorSettings settings) {
+    JsonValue node = object();
+    JsonValue loops = object();
+
+    node.addChild("minRooms", new JsonValue((long) settings.minRooms()));
+    node.addChild("maxRooms", new JsonValue((long) settings.maxRooms()));
+    node.addChild("trunkRatio", new JsonValue(settings.trunkRatio()));
+    node.addChild("criticalShare", new JsonValue(settings.criticalShare()));
+    loops.addChild("perRoom", new JsonValue(settings.loops().loopsPerRoom()));
+    loops.addChild("minCycleRooms", new JsonValue((long) settings.loops().minCycleRooms()));
+    loops.addChild("maxCriticalLoss", new JsonValue(settings.loops().maxCriticalLoss()));
+    node.addChild("loops", loops);
+    node.addChild("questBundleMax", new JsonValue((long) settings.questBundleMax()));
+    node.addChild("linearity", new JsonValue(settings.linearity()));
+    JsonValue branches = object();
+    branches.addChild("chaining", new JsonValue(settings.branches().chaining()));
+    branches.addChild("deadEndMinibosses",
+        new JsonValue(settings.branches().deadEndMinibosses()));
+    node.addChild("branches", branches);
+    JsonValue rooms = object();
+    rooms.addChild("shops", new JsonValue(settings.rooms().shops()));
+    rooms.addChild("minibosses", new JsonValue(settings.rooms().minibosses()));
+    rooms.addChild("normal", new JsonValue(settings.rooms().normal()));
+    rooms.addChild("puzzle", new JsonValue(settings.rooms().puzzle()));
+    rooms.addChild("empty", new JsonValue(settings.rooms().empty()));
+    rooms.addChild("collectible", new JsonValue(settings.rooms().collectible()));
+    node.addChild("rooms", rooms);
+    // Last, as before 0.11.0.
+    node.addChild("questRoomRatio", new JsonValue(settings.questRoomRatio()));
+
+    return node;
+  }
+
+  private static FloorSettings settings(JsonValue node) {
+    if (node == null) {
+      return null;
+    }
+
+    JsonValue loops = node.get("loops");
+    // Documents from before 0.11.0 have no adaptive fields: they get the defaults of that time.
+    JsonValue branches = node.get("branches");
+    JsonValue rooms = node.get("rooms");
+    RoomMix mix = rooms == null ? RoomMix.DEFAULT
+        : new RoomMix(rooms.getDouble("shops"), rooms.getDouble("minibosses"),
+            rooms.getDouble("normal"), rooms.getDouble("puzzle"), rooms.getDouble("empty"),
+            rooms.getDouble("collectible"));
+
+    return new FloorSettings(node.getInt("minRooms"), node.getInt("maxRooms"),
+        node.getDouble("trunkRatio"), node.getDouble("criticalShare"),
+        new LoopSettings(loops.getDouble("perRoom"), loops.getInt("minCycleRooms"),
+            loops.getDouble("maxCriticalLoss")), node.getDouble("questRoomRatio"),
+        node.getInt("questBundleMax", QuestSettings.defaults().maxBundleSize()),
+        node.getDouble("linearity", 0),
+        branches == null ? BranchSettings.NONE : new BranchSettings(
+            branches.getDouble("chaining"), branches.getDouble("deadEndMinibosses")), mix);
   }
 
   private static FloorDocument.StateDoc state(JsonValue node) {

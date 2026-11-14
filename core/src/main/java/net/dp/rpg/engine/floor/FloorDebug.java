@@ -42,7 +42,7 @@ public final class FloorDebug {
       }
     }
 
-    return join(canvas);
+    return joinTopFirst(canvas);
   }
 
   public static String summary(FloorGraph graph) {
@@ -57,7 +57,7 @@ public final class FloorDebug {
 
   private static void paintGaps(char[][] canvas, FloorGraph graph, RoomNode room, RoomCell cell) {
     paintGap(canvas, graph, room, cell, Direction.EAST, '-', '=');
-    paintGap(canvas, graph, room, cell, Direction.SOUTH, '|', '"');
+    paintGap(canvas, graph, room, cell, Direction.NORTH, '|', '"');
   }
 
   private static void paintGap(char[][] canvas, FloorGraph graph, RoomNode room, RoomCell cell,
@@ -72,7 +72,7 @@ public final class FloorDebug {
     int gapX = cell.x() * 2 + direction.getDeltaX();
     int gapY = cell.y() * 2 + direction.getDeltaY();
 
-    if (gapY >= canvas.length || gapX >= canvas[0].length) {
+    if (gapY < 0 || gapY >= canvas.length || gapX < 0 || gapX >= canvas[0].length) {
       return;
     }
 
@@ -109,11 +109,11 @@ public final class FloorDebug {
     return canvas;
   }
 
-  private static String join(char[][] canvas) {
+  private static String joinTopFirst(char[][] canvas) {
     StringBuilder builder = new StringBuilder();
 
-    for (char[] row : canvas) {
-      builder.append(new String(row).stripTrailing()).append(System.lineSeparator());
+    for (int row = canvas.length - 1; row >= 0; row--) {
+      builder.append(new String(canvas[row]).stripTrailing()).append(System.lineSeparator());
     }
 
     return builder.toString();

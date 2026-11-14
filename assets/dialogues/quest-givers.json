@@ -1,0 +1,43 @@
+{
+  "dialogues": [
+    { "id": "giver.story.miner", "start": "story", "nodes": {
+      "story": { "speaker": "Stary górnik", "text": "Kiedyś kopaliśmy tu srebro. Potem z głębi wyszły pająki.", "next": "story2" },
+      "story2": { "speaker": "Stary górnik", "text": "Moi ludzie nie wrócili z dolnych korytarzy. Ja już nie mam siły, żeby ich szukać.", "next": "offer" },
+      "offer": { "speaker": "Stary górnik", "text": "{quest}", "choices": [
+        { "text": "Pomogę ci.", "action": "quest-accept", "next": "thanks" },
+        { "text": "Nie teraz.", "action": "quest-decline", "next": "refused" }
+      ] },
+      "thanks": { "speaker": "Stary górnik", "text": "Niech ci kilof lekkim będzie. Wróć, gdy skończysz." },
+      "refused": { "speaker": "Stary górnik", "text": "Rozumiem. Gdybyś zmienił zdanie, będę tutaj." }
+    } },
+    { "id": "giver.story.pilgrim", "start": "story", "nodes": {
+      "story": { "speaker": "Pielgrzym", "text": "Szedłem do świątyni na dole, ale drogę zagrodziły kości, które chodzą.", "next": "story2" },
+      "story2": { "speaker": "Pielgrzym", "text": "Nie jestem wojownikiem. Mam tylko modlitwy i parę monet, a modlitwy na nie nie działają.", "next": "offer" },
+      "offer": { "speaker": "Pielgrzym", "text": "{quest}", "choices": [
+        { "text": "Zajmę się tym.", "action": "quest-accept", "next": "thanks" },
+        { "text": "Radź sobie sam.", "action": "quest-decline", "next": "refused" }
+      ] },
+      "thanks": { "speaker": "Pielgrzym", "text": "Niech cię strzegą wszyscy święci. Czekam tutaj." },
+      "refused": { "speaker": "Pielgrzym", "text": "Pomodlę się, żebyś zmienił zdanie." }
+    } },
+    { "id": "giver.story.scholar", "start": "story", "nodes": {
+      "story": { "speaker": "Uczony", "text": "Badam te ruiny od lat. Każda komnata ma swoją tajemnicę.", "next": "story2" },
+      "story2": { "speaker": "Uczony", "text": "Brakuje mi tylko kogoś, kto nie boi się pobrudzić rąk. Albo miecza.", "next": "offer" },
+      "offer": { "speaker": "Uczony", "text": "{quest}", "choices": [
+        { "text": "Brzmi ciekawie.", "action": "quest-accept", "next": "thanks" },
+        { "text": "Może później.", "action": "quest-decline", "next": "refused" }
+      ] },
+      "thanks": { "speaker": "Uczony", "text": "Wspaniale! Zapiszę twoje imię w przypisach." },
+      "refused": { "speaker": "Uczony", "text": "Szkoda. Nauka poczeka, ruiny też." }
+    } },
+    { "id": "giver.waiting", "start": "a", "nodes": {
+      "a": { "speaker": "{name}", "text": "Jak ci idzie? {progress}" }
+    } },
+    { "id": "giver.done", "start": "a", "nodes": {
+      "a": { "speaker": "{name}", "text": "Udało ci się! Weź to, należy ci się.", "action": "quest-reward" }
+    } },
+    { "id": "giver.finished", "start": "a", "nodes": {
+      "a": { "speaker": "{name}", "text": "Jeszcze raz dziękuję. Uważaj na siebie w dole." }
+    } }
+  ]
+}

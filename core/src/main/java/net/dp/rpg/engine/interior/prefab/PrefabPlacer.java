@@ -94,8 +94,8 @@ public final class PrefabPlacer {
     int height = orientation.height();
 
     return switch (back) {
-      case NORTH -> backRowTouchesWall(canvas, x, y - 1, width, true);
-      case SOUTH -> backRowTouchesWall(canvas, x, y + height, width, true);
+      case NORTH -> backRowTouchesWall(canvas, x, y + height, width, true);
+      case SOUTH -> backRowTouchesWall(canvas, x, y - 1, width, true);
       case WEST -> backRowTouchesWall(canvas, x - 1, y, height, false);
       case EAST -> backRowTouchesWall(canvas, x + width, y, height, false);
     };
