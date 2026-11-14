@@ -38,6 +38,20 @@ public record WalkerSettings(
         sameRoomWeight, otherRoomWeight, weight, maxBarrenSteps, hardStepCap);
   }
 
+  // Towards a walker that hardly ever steps back into older rooms, so the trunk stays one line.
+  public WalkerSettings towardsLinear(double linearity) {
+    if (linearity <= 0) {
+      return this;
+    }
+
+    double l = Math.min(1, linearity);
+    double reverse = reverseWeight + (0.001 - reverseWeight) * l;
+    double other = otherRoomWeight + (0.01 - otherRoomWeight) * l;
+
+    return new WalkerSettings(straightWeight, turnWeight, reverse, freeCellWeight * (1 + 5 * l),
+        sameRoomWeight, other, beyondTargetWeight, maxBarrenSteps, hardStepCap);
+  }
+
   private static void requirePositive(double value, String name) {
     if (!Double.isFinite(value) || value <= 0.0) {
       throw new IllegalArgumentException("%s must be greater than zero, got %s".formatted(name, value));

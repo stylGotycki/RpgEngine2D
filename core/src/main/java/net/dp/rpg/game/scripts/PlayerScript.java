@@ -29,7 +29,6 @@ import net.dp.rpg.game.item.Stat;
 import net.dp.rpg.game.level.entities.ItemPickupCreator;
 import net.dp.rpg.game.animations.PlayerAnimationId;
 import net.dp.rpg.game.events.*;
-import net.dp.rpg.game.level.LevelBuilder;
 import net.dp.rpg.game.menu.MenuBuilder;
 import java.util.Optional;
 
@@ -311,13 +310,6 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
                 doorReached.unlock();
                 doorReached.open();
             }
-        }
-        else if(keycode == Input.Keys.F5)
-        {
-            // Debug: a new floor from a new seed, same as starting a new game.
-            Scene scene = getEngine().createScene();
-            new LevelBuilder(new java.util.Random().nextLong(), stats).build(getEngine(), scene);
-            getEngine().switchScene(scene);
         }
         else if(keycode == Input.Keys.X && !isWalking)
         {

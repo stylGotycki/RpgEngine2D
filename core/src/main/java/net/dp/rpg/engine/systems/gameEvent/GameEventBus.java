@@ -37,6 +37,15 @@ public class GameEventBus
         }
     }
 
+    public void unsubscribe(GameEventListener listener, Class<? extends GameEvent> eventClass)
+    {
+        Array<GameEventListener> listenersArray = listeners.get(eventClass);
+        if(listenersArray != null)
+        {
+            listenersArray.removeValue(listener, true);
+        }
+    }
+
     public <T extends GameEvent> void publish(Class<T> eventClass, Consumer<T> init)
     {
         T event = poolManager.obtain(eventClass);

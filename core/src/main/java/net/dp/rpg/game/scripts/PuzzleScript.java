@@ -359,7 +359,6 @@ public class PuzzleScript extends EntityScript implements GameEventListener {
     for (int y = 0; y < circuit.height(); y++) {
       for (int x = 0; x < circuit.width(); x++) {
         Sprite cell = cells[y * circuit.width() + x];
-        // Pieces turn clockwise; libGDX rotation is counter-clockwise.
         cell.setRotation(-90f * circuit.rotation(x, y));
         cell.setColor(IDLE);
       }

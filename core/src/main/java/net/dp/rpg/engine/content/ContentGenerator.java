@@ -211,7 +211,11 @@ public final class ContentGenerator {
         boolean potion = random.nextDouble() < settings.potionChance();
 
         if (potion && !inQuest) {
-          place(ContentKind.ITEM, ContentTags.POTION, tiles.floor(2, random), spots);
+          // The extra draw only exists with a healing share, so default floors keep their streams.
+          boolean healing = settings.healingShare() > 0
+              && random.nextDouble() < settings.healingShare();
+          place(ContentKind.ITEM, healing ? ContentTags.HEALING_POTION : ContentTags.POTION,
+              tiles.floor(2, random), spots);
         }
       }
       default -> {

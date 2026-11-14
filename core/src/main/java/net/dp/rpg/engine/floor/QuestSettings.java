@@ -25,6 +25,16 @@ public record QuestSettings(double roomRatio, List<Double> bundleWeights) {
     return new QuestSettings(ratio, bundleWeights);
   }
 
+  // Quests of at most `size` rooms: a bundle of one room is one simple goal.
+  public QuestSettings withMaxBundle(int size) {
+    if (size < 1) {
+      throw new IllegalArgumentException("A bundle needs at least one room, got " + size);
+    }
+
+    return size >= bundleWeights.size() ? this
+        : new QuestSettings(roomRatio, bundleWeights.subList(0, size));
+  }
+
   public int maxBundleSize() {
     return bundleWeights.size();
   }

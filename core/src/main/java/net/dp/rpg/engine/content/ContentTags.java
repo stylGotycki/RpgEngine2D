@@ -23,6 +23,9 @@ public final class ContentTags {
 
   public static final String POTION = "potion";
 
+  // A potion that is always a healing one (adaptation: players who fight a lot).
+  public static final String HEALING_POTION = "potion-heal";
+
   /** One of the shop's free offers; the player takes one of them (E2). */
   public static final String SHOP_OFFER = "shop-offer";
 

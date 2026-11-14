@@ -13,6 +13,7 @@ import net.dp.rpg.engine.EngineServices;
 import net.dp.rpg.engine.Scene;
 import net.dp.rpg.engine.components.*;
 import net.dp.rpg.engine.Script;
+import net.dp.rpg.engine.adaptation.Adaptation;
 import net.dp.rpg.engine.content.ContentKind;
 import net.dp.rpg.engine.content.ContentSpot;
 import net.dp.rpg.engine.puzzle.PuzzleSpec;
@@ -25,15 +26,19 @@ import net.dp.rpg.engine.dialogue.Dialogue;
 import net.dp.rpg.engine.dialogue.DialogueLibrary;
 import net.dp.rpg.engine.floor.RandomSource;
 import net.dp.rpg.engine.floor.FloorArchetype;
-import net.dp.rpg.engine.floor.FloorArchetypes;
-import net.dp.rpg.engine.floor.FloorSettings;
 import net.dp.rpg.engine.floor.graph.DoorType;
+import com.badlogic.gdx.scenes.scene2d.ui.Skin;
+import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import net.dp.rpg.engine.systems.TileConverter;
 import net.dp.rpg.engine.tile.room.RoomEdge;
 import net.dp.rpg.engine.tile.room.RoomGeometry;
 import net.dp.rpg.game.FixtureCategory;
 import net.dp.rpg.game.TileFloor;
 import net.dp.rpg.game.TileRoom;
+import net.dp.rpg.game.adaptation.AdaptationOverlay;
+import net.dp.rpg.game.adaptation.AdaptationScript;
+import net.dp.rpg.game.adaptation.GameSession;
+import net.dp.rpg.game.adaptation.MetricsCollector;
 import net.dp.rpg.game.events.EnterRoomEvent;
 import net.dp.rpg.game.dialogue.DialogueController;
 import net.dp.rpg.game.dialogue.GameDialogues;
@@ -77,16 +82,19 @@ public class LevelBuilder
     private final float playerMaxHealth = 100;
     private final long seed;
     private final PlayerStats stats;
+    private final GameSession session;
 
-    public LevelBuilder(long seed, PlayerStats stats)
+    public LevelBuilder(long seed, PlayerStats stats, GameSession session)
     {
         this.seed = seed;
         this.stats = stats;
+        this.session = session;
     }
 
+    // A new game: rolled stats and a fresh session, so the first floor is the neutral one.
     public LevelBuilder(long seed)
     {
-        this(seed, PlayerStats.rolled(RandomSource.derive(seed, "player-start")));
+        this(seed, PlayerStats.rolled(RandomSource.derive(seed, "player-start")), GameSession.start());
     }
 
     /** The seed from {@link #SEED_PROPERTY}, or a random one. Logged, so a floor can be replayed. */
@@ -94,7 +102,7 @@ public class LevelBuilder
     {
         String value = System.getProperty(SEED_PROPERTY);
         long seed = value == null || value.isBlank() ? new Random().nextLong() : Long.parseLong(value.trim());
-        return new LevelBuilder(seed, PlayerStats.rolled(RandomSource.derive(seed, "player-start")));
+        return new LevelBuilder(seed);
     }
 
     public void build(EngineServices engine, Scene scene)
@@ -103,9 +111,14 @@ public class LevelBuilder
 
         //tilemap
         TileConverter tileConverter = new TileConverter();
-        FloorArchetype archetype = FloorArchetypes.CATACOMBS;
-        TileFloor floor = new TileFloor(archetype, FloorSettings.of(archetype), seed, scene);
-        Gdx.app.log("Level", "seed " + seed + " (replay with -D" + SEED_PROPERTY + "=" + seed + ")");
+        // E6: the floor is generated from the session's profile; the first one from the neutral one.
+        FloorArchetype archetype = session.adaptive().archetype();
+        Adaptation adaptation = session.adaptive().current();
+        TileFloor floor = new TileFloor(archetype, adaptation.floor(), adaptation.content(), adaptation.quests(), seed, scene);
+        Gdx.app.log("Level", "floor " + session.adaptive().floor() + ", seed " + seed + " (replay with -D" + SEED_PROPERTY + "=" + seed + ")");
+        adaptation.reasons().forEach(reason -> Gdx.app.log("Adaptation", reason));
+        // Before the first EnterRoomEvent, so the start room counts as visited.
+        session.beginFloor(seed, new MetricsCollector(floor));
         Engine.eventBus.subscribe(floor, EnterRoomEvent.class);
 
         DoorManager doorManager = new DoorManager(floor);
@@ -360,6 +373,15 @@ public class LevelBuilder
         Engine.eventBus.subscribe(minimap, EnterRoomEvent.class);
         minimap.setQuestRooms(quests::markedRooms);
         LevelGui levelGui = new LevelGui(engine, scene, player, minimap, stats, atlas, dialogues, quests);
+
+        // F3 overlay over the rest of the GUI, left middle; F5 builds the next floor from it.
+        AdaptationOverlay overlay = new AdaptationOverlay(session, atlas, engine.getAssetManager().get("skins/default/default.json", Skin.class));
+        Table overlayTable = new Table();
+        overlayTable.setFillParent(true);
+        overlayTable.left().padLeft(16);
+        overlayTable.add(overlay);
+        scene.getGui().getStage().addActor(overlayTable);
+        scene.setSceneScript(new AdaptationScript(session, stats, overlay));
 
         NarratorDirector narrator = new NarratorDirector(floor, dialogues, dialogueLibrary,
                 Map.of("boss", GameEnemies.registry().get(ContentTags.BOSS).name()));

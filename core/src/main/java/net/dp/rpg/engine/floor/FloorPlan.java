@@ -16,7 +16,8 @@ public record FloorPlan(
     ShapePool defaultShapes,
     List<RoomTypeDefinition> roomTypes,
     QuestSettings questSettings,
-    boolean exclusiveGroups) {
+    boolean exclusiveGroups,
+    BranchSettings branches) {
 
   public static final double DEFAULT_TRUNK_RATIO = 0.70;
 
@@ -48,42 +49,43 @@ public record FloorPlan(
     }
 
     roomTypes = List.copyOf(roomTypes);
+    branches = branches == null ? BranchSettings.NONE : branches;
   }
 
   public static FloorPlan of(int roomCount) {
     return new FloorPlan("default", roomCount, DEFAULT_TRUNK_RATIO, DEFAULT_CELLS_PER_ROOM,
         DEFAULT_CRITICAL_SHARE, LoopSettings.defaults(), ShapePools.STANDARD,
-        DefaultRoomTypes.catalog(), QuestSettings.defaults(), true);
+        DefaultRoomTypes.catalog(), QuestSettings.defaults(), true, BranchSettings.NONE);
   }
 
   public FloorPlan withTrunkRatio(double ratio) {
     return new FloorPlan(archetypeId, roomCount, ratio, cellsPerRoom, criticalShare, loops,
-        defaultShapes, roomTypes, questSettings, exclusiveGroups);
+        defaultShapes, roomTypes, questSettings, exclusiveGroups, branches);
   }
 
   public FloorPlan withCellsPerRoom(double cells) {
     return new FloorPlan(archetypeId, roomCount, trunkRatio, cells, criticalShare, loops,
-        defaultShapes, roomTypes, questSettings, exclusiveGroups);
+        defaultShapes, roomTypes, questSettings, exclusiveGroups, branches);
   }
 
   public FloorPlan withCriticalShare(double share) {
     return new FloorPlan(archetypeId, roomCount, trunkRatio, cellsPerRoom, share, loops,
-        defaultShapes, roomTypes, questSettings, exclusiveGroups);
+        defaultShapes, roomTypes, questSettings, exclusiveGroups, branches);
   }
 
   public FloorPlan withLoops(LoopSettings value) {
     return new FloorPlan(archetypeId, roomCount, trunkRatio, cellsPerRoom, criticalShare, value,
-        defaultShapes, roomTypes, questSettings, exclusiveGroups);
+        defaultShapes, roomTypes, questSettings, exclusiveGroups, branches);
   }
 
   public FloorPlan withQuestSettings(QuestSettings quests) {
     return new FloorPlan(archetypeId, roomCount, trunkRatio, cellsPerRoom, criticalShare, loops,
-        defaultShapes, roomTypes, quests, exclusiveGroups);
+        defaultShapes, roomTypes, quests, exclusiveGroups, branches);
   }
 
   public FloorPlan withRoomTypes(List<RoomTypeDefinition> types) {
     return new FloorPlan(archetypeId, roomCount, trunkRatio, cellsPerRoom, criticalShare, loops,
-        defaultShapes, types, questSettings, exclusiveGroups);
+        defaultShapes, types, questSettings, exclusiveGroups, branches);
   }
 
   public int trunkRooms() {

@@ -20,6 +20,8 @@ public class NpcScript extends EntityScript {
 
   public static final String TALK_CORRECT = "talk-correct";
 
+  public static final String TALK_WRONG = "talk-wrong";
+
   public enum Role {
     QUEST_GIVER,
     TALK
