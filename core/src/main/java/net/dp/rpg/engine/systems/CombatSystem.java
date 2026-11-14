@@ -83,7 +83,7 @@ public class CombatSystem
         ScriptComponent attackedScript = scriptComponents.getByEntity(attacked);
         if(attackedScript != null)
             damage = attackedScript.script.modifyIncomingDamage(attacker, damage);
-        if(health != null && health.dealDamage(damage))
+        if(health != null && health.health > 0 && health.dealDamage(damage))
         {
             Body attackedBody = bodyComponents.getByEntity(attacked).body;
             Body attackerBody = bodyComponents.getByEntity(attacker).body;
