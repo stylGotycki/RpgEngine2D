@@ -1,4 +1,4 @@
-package net.dp.rpg.game.events;
+package net.dp.rpg.game.level.events;
 
 import net.dp.rpg.engine.systems.gameEvent.GameEvent;
 

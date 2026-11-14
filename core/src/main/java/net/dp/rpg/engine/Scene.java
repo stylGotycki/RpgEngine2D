@@ -149,7 +149,9 @@ public class Scene implements Disposable
         }
     }
 
-
+    /**
+     * creates Body using parameters set in bodyDef and adds it as Component
+     */
     public Body createBodyComponent(int entity, BodyDef bodyDef)
     {
         Body body = physicalWorld.createBody(bodyDef);
@@ -200,9 +202,8 @@ public class Scene implements Disposable
 
     public int createEntity()
     {
-        // Removing the id matters: getFirst() alone handed the same id to every new entity.
         if(!freeEntity.isEmpty())
-            return freeEntity.removeFirst();
+            return freeEntity.getFirst();
 
         return nextEntity++;
     }
@@ -261,14 +262,14 @@ public class Scene implements Disposable
             this.activeCamera = component.camera;
     }
 
-    public void setTileMap(TileMapData tileMap, TileSystem tileSystem, float cellX, float cellY)
+    public void setTileMap(TileMapData tileMap, TileSystem tileSystem, float xPos, float yPos, int gridHeight)
     {
         if(tileMap != null && tileSystem != null)
         {
             this.tileSystem = tileSystem;
             this.tileMap = tileMap;
-            this.tileTransformX = cellX * RoomGeometry.CELL_WIDTH;
-            this.tileTransformY = cellY * RoomGeometry.CELL_HEIGHT;
+            this.tileTransformX = xPos * RoomGeometry.CELL_WIDTH;
+            this.tileTransformY = (gridHeight - yPos) * RoomGeometry.CELL_HEIGHT - tileMap.height();
         }
     }
 

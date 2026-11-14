@@ -2,16 +2,13 @@ package net.dp.rpg.game;
 
 import com.badlogic.gdx.assets.loaders.ParticleEffectLoader;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.ParticleEffect;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import net.dp.rpg.engine.AbstractGame;
 import net.dp.rpg.engine.Engine;
 import net.dp.rpg.engine.Scene;
-import net.dp.rpg.game.events.*;
-import net.dp.rpg.game.debug.AtlasCheck;
-import net.dp.rpg.game.level.gui.GameFonts;
+import net.dp.rpg.game.level.events.*;
 import net.dp.rpg.game.menu.MenuBuilder;
 import net.dp.rpg.game.scripts.GlobalScript;
 
@@ -23,7 +20,6 @@ public class Game extends AbstractGame
         String atlasFile = "atlases/textures.atlas";
         getEngine().getAssetManager().load(atlasFile, TextureAtlas.class);
         getEngine().getAssetManager().load("skins/default/default.json", Skin.class);
-        getEngine().getAssetManager().load(GameFonts.FONT, BitmapFont.class);
 
         ParticleEffectLoader.ParticleEffectParameter param = new ParticleEffectLoader.ParticleEffectParameter();
         param.atlasFile = atlasFile;
@@ -35,25 +31,10 @@ public class Game extends AbstractGame
         Engine.poolManager.addPool(SkillWindowToggleEvent.class, SkillWindowToggleEvent::new);
         Engine.poolManager.addPool(SkillPointsAvailableEvent.class, SkillPointsAvailableEvent::new);
         Engine.poolManager.addPool(SkillPointUsedEvent.class, SkillPointUsedEvent::new);
-        Engine.poolManager.addPool(GameMessageEvent.class, GameMessageEvent::new);
-        Engine.poolManager.addPool(ItemPickedEvent.class, ItemPickedEvent::new);
-        Engine.poolManager.addPool(PotionUsedEvent.class, PotionUsedEvent::new);
-        Engine.poolManager.addPool(EnemyKilledEvent.class, EnemyKilledEvent::new);
-        Engine.poolManager.addPool(PlayerDamagedEvent.class, PlayerDamagedEvent::new);
-        Engine.poolManager.addPool(ItemHoverEvent.class, ItemHoverEvent::new);
-        Engine.poolManager.addPool(DialogueChoiceEvent.class, DialogueChoiceEvent::new);
-        Engine.poolManager.addPool(DialogueEndedEvent.class, DialogueEndedEvent::new);
-        Engine.poolManager.addPool(NpcActionEvent.class, NpcActionEvent::new);
-        Engine.poolManager.addPool(QuestEvent.class, QuestEvent::new);
-        Engine.poolManager.addPool(InteractEvent.class, InteractEvent::new);
-        Engine.poolManager.addPool(PuzzleSolvedEvent.class, PuzzleSolvedEvent::new);
 
         getEngine().getAssetManager().finishLoading();
 
         getEngine().setTextureFilters(Texture.TextureFilter.Linear, Texture.TextureFilter.Nearest);
-        AtlasCheck.report(atlasFile);
-        GameFonts.register(getEngine().getAssetManager().get("skins/default/default.json", Skin.class),
-                getEngine().getAssetManager().get(GameFonts.FONT, BitmapFont.class));
 
         Scene scene = getEngine().createScene();
 

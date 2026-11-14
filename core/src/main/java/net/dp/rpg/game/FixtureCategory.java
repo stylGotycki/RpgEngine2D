@@ -9,11 +9,14 @@ public final class FixtureCategory
     public static short SENSOR = 0x0010;
     public static short LIGHT = 0x0020;
     public static short PLAYER = 0x0040;
-    public static short ITEM = 0x0080;
-    public static short NPC = 0x0100;
 
-    public static boolean isCategory(short bits, short category)
+  public static boolean isCategory(short bits, short... categories)
+  {
+    int categoriesCombined = 0;
+    for(short category : categories)
     {
-        return (bits & category) != 0;
+      categoriesCombined |= category;
     }
+    return (bits & categoriesCombined) != 0;
+  }
 }

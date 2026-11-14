@@ -17,12 +17,15 @@ import net.dp.rpg.game.item.PlayerStats;
 import net.dp.rpg.game.animations.PlayerAnimationId;
 import net.dp.rpg.game.level.entities.DefaultEntityProperties;
 import net.dp.rpg.game.level.entities.EntityCreator;
+import net.dp.rpg.game.level.entities.Fraction;
 import net.dp.rpg.game.scripts.PlayerScript;
 
 public class PlayerCreator extends EntityCreator implements Disposable
 {
     private final float size = 0.8f;
     private final int health = 100;
+    private final float damage = 20;
+    private final float knockback = 8;
 
     private final BodyDef bodyDef = new BodyDef();
     private final FixtureDef bodyFixtureDef = new FixtureDef();
@@ -35,6 +38,7 @@ public class PlayerCreator extends EntityCreator implements Disposable
     private final Sprite attackSprite;
     private final Animation<TextureRegion> idleAnimation;
     private final Animation<TextureRegion> walkAnimation;
+    private final Animation<TextureRegion> deathAnimation;
 
     private final TextureAtlas atlas;
     private final PlayerStats stats;
@@ -92,6 +96,8 @@ public class PlayerCreator extends EntityCreator implements Disposable
 
         idleAnimation = new Animation<>(1f, atlas.findRegions("player/idle"), Animation.PlayMode.LOOP);
         walkAnimation = new Animation<>(0.1f, atlas.findRegions("player/walk"), Animation.PlayMode.LOOP);
+        deathAnimation = new Animation<>(0.1f, atlas.findRegions("player/death"), Animation.PlayMode.NORMAL);
+
     }
 
     @Override
@@ -102,6 +108,7 @@ public class PlayerCreator extends EntityCreator implements Disposable
         AnimationSet<PlayerAnimationId> animationSet = new AnimationSet<>();
         animationSet.addAnimation(idleAnimation, PlayerAnimationId.IDLE);
         animationSet.addAnimation(walkAnimation, PlayerAnimationId.WALK);
+        animationSet.addAnimation(deathAnimation, PlayerAnimationId.DEATH);
 
         MultiSpriteComponent spriteComponent = new MultiSpriteComponent();
         spriteComponent.add(bodySprite, true);
@@ -120,6 +127,8 @@ public class PlayerCreator extends EntityCreator implements Disposable
         light.setContactFilter(lightContactFilter);
 
         scene.addComponent(entityId, new HealthComponent(health,health, 1f));
+        scene.addComponent(entityId, new AttackComponent(damage,knockback));
+        scene.addComponent(entityId, new FractionComponent(Fraction.PLAYER));
         scene.addComponent(entityId, spriteComponent);
 
         MultiAnimationComponent animationComponent = new MultiAnimationComponent();

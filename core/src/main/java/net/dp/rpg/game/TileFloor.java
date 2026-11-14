@@ -29,7 +29,7 @@ import net.dp.rpg.engine.tile.debug.GdxTileLogger;
 import net.dp.rpg.engine.tile.debug.TileLogger;
 import net.dp.rpg.engine.tile.room.RoomCell;
 import net.dp.rpg.engine.tile.room.RoomEdge;
-import net.dp.rpg.game.events.EnterRoomEvent;
+import net.dp.rpg.game.level.events.EnterRoomEvent;
 import net.dp.rpg.game.level.PlaceholderInterior;
 
 public class TileFloor implements GameEventListener {
@@ -67,7 +67,7 @@ public class TileFloor implements GameEventListener {
   }
 
   public TileFloor(FloorArchetype archetype, FloorSettings settings,
-      ContentSettings contentSettings, QuestWeights questWeights, long seed, Scene scene) {
+                   ContentSettings contentSettings, QuestWeights questWeights, long seed, Scene scene) {
     this.scene = scene;
     this.tileSystem = tiles();
     this.walkability = new RoomReachability(tileSystem.types());

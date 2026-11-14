@@ -7,7 +7,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import net.dp.rpg.engine.Engine;
 import net.dp.rpg.game.SkillType;
-import net.dp.rpg.game.events.SkillPointUsedEvent;
+import net.dp.rpg.game.level.events.SkillPointUsedEvent;
 
 public class SkillField extends ImageButton
 {
