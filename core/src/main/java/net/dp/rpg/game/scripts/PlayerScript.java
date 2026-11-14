@@ -47,6 +47,7 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
     private float remainingAttackFade = 0;
     boolean isAttacking = false;
     boolean isWalking = false;
+    boolean isDead = false;
     TileRoom roomEntered = null;
     TileRoom currentRoom = null;
     DoorScript doorReached = null;
@@ -79,6 +80,25 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
         stats.update(delta);
         if(attackCooldown > 0)
             attackCooldown -= delta;
+
+        if(remainingAttackFade > 0)
+        {
+            remainingAttackFade -= delta;
+            if(remainingAttackFade < 0)
+            {
+                remainingAttackFade = 0;
+            }
+            getComponent(MultiSpriteComponent.class).sprites.get(1).setAlpha(remainingAttackFade/attackFadeTime);
+        }
+
+        if(isAttacking)
+        {
+            stopAttack();
+        }
+
+        if(isDead)
+            return;
+
         float speed = 60f * stats.moveSpeedMultiplier();
         tempVector2.set(0,0);
         if(Gdx.input.isKeyPressed(Input.Keys.A))
@@ -125,21 +145,6 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
 
         Body playerBody = getComponent(PhysicalBodyComponent.class).body;
         playerBody.applyForce(tempVector2.scl(speed), playerBody.getPosition(), true);
-
-        if(remainingAttackFade > 0)
-        {
-            remainingAttackFade -= delta;
-            if(remainingAttackFade < 0)
-            {
-                remainingAttackFade = 0;
-            }
-            getComponent(MultiSpriteComponent.class).sprites.get(1).setAlpha(remainingAttackFade/attackFadeTime);
-        }
-
-        if(isAttacking)
-        {
-            stopAttack();
-        }
 
         if(roomEntered != null)
         {
@@ -240,6 +245,9 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
     @Override
     public boolean keyDown(int keycode)
     {
+        if(isDead)
+            return false;
+
         if(dialogues.isOpen())
         {
             if(keycode == Input.Keys.E || keycode == Input.Keys.SPACE || keycode == Input.Keys.ENTER)
@@ -344,6 +352,7 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
     {
         getComponent(MultiAnimationComponent.class).animationSets.get(0).play(PlayerAnimationId.DEATH);
         Engine.eventBus.publish(PlayerDeathEvent.class, e -> e.playerId = getEntity());
+        isDead = true;
     }
 
     public void addSkillPoint()
