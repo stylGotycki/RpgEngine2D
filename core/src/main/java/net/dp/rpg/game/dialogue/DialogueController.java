@@ -8,8 +8,8 @@ import net.dp.rpg.engine.dialogue.Dialogue;
 import net.dp.rpg.engine.dialogue.DialogueChoice;
 import net.dp.rpg.engine.dialogue.DialogueNode;
 import net.dp.rpg.engine.dialogue.DialogueRunner;
-import net.dp.rpg.game.events.DialogueChoiceEvent;
-import net.dp.rpg.game.events.DialogueEndedEvent;
+import net.dp.rpg.game.level.events.DialogueChoiceEvent;
+import net.dp.rpg.game.level.events.DialogueEndedEvent;
 
 public class DialogueController {
 

@@ -14,7 +14,9 @@ import java.util.Map;
 import net.dp.rpg.engine.animation.AnimationSet;
 import net.dp.rpg.engine.Scene;
 import net.dp.rpg.engine.components.AnimationComponent;
+import net.dp.rpg.engine.components.FractionComponent;
 import net.dp.rpg.engine.components.HealthComponent;
+import net.dp.rpg.engine.components.PeriodicAttackComponent;
 import net.dp.rpg.engine.components.ScriptComponent;
 import net.dp.rpg.engine.components.SpriteComponent;
 import net.dp.rpg.game.FixtureCategory;
@@ -26,6 +28,11 @@ import net.dp.rpg.game.enemy.EnemyDef;
 import net.dp.rpg.game.scripts.EnemyScript;
 
 public class EnemyEntityCreator implements Disposable {
+
+  // As SpiderEntityCreator on dev: one hit on touch, then once per second while touching.
+  private static final float KNOCKBACK = 10;
+
+  private static final float DAMAGE_DELAY = 1;
 
   private final Scene scene;
 
@@ -58,7 +65,8 @@ public class EnemyEntityCreator implements Disposable {
     fixtureDef.restitution = 0f;
     fixtureDef.friction = 0f;
     fixtureDef.density = 1f;
-    fixtureDef.filter.categoryBits = FixtureCategory.ENEMY;
+    // ENEMY_ATTACK: the body itself hurts the player through CombatSystem.
+    fixtureDef.filter.categoryBits = (short) (FixtureCategory.ENEMY | FixtureCategory.ENEMY_ATTACK);
     fixtureDef.isSensor = false;
     fixtureDef.shape = circle;
   }
@@ -81,6 +89,9 @@ public class EnemyEntityCreator implements Disposable {
     scene.addComponent(entityId, new HealthComponent(enemy.health(), enemy.health()));
     scene.addComponent(entityId, new SpriteComponent(sprite, false));
     scene.addComponent(entityId, new AnimationComponent(animationSet));
+    scene.addComponent(entityId,
+        new PeriodicAttackComponent(enemy.damage(), KNOCKBACK, DAMAGE_DELAY));
+    scene.addComponent(entityId, new FractionComponent(Fraction.ENEMY));
     scene.addComponent(entityId,
         new ScriptComponent(new EnemyScript(playerId, enemy, floor, home, dialogues)));
 

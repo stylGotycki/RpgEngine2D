@@ -8,7 +8,7 @@ import net.dp.rpg.engine.floor.type.RoomType;
 import net.dp.rpg.engine.systems.gameEvent.GameEvent;
 import net.dp.rpg.engine.systems.gameEvent.GameEventListener;
 import net.dp.rpg.game.TileFloor;
-import net.dp.rpg.game.events.EnterRoomEvent;
+import net.dp.rpg.game.level.events.EnterRoomEvent;
 
 public class NarratorDirector implements GameEventListener {
 

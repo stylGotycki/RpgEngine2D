@@ -8,7 +8,7 @@ import net.dp.rpg.engine.EntityScript;
 import net.dp.rpg.engine.dialogue.Dialogue;
 import net.dp.rpg.engine.dialogue.DialogueLibrary;
 import net.dp.rpg.game.dialogue.DialogueController;
-import net.dp.rpg.game.events.NpcActionEvent;
+import net.dp.rpg.game.level.events.NpcActionEvent;
 
 public class NpcScript extends EntityScript {
 

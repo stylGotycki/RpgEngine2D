@@ -19,7 +19,7 @@ import net.dp.rpg.engine.systems.gameEvent.GameEventListener;
 import net.dp.rpg.engine.tile.room.Direction;
 import net.dp.rpg.engine.tile.room.RoomCell;
 import net.dp.rpg.engine.tile.room.RoomGeometry;
-import net.dp.rpg.game.events.EnterRoomEvent;
+import net.dp.rpg.game.level.events.EnterRoomEvent;
 
 /**
  * The minimap in the corner of the screen: the whole floor scaled into a fixed box, with only the

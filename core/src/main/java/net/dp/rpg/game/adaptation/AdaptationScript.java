@@ -3,14 +3,15 @@ package net.dp.rpg.game.adaptation;
 import com.badlogic.gdx.Input;
 import java.util.Random;
 import net.dp.rpg.engine.Scene;
-import net.dp.rpg.engine.SceneScript;
 import net.dp.rpg.engine.systems.input.InputListener;
 import net.dp.rpg.game.item.PlayerStats;
 import net.dp.rpg.game.level.LevelBuilder;
+import net.dp.rpg.game.scripts.LevelScript;
 
 // F3 shows the adaptation overlay; F5 ends the floor and builds the next one from the updated
 // profile. F5 stands in for the stairs after the boss until they exist.
-public class AdaptationScript extends SceneScript implements InputListener {
+// Extends the level script from dev, which takes the player back to the menu after death.
+public class AdaptationScript extends LevelScript implements InputListener {
 
   private final GameSession session;
 
@@ -26,6 +27,7 @@ public class AdaptationScript extends SceneScript implements InputListener {
 
   @Override
   public void update(float delta) {
+    super.update(delta);
   }
 
   @Override

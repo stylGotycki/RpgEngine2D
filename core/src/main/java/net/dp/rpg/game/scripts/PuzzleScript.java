@@ -22,9 +22,9 @@ import net.dp.rpg.engine.systems.gameEvent.GameEventListener;
 import net.dp.rpg.engine.tile.room.RoomGeometry;
 import net.dp.rpg.game.TileFloor;
 import net.dp.rpg.game.TileRoom;
-import net.dp.rpg.game.events.GameMessageEvent;
-import net.dp.rpg.game.events.InteractEvent;
-import net.dp.rpg.game.events.PuzzleSolvedEvent;
+import net.dp.rpg.game.level.events.GameMessageEvent;
+import net.dp.rpg.game.level.events.InteractEvent;
+import net.dp.rpg.game.level.events.PuzzleSolvedEvent;
 
 public class PuzzleScript extends EntityScript implements GameEventListener {
 

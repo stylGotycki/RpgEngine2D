@@ -16,14 +16,14 @@ import net.dp.rpg.engine.systems.gameEvent.GameEvent;
 import net.dp.rpg.engine.systems.gameEvent.GameEventListener;
 import net.dp.rpg.game.TileFloor;
 import net.dp.rpg.game.TileRoom;
-import net.dp.rpg.game.events.EnemyKilledEvent;
-import net.dp.rpg.game.events.EnterRoomEvent;
-import net.dp.rpg.game.events.ItemPickedEvent;
-import net.dp.rpg.game.events.NpcActionEvent;
-import net.dp.rpg.game.events.PlayerDamagedEvent;
-import net.dp.rpg.game.events.PotionUsedEvent;
-import net.dp.rpg.game.events.PuzzleSolvedEvent;
-import net.dp.rpg.game.events.QuestEvent;
+import net.dp.rpg.game.level.events.EnemyKilledEvent;
+import net.dp.rpg.game.level.events.EnterRoomEvent;
+import net.dp.rpg.game.level.events.ItemPickedEvent;
+import net.dp.rpg.game.level.events.NpcActionEvent;
+import net.dp.rpg.game.level.events.PlayerDamagedEvent;
+import net.dp.rpg.game.level.events.PotionUsedEvent;
+import net.dp.rpg.game.level.events.PuzzleSolvedEvent;
+import net.dp.rpg.game.level.events.QuestEvent;
 import net.dp.rpg.game.scripts.NpcScript;
 
 // Counts what the player does on one floor. Totals come from the floor's generated content, the

@@ -80,6 +80,9 @@ public class CombatSystem
     private boolean dealDamageIfPossible(int attacker, int attacked, float damage, float knockback)
     {
         HealthComponent health = healthComponents.getByEntity(attacked);
+        ScriptComponent attackedScript = scriptComponents.getByEntity(attacked);
+        if(attackedScript != null)
+            damage = attackedScript.script.modifyIncomingDamage(attacker, damage);
         if(health != null && health.dealDamage(damage))
         {
             Body attackedBody = bodyComponents.getByEntity(attacked).body;

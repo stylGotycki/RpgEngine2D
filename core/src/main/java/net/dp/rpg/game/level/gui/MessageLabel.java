@@ -4,7 +4,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import net.dp.rpg.engine.systems.gameEvent.GameEvent;
 import net.dp.rpg.engine.systems.gameEvent.GameEventListener;
-import net.dp.rpg.game.events.GameMessageEvent;
+import net.dp.rpg.game.level.events.GameMessageEvent;
 
 public class MessageLabel extends Label implements GameEventListener {
 

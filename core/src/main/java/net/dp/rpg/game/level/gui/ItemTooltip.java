@@ -8,7 +8,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import net.dp.rpg.engine.systems.gameEvent.GameEvent;
 import net.dp.rpg.engine.systems.gameEvent.GameEventListener;
-import net.dp.rpg.game.events.ItemHoverEvent;
+import net.dp.rpg.game.level.events.ItemHoverEvent;
 import net.dp.rpg.game.item.ItemDef;
 import net.dp.rpg.game.item.ItemDescriptions;
 import net.dp.rpg.game.item.PlayerStats;
