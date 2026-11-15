@@ -28,10 +28,34 @@ public final class AdaptationPolicy {
   // From this combat value on, every fighting room holds at least one enemy.
   public static final double EVERY_ROOM_FIGHTS = 0.3;
 
+  // Every floor deeper is this much bigger and harder than the first, before the profile adds its
+  // own scale: floor n has 1 + 0.2 (n - 1) of the first floor's size and 1 + 0.1 (n - 1) of its
+  // difficulty.
+  public static final double SIZE_GROWTH_PER_FLOOR = 0.2;
+
+  public static final double DIFFICULTY_GROWTH_PER_FLOOR = 0.1;
+
+  // The profile alone scales a floor by at most this much; with the growth of deep floors the
+  // total stays below MAX_SIZE_SCALE, or the grid would have to hold 100+ rooms.
+  private static final double MAX_PROFILE_SCALE = 2.3;
+
+  public static final double MAX_SIZE_SCALE = 2.8;
+
   private static final List<RoomType> FIGHTING_ROOMS = List.of(RoomType.NORMAL,
       RoomType.POWER_FIELD, RoomType.VAULT, RoomType.COLLECTIBLE, RoomType.EMPTY);
 
   public Adaptation adapt(PlayerProfile profile, FloorArchetype archetype) {
+    return adapt(profile, archetype, 1);
+  }
+
+  // The floor is numbered from 1; deeper floors grow on top of what the profile asks for.
+  public Adaptation adapt(PlayerProfile profile, FloorArchetype archetype, int floorNumber) {
+    if (floorNumber < 1) {
+      throw new IllegalArgumentException("Floors are numbered from 1, got " + floorNumber);
+    }
+
+    double sizeGrowth = 1 + SIZE_GROWTH_PER_FLOOR * (floorNumber - 1);
+    double difficultyGrowth = 1 + DIFFICULTY_GROWTH_PER_FLOOR * (floorNumber - 1);
     double c = profile.get(PlayStyle.COMBAT);
     double e = profile.get(PlayStyle.EXPLORATION);
     double k = profile.get(PlayStyle.CAUTION);
@@ -41,9 +65,13 @@ public final class AdaptationPolicy {
     List<String> reasons = new ArrayList<>();
 
     // Size: explorers and skilled players get more floor, fighters less.
-    double scale = clamp(Math.pow(2, 0.75 * e + 0.85 * s - 0.45 * pos(c)), 0.45, 2.3);
+    double profileScale = clamp(Math.pow(2, 0.75 * e + 0.85 * s - 0.45 * pos(c)), 0.45,
+        MAX_PROFILE_SCALE);
+    double scale = Math.min(MAX_SIZE_SCALE, profileScale * sizeGrowth);
     int minRooms = Math.max(8, (int) Math.round(base.minRooms() * scale));
     int maxRooms = Math.max(minRooms, (int) Math.round(base.maxRooms() * scale));
+    reasons.add(format("Piętro %d: rozmiar x%.2f, trudność x%.2f", floorNumber, sizeGrowth,
+        difficultyGrowth));
     reasons.add(format("Rozmiar x%.2f: %d-%d pokoi", scale, minRooms, maxRooms));
 
     // Shape: weak players walk one line to the boss, explorers get long branches.
@@ -88,7 +116,8 @@ public final class AdaptationPolicy {
         .withBranches(new BranchSettings(chaining, deadEnds)).withRoomMix(rooms);
 
     ContentSettings defaults = ContentSettings.DEFAULTS;
-    double difficulty = clamp(1 + 0.45 * s + 0.35 * c - 0.35 * pos(e), 0.35, 1.9);
+    double difficulty = clamp(1 + 0.45 * s + 0.35 * c - 0.35 * pos(e), 0.35, 1.9)
+        * difficultyGrowth;
     double potions = clamp(defaults.potionChance() * Math.pow(2, 1.2 * c - 1.1 * s + 0.5 * k),
         0.02, 0.6);
     double healing = clamp(0.6 * pos(c) + 0.4 * neg(s), 0, 0.8);

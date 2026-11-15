@@ -18,6 +18,11 @@ public class DoorScript extends EntityScript
 
     @Getter
     private boolean locked;
+
+    // Sealed by the game, not by the floor's graph: nothing opens it (no key, no debug K) until
+    // the game unseals it. The boss room seals behind the player.
+    @Getter
+    private boolean sealed;
     private final Fixture fixture;
 
     @Getter
@@ -40,7 +45,7 @@ public class DoorScript extends EntityScript
 
     public boolean open()
     {
-        if(locked)
+        if(locked || sealed)
             return false;
         closed = false;
         fixture.setSensor(true);
@@ -50,6 +55,18 @@ public class DoorScript extends EntityScript
     public void unlock()
     {
         locked = false;
+    }
+
+    // Closes the door for good until unseal(); a sealed door is always closed.
+    public void seal()
+    {
+        sealed = true;
+        close();
+    }
+
+    public void unseal()
+    {
+        sealed = false;
     }
 
     public void close()

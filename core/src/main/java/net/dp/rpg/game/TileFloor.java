@@ -153,6 +153,39 @@ public class TileFloor implements GameEventListener {
     return new int[] {x, y};
   }
 
+  // Bottom-left tile of the block of size x size walkable tiles nearest to (x, y), none of them a
+  // door. Falls back to the nearest single walkable tile when the room has no such block.
+  public int[] walkableBlockNear(TileRoom room, int x, int y, int size) {
+    int limit = Math.max(room.map().width(), room.map().height());
+
+    for (int radius = 0; radius < limit; radius++) {
+      for (int dy = -radius; dy <= radius; dy++) {
+        for (int dx = -radius; dx <= radius; dx++) {
+          boolean onRing = Math.abs(dx) == radius || Math.abs(dy) == radius;
+
+          if (onRing && isWalkableBlock(room, x + dx, y + dy, size)) {
+            return new int[] {x + dx, y + dy};
+          }
+        }
+      }
+    }
+
+    return walkableTileNear(room, x, y);
+  }
+
+  private boolean isWalkableBlock(TileRoom room, int x, int y, int size) {
+    for (int dy = 0; dy < size; dy++) {
+      for (int dx = 0; dx < size; dx++) {
+        if (!walkability.isWalkable(room.map(), x + dx, y + dy)
+            || isDoorTile(room, x + dx, y + dy)) {
+          return false;
+        }
+      }
+    }
+
+    return true;
+  }
+
   private static boolean isDoorTile(TileRoom room, int x, int y) {
     return room.doors().stream().anyMatch(edge -> edge.doorTileX() == x && edge.doorTileY() == y);
   }

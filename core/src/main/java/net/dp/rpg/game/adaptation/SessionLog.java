@@ -43,13 +43,57 @@ public class SessionLog {
     }
   }
 
+  // A floor that ended with the player's death: its metrics, with no profile (the game is over).
+  public void writeAbandoned(int floor, long seed, FloorMetrics metrics) {
+    if (file == null) {
+      return;
+    }
+
+    try {
+      file.writeString(abandonedLine(floor, seed, metrics) + "\n", true, "UTF-8");
+    } catch (RuntimeException e) {
+      Gdx.app.error("Session", "Cannot write " + file.path(), e);
+    }
+  }
+
+  static String abandonedLine(int floor, long seed, FloorMetrics metrics) {
+    StringBuilder json = new StringBuilder("{");
+
+    field(json, "floor", floor);
+    field(json, "seed", seed);
+    field(json, "died", true);
+    metrics(json, metrics);
+    close(json);
+    return json.toString();
+  }
+
   static String line(FloorReport report) {
-    FloorMetrics m = report.metrics();
     Adaptation next = report.next();
     StringBuilder json = new StringBuilder("{");
 
     field(json, "floor", report.floor());
     field(json, "seed", report.seed());
+    metrics(json, report.metrics());
+    json.append(',');
+    profile(json, "measured", report.measured());
+    profile(json, "before", report.before());
+    profile(json, "after", report.after());
+    json.append("\"next\":{");
+    field(json, "minRooms", next.floor().minRooms());
+    field(json, "maxRooms", next.floor().maxRooms());
+    field(json, "trunkRatio", next.floor().trunkRatio());
+    field(json, "criticalShare", next.floor().criticalShare());
+    field(json, "loopsPerRoom", next.floor().loops().loopsPerRoom());
+    field(json, "questRoomRatio", next.floor().questRoomRatio());
+    field(json, "difficulty", next.content().difficulty());
+    field(json, "potionChance", next.content().potionChance());
+    json.append("\"questWeights\":");
+    weights(json, next.quests().weights());
+    json.append("}}");
+    return json.toString();
+  }
+
+  private static void metrics(StringBuilder json, FloorMetrics m) {
     json.append("\"metrics\":{");
     field(json, "roomsTotal", m.roomsTotal());
     field(json, "roomsVisited", m.roomsVisited());
@@ -71,23 +115,6 @@ public class SessionLog {
     field(json, "questsCompleted", m.questsCompleted());
     field(json, "seconds", m.seconds());
     close(json);
-    json.append(',');
-    profile(json, "measured", report.measured());
-    profile(json, "before", report.before());
-    profile(json, "after", report.after());
-    json.append("\"next\":{");
-    field(json, "minRooms", next.floor().minRooms());
-    field(json, "maxRooms", next.floor().maxRooms());
-    field(json, "trunkRatio", next.floor().trunkRatio());
-    field(json, "criticalShare", next.floor().criticalShare());
-    field(json, "loopsPerRoom", next.floor().loops().loopsPerRoom());
-    field(json, "questRoomRatio", next.floor().questRoomRatio());
-    field(json, "difficulty", next.content().difficulty());
-    field(json, "potionChance", next.content().potionChance());
-    json.append("\"questWeights\":");
-    weights(json, next.quests().weights());
-    json.append("}}");
-    return json.toString();
   }
 
   private static void profile(StringBuilder json, String name, PlayerProfile profile) {

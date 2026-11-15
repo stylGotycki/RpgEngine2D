@@ -8,6 +8,9 @@ public final class AdaptiveSession {
 
   public static final double DEFAULT_BLEND = 0.5;
 
+  // A game lasts this many floors; finishing the last one wins it.
+  public static final int FLOORS = 4;
+
   private final FloorArchetype archetype;
 
   private final double blend;
@@ -33,7 +36,7 @@ public final class AdaptiveSession {
 
     this.archetype = archetype;
     this.blend = blend;
-    this.current = policy.adapt(profile, archetype);
+    this.current = policy.adapt(profile, archetype, 1);
   }
 
   public FloorArchetype archetype() {
@@ -57,6 +60,11 @@ public final class AdaptiveSession {
     return List.copyOf(reports);
   }
 
+  // True once the floor just finished was the last one of the game.
+  public boolean finished() {
+    return reports.size() >= FLOORS;
+  }
+
   public PlayerProfile estimate(FloorMetrics metrics) {
     return estimator.estimate(metrics);
   }
@@ -66,7 +74,8 @@ public final class AdaptiveSession {
     PlayerProfile before = profile;
 
     profile = profile.blend(measured, blend);
-    current = policy.adapt(profile, archetype);
+    // The report carries the settings of the floor that follows, so it is numbered one up.
+    current = policy.adapt(profile, archetype, floor() + 1);
 
     FloorReport report = new FloorReport(floor(), seed, metrics, measured, before, profile,
         current);

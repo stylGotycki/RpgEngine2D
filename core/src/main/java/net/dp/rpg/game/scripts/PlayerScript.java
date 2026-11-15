@@ -25,6 +25,7 @@ import net.dp.rpg.game.item.ItemCategory;
 import net.dp.rpg.game.item.ItemDef;
 import net.dp.rpg.game.item.PlayerStats;
 import net.dp.rpg.game.item.Stat;
+import net.dp.rpg.game.level.DoorManager;
 import net.dp.rpg.game.level.entities.ItemPickupCreator;
 import net.dp.rpg.game.animations.PlayerAnimationId;
 import net.dp.rpg.game.level.events.*;
@@ -278,7 +279,12 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
             else if(doorReached != null)
             {
                 if(!doorReached.open())
-                    Gdx.app.log("Door", "Locked. K unlocks it (debug, until keys exist).");
+                {
+                    if(doorReached.isSealed())
+                        message(DoorManager.SEALED_MESSAGE);
+                    else
+                        Gdx.app.log("Door", "Locked. K unlocks it (debug, until keys exist).");
+                }
             }
             else
             {
@@ -358,6 +364,18 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
     public void addSkillPoint()
     {
         availableSkillPoints++;
+        Engine.eventBus.publish(SkillPointsAvailableEvent.class, e -> e.skillPoints = availableSkillPoints);
+    }
+
+    public int getAvailableSkillPoints()
+    {
+        return availableSkillPoints;
+    }
+
+    // Unspent points travel to the next floor; the skill window learns of them through the event.
+    public void restoreSkillPoints(int points)
+    {
+        availableSkillPoints = points;
         Engine.eventBus.publish(SkillPointsAvailableEvent.class, e -> e.skillPoints = availableSkillPoints);
     }
 

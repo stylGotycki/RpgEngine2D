@@ -19,6 +19,7 @@ public final class LootTable {
     return switch (tag) {
       case ContentTags.EQUIPMENT -> equipment(random, depth, List.of());
       case ContentTags.POTION -> potion(random, depth);
+      case ContentTags.HEALING_POTION -> potion(PotionEffect.HEAL, random, depth);
       case ContentTags.LOOT -> random.nextBoolean() ? equipment(random, depth, List.of())
           : potion(random, depth);
       default -> throw new IllegalArgumentException("Not an item pool: " + tag);
@@ -58,7 +59,11 @@ public final class LootTable {
   }
 
   private ItemDef potion(Random random, double depth) {
-    PotionEffect effect = PotionEffect.values()[random.nextInt(PotionEffect.values().length)];
+    return potion(PotionEffect.values()[random.nextInt(PotionEffect.values().length)], random,
+        depth);
+  }
+
+  private ItemDef potion(PotionEffect effect, Random random, double depth) {
     boolean big = random.nextDouble() < 0.3 + 0.3 * depth;
 
     return items.of(ItemCategory.POTION).stream()

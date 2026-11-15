@@ -14,6 +14,7 @@ import net.dp.rpg.engine.Scene;
 import net.dp.rpg.engine.components.*;
 import net.dp.rpg.engine.Script;
 import net.dp.rpg.engine.adaptation.Adaptation;
+import net.dp.rpg.engine.adaptation.AdaptiveSession;
 import net.dp.rpg.engine.content.ContentKind;
 import net.dp.rpg.engine.content.ContentSpot;
 import net.dp.rpg.engine.puzzle.PuzzleSpec;
@@ -39,6 +40,8 @@ import net.dp.rpg.game.adaptation.AdaptationOverlay;
 import net.dp.rpg.game.adaptation.AdaptationScript;
 import net.dp.rpg.game.adaptation.GameSession;
 import net.dp.rpg.game.adaptation.MetricsCollector;
+import net.dp.rpg.game.level.entities.HatchCreator;
+import net.dp.rpg.game.level.events.EnemyKilledEvent;
 import net.dp.rpg.game.level.events.EnterRoomEvent;
 import net.dp.rpg.game.dialogue.DialogueController;
 import net.dp.rpg.game.dialogue.GameDialogues;
@@ -84,18 +87,27 @@ public class LevelBuilder
     private final long seed;
     private final PlayerStats stats;
     private final GameSession session;
+    private final PlayerCarry carry;
 
-    public LevelBuilder(long seed, PlayerStats stats, GameSession session)
+    // A floor of a running game: the player's stats travel in the same object, health and unspent
+    // skill points in the carry.
+    public LevelBuilder(long seed, PlayerStats stats, GameSession session, PlayerCarry carry)
     {
         this.seed = seed;
         this.stats = stats;
         this.session = session;
+        this.carry = carry;
+    }
+
+    public LevelBuilder(long seed, PlayerStats stats, GameSession session)
+    {
+        this(seed, stats, session, PlayerCarry.NONE);
     }
 
     // A new game: rolled stats and a fresh session, so the first floor is the neutral one.
     public LevelBuilder(long seed)
     {
-        this(seed, PlayerStats.rolled(RandomSource.derive(seed, "player-start")), GameSession.start());
+        this(seed, PlayerStats.rolled(RandomSource.derive(seed, "player-start")), GameSession.start(seed));
     }
 
     /** The seed from {@link #SEED_PROPERTY}, or a random one. Logged, so a floor can be replayed. */
@@ -122,8 +134,13 @@ public class LevelBuilder
         session.beginFloor(seed, new MetricsCollector(floor));
         Engine.eventBus.subscribe(floor, EnterRoomEvent.class);
 
-        DoorManager doorManager = new DoorManager(floor);
+        // The player is created below; the boss can only die after that.
+        int[] playerEntity = {-1};
+        DoorManager doorManager = new DoorManager(floor, bossRoom ->
+                // The boss dies inside a physics callback, where bodies cannot be created.
+                Gdx.app.postRunnable(() -> openHatch(engine, scene, atlas, floor, bossRoom, playerEntity[0])));
         Engine.eventBus.subscribe(doorManager, EnterRoomEvent.class);
+        Engine.eventBus.subscribe(doorManager, EnemyKilledEvent.class);
 
         for(TileRoom room : floor.getRooms())
         {
@@ -202,7 +219,11 @@ public class LevelBuilder
         TileRoom start = floor.getStartRoom();
         int[] spawn = floor.walkableTileNear(start, RoomGeometry.CELL_WIDTH / 2, RoomGeometry.CELL_HEIGHT / 2);
         int player = playerCreator.create(worldX(start, spawn[0]), worldY(start, spawn[1]));
+        playerEntity[0] = player;
         puzzles.forEach(puzzle -> puzzle.setPlayer(player));
+        // Health of the previous floor; a new game starts at full health.
+        HealthComponent playerHealth = scene.getComponentStorage(HealthComponent.class).getByEntity(player);
+        playerHealth.health = carry.healthFor(playerHealth.maxHealth);
 
         //camera
         float cameraHeight = 13;
@@ -384,7 +405,7 @@ public class LevelBuilder
         scene.getGui().getStage().addActor(overlayTable);
         // One scene script per scene: AdaptationScript extends LevelScript, so the player's
         // death (dev) and F3/F5 both work.
-        AdaptationScript levelScript = new AdaptationScript(session, stats, overlay);
+        AdaptationScript levelScript = new AdaptationScript(session, stats, overlay, player);
         Engine.eventBus.subscribe(levelScript, PlayerDeathEvent.class);
         scene.setSceneScript(levelScript);
 
@@ -392,6 +413,10 @@ public class LevelBuilder
                 Map.of("boss", GameEnemies.registry().get(ContentTags.BOSS).name()));
         Engine.eventBus.subscribe(narrator, EnterRoomEvent.class);
         narrator.floorStart();
+
+        // Unspent skill points of the previous floor; the skill window is subscribed by now.
+        if(carry.skillPoints() > 0 && scriptOf(scene, player) instanceof PlayerScript playerScript)
+            playerScript.restoreSkillPoints(carry.skillPoints());
 
         //inform about first room
         Engine.eventBus.publish(EnterRoomEvent.class, e -> e.room = floor.getActiveRoom());
@@ -402,6 +427,23 @@ public class LevelBuilder
         scene.setAttackCategories(FixtureCategory.ENEMY_ATTACK, FixtureCategory.PLAYER_ATTACK);
         scene.setBodyCategories(FixtureCategory.PLAYER, FixtureCategory.ENEMY);
 
+    }
+
+    // The boss is dead: the way down appears in the middle of its room. Runs outside the physics
+    // step (the hatch creates a body). Does nothing when the player already left the floor.
+    private void openHatch(EngineServices engine, Scene scene, TextureAtlas atlas, TileFloor floor, TileRoom bossRoom, int player)
+    {
+        if(engine.getActiveScene() != scene)
+            return;
+        // A 2 x 2 block of floor nearest to the middle of the room, none of it a door tile.
+        int[] block = floor.walkableBlockNear(bossRoom, bossRoom.map().width() / 2 - 1, bossRoom.map().height() / 2 - 1, 2);
+        float x = worldX(bossRoom, block[0]) + 0.5f;
+        float y = worldY(bossRoom, block[1]) + 0.5f;
+        boolean lastFloor = session.adaptive().floor() >= AdaptiveSession.FLOORS;
+        new HatchCreator(scene, atlas).create(x, y, player, lastFloor,
+                () -> FloorTransition.descend(engine, scene, session, stats, player));
+        Engine.eventBus.publish(GameMessageEvent.class, e -> e.text = lastFloor
+                ? "Wyjście otwarte. Stań na włazie i naciśnij E." : "Właz otwarty. Stań na nim i naciśnij E.");
     }
 
     // Until quests are generated (E5) the offer is a placeholder; the story is the giver's own.
