@@ -11,6 +11,8 @@ import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Disposable;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
+
 import net.dp.rpg.engine.animation.AnimationSet;
 import net.dp.rpg.engine.Scene;
 import net.dp.rpg.engine.components.AnimationComponent;
@@ -26,6 +28,8 @@ import net.dp.rpg.game.animations.EnemyAnimationId;
 import net.dp.rpg.game.dialogue.DialogueController;
 import net.dp.rpg.game.enemy.EnemyDef;
 import net.dp.rpg.game.scripts.EnemyScript;
+import net.dp.rpg.game.scripts.SkeletonScript;
+import net.dp.rpg.game.scripts.SpiderScript;
 
 public class EnemyEntityCreator implements Disposable {
 
@@ -104,8 +108,15 @@ public class EnemyEntityCreator implements Disposable {
     scene.addComponent(entityId,
         new PeriodicAttackComponent(enemy.damage(), KNOCKBACK, DAMAGE_DELAY));
     scene.addComponent(entityId, new FractionComponent(Fraction.ENEMY));
+    EnemyScript enemyScript;
+    if(Objects.equals(enemy.id(), "spider"))
+        enemyScript = new SpiderScript(player, enemy, floor, home, dialogues);
+    else if(Objects.equals(enemy.id(), "skeleton"))
+        enemyScript = new SkeletonScript(player, enemy, floor, home, dialogues);
+    else
+        enemyScript = new EnemyScript(player, enemy, floor, home, dialogues);
     scene.addComponent(entityId,
-        new ScriptComponent(new EnemyScript(player, enemy, floor, home, dialogues)));
+        new ScriptComponent(enemyScript));
 
     return entityId;
   }

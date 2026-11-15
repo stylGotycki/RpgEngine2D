@@ -18,9 +18,11 @@ import net.dp.rpg.engine.systems.input.InputListener;
 import net.dp.rpg.engine.tile.TileMapData;
 import net.dp.rpg.engine.tile.TileSystem;
 import net.dp.rpg.engine.tile.room.RoomGeometry;
+import net.dp.rpg.game.FixtureCategory;
 
 import java.util.ArrayList;
 import java.util.BitSet;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Scene implements Disposable
 {
@@ -325,15 +327,20 @@ public class Scene implements Disposable
         rayHandler.setAmbientLight(light);
     }
 
-    public short rayCastCategory(Vector2 start, Vector2 end)
+    public boolean rayCastCategory(Vector2 start, Vector2 end, short... categories)
     {
-        short[] categoryBits = {0};
+        AtomicBoolean detected = new AtomicBoolean(false);
         physicalWorld.rayCast((fixture, point, normal, fraction) ->
         {
-            categoryBits[0] = fixture.getFilterData().categoryBits;
-            return 0;
+            if(FixtureCategory.isCategory(fixture.getFilterData().categoryBits, categories))
+            {
+                detected.set(true);
+                return 0;
+            }
+            else
+                return -1;
         }, start, end);
-        return categoryBits[0];
+        return detected.get();
     }
 
     public void update(float delta)
