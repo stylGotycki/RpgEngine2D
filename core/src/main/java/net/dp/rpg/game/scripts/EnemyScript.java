@@ -64,15 +64,13 @@ public class EnemyScript extends EntityScript
         if(dialogues != null && dialogues.isOpen())
             return;
         PlayerStats playerStats = playerStats();
-        if(playerStats != null && playerStats.isInvisible())
-            return;
 
         // Acceleration, not force, so a heavy boss is not slower than its numbers say.
         float speed = enemy.acceleration() * getComponent(PhysicalBodyComponent.class).body.getMass();
         Vector2 position = getComponent(TransformComponent.class).position;
 
         // AnimationSet only advances after play() (dev).
-        if(playerDetected >= 0)
+        if(playerDetected >= 0 && playerStats != null && !playerStats.isInvisible())
         {
             TransformComponent transform = (TransformComponent) getScene().getComponent(playerDetected, TransformComponent.class);
             target.set(transform.position);
@@ -84,23 +82,21 @@ public class EnemyScript extends EntityScript
         if(target.dst(position) > 0.3)
         {
             targetDirection.set(target).sub(position).setLength(1);
-            if(playerDetected >= 0)
+            float rotateSpeed = enemy.acceleration() * delta * 10;
+            leftRayEnd.set(currentDirection).rotateDeg(-45).setLength(enemy.size()).add(position);
+            rightRayEnd.set(currentDirection).rotateDeg(45).setLength(enemy.size()).add(position);
+            if(isCategory(getScene().rayCastCategory(position, leftRayEnd), WALL, OBSTACLE))
             {
-                leftRayEnd.set(currentDirection).rotateDeg(-45).setLength(enemy.size()).add(position);
-                rightRayEnd.set(currentDirection).rotateDeg(45).setLength(enemy.size()).add(position);
-                if(isCategory(getScene().rayCastCategory(position, leftRayEnd), WALL, OBSTACLE))
-                {
-                    targetDirection.set(currentDirection).rotateDeg(5);
-                }
-                else if(isCategory(getScene().rayCastCategory(position, rightRayEnd), WALL, OBSTACLE))
-                {
-                    targetDirection.set(currentDirection).rotateDeg(-5);
-                }
-                else
-                {
-                    currentDirection.rotateDeg(currentDirection.crs(targetDirection) > 0 ? 5 : -5);
-                    targetDirection.set(currentDirection);
-                }
+                targetDirection.set(currentDirection).rotateDeg(rotateSpeed);
+            }
+            else if(isCategory(getScene().rayCastCategory(position, rightRayEnd), WALL, OBSTACLE))
+            {
+                targetDirection.set(currentDirection).rotateDeg(-rotateSpeed);
+            }
+            else
+            {
+                currentDirection.rotateDeg(currentDirection.crs(targetDirection) > 0 ? rotateSpeed : -rotateSpeed);
+                targetDirection.set(currentDirection);
             }
             getComponent(TransformComponent.class).setRotation(targetDirection.angleRad());
             currentDirection.set(targetDirection);
