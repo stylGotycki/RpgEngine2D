@@ -21,10 +21,7 @@ import net.dp.rpg.game.TileRoom;
 import net.dp.rpg.game.dialogue.DialogueController;
 import net.dp.rpg.game.dialogue.GameDialogues;
 import net.dp.rpg.game.enemy.EnemyDef;
-import net.dp.rpg.game.item.ItemCategory;
-import net.dp.rpg.game.item.ItemDef;
-import net.dp.rpg.game.item.PlayerStats;
-import net.dp.rpg.game.item.Stat;
+import net.dp.rpg.game.item.*;
 import net.dp.rpg.game.level.DoorManager;
 import net.dp.rpg.game.level.entities.ItemPickupCreator;
 import net.dp.rpg.game.animations.PlayerAnimationId;
@@ -153,6 +150,10 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
             currentRoom = roomEntered;
             roomEntered = null;
         }
+
+        if(!getStats().isInvisible())
+            getComponent(MultiSpriteComponent.class).sprites.get(0).setAlpha(1f);
+
     }
 
     @Override
@@ -542,6 +543,11 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
             e.potion = potion;
             e.slot = slot;
         });
+        if(potion.potion() == PotionEffect.INVISIBILITY)
+        {
+            getComponent(MultiSpriteComponent.class).sprites.get(0).setAlpha(0.65f);
+        }
+
         message(potion.name());
     }
 
