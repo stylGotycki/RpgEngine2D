@@ -254,6 +254,8 @@ public class Scene implements Disposable
 
     private void deleteEntity(int entityId)
     {
+        if(!validEntities.get(entityId))
+            return;
         freeEntity.add(entityId);
         validEntities.clear(entityId);
         for(ComponentStorage<? extends Component> componentStorage : componentStorages)

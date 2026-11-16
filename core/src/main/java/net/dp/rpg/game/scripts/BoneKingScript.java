@@ -62,7 +62,7 @@ public class BoneKingScript extends EnemyScript
                 }
             }
         }
-        else if(playerPosition.dst(position) > 0.3)
+        else if(playerPosition.dst(position) > 0.3 && !playerStats().isInvisible())
         {
             float rotateSpeed = enemy.acceleration() * delta * 10;
             targetDirection.set(playerPosition).sub(position).setLength(1);

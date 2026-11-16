@@ -113,7 +113,8 @@ public class EnemyEntityCreator implements Disposable {
     {
         case "spider" -> new SpiderScript(player, enemy, floor, home, dialogues);
         case "skeleton" -> new SkeletonScript(player, enemy, floor, home, dialogues);
-        case "boss" -> new BoneKingScript(player, enemy, floor, home, dialogues, this);
+        case "boss" -> new BoneKingScript(player, enemy, floor, home, dialogues, new EnemyEntityCreator(scene, atlas, player, dialogues));
+        case "miniboss" -> new SpiderScript(player, enemy, floor, home, dialogues);
         default -> new EnemyScript(player, enemy, floor, home, dialogues);
     };
       scene.addComponent(entityId, new ScriptComponent(enemyScript));

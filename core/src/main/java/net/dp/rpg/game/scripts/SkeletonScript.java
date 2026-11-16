@@ -20,7 +20,7 @@ public class SkeletonScript extends EnemyScript
     private final float viewAngleDeg = 90;
     private final Vector2 target = new Vector2();
     private final Vector2 currentDirection = new Vector2(1,0);
-    private final Vector2 targetDirection = new Vector2();
+    private final Vector2 targetDirection = new Vector2(1, 0);
     private final Vector2 toPlayer = new Vector2();
     private boolean walking = false;
     private float lookAroundChance = 0.5f;
@@ -47,7 +47,7 @@ public class SkeletonScript extends EnemyScript
         toPlayer.set(playerPosition).sub(position);
         //check if target is out of skeleton sight
         if(toPlayer.dot(currentDirection) > MathUtils.cosDeg(viewAngleDeg/2)
-            && !getScene().rayCastCategory(position, playerPosition, WALL, OBSTACLE))
+            && !getScene().rayCastCategory(position, playerPosition, WALL, OBSTACLE) && !playerStats().isInvisible())
         {
             target.set(playerPosition);
         }
