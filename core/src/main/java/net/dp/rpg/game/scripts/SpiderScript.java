@@ -51,7 +51,7 @@ public class SpiderScript extends EnemyScript
         // AnimationSet only advances after play() (dev).
         if(playerDetected >= 0 && playerStats != null && !playerStats.isInvisible())
         {
-            TransformComponent transform = (TransformComponent) getScene().getComponent(playerDetected, TransformComponent.class);
+            TransformComponent transform = getScene().getComponent(playerDetected, TransformComponent.class);
             target.set(transform.position);
         }
         else if(MathUtils.randomBoolean(Utils.getFrameChance(changeTargetChance, delta)))

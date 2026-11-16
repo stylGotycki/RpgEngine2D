@@ -15,8 +15,8 @@ import net.dp.rpg.game.item.PlayerStats;
 public class EnemyScript extends EntityScript
 {
     protected final int playerEntity;
-    private final TileFloor floor;
-    private final TileRoom home;
+    protected final TileFloor floor;
+    protected final TileRoom home;
     protected final EnemyDef enemy;
     private final DialogueController dialogues;
     private boolean dead = false;

@@ -58,8 +58,8 @@ public class CollisionDispatcher implements ContactListener
 
         if(begin)
         {
-            FractionComponent fractionA = (FractionComponent) scene.getComponent(entityA, FractionComponent.class);
-            FractionComponent fractionB = (FractionComponent) scene.getComponent(entityB, FractionComponent.class);
+            FractionComponent fractionA = scene.getComponent(entityA, FractionComponent.class);
+            FractionComponent fractionB = scene.getComponent(entityB, FractionComponent.class);
             if(entityA >= 0 && entityB >= 0 && (fractionA == null || fractionB == null || fractionA.fraction != fractionB.fraction))
             {
                 short categoryA = fixtureA.getFilterData().categoryBits;

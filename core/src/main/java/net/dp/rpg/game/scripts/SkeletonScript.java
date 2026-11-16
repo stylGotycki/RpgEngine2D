@@ -43,7 +43,7 @@ public class SkeletonScript extends EnemyScript
         currentDirection.setLength(1).setAngleRad(getComponent(TransformComponent.class).rotation);
         Vector2 position = getComponent(TransformComponent.class).position;
 
-        Vector2 playerPosition = ((TransformComponent)getScene().getComponent(playerEntity, TransformComponent.class)).position;
+        Vector2 playerPosition = getScene().getComponent(playerEntity, TransformComponent.class).position;
         toPlayer.set(playerPosition).sub(position);
         //check if target is out of skeleton sight
         if(toPlayer.dot(currentDirection) > MathUtils.cosDeg(viewAngleDeg/2)
@@ -83,7 +83,6 @@ public class SkeletonScript extends EnemyScript
                 getComponent(AnimationComponent.class).animationSet.stop();
                 walking = false;
             }
-            float chance = Utils.getFrameChance(lookAroundChance, delta);
             if(MathUtils.isEqual(currentDirection.dot(targetDirection), 1, 0.001f)
                 && MathUtils.randomBoolean(Utils.getFrameChance(lookAroundChance, delta)))
             {

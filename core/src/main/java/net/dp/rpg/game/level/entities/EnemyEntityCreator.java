@@ -27,6 +27,7 @@ import net.dp.rpg.game.TileRoom;
 import net.dp.rpg.game.animations.EnemyAnimationId;
 import net.dp.rpg.game.dialogue.DialogueController;
 import net.dp.rpg.game.enemy.EnemyDef;
+import net.dp.rpg.game.scripts.BoneKingScript;
 import net.dp.rpg.game.scripts.EnemyScript;
 import net.dp.rpg.game.scripts.SkeletonScript;
 import net.dp.rpg.game.scripts.SpiderScript;
@@ -108,15 +109,14 @@ public class EnemyEntityCreator implements Disposable {
     scene.addComponent(entityId,
         new PeriodicAttackComponent(enemy.damage(), KNOCKBACK, DAMAGE_DELAY));
     scene.addComponent(entityId, new FractionComponent(Fraction.ENEMY));
-    EnemyScript enemyScript;
-    if(Objects.equals(enemy.id(), "spider"))
-        enemyScript = new SpiderScript(player, enemy, floor, home, dialogues);
-    else if(Objects.equals(enemy.id(), "skeleton"))
-        enemyScript = new SkeletonScript(player, enemy, floor, home, dialogues);
-    else
-        enemyScript = new EnemyScript(player, enemy, floor, home, dialogues);
-    scene.addComponent(entityId,
-        new ScriptComponent(enemyScript));
+    EnemyScript enemyScript = switch (enemy.id())
+    {
+        case "spider" -> new SpiderScript(player, enemy, floor, home, dialogues);
+        case "skeleton" -> new SkeletonScript(player, enemy, floor, home, dialogues);
+        case "boss" -> new BoneKingScript(player, enemy, floor, home, dialogues, this);
+        default -> new EnemyScript(player, enemy, floor, home, dialogues);
+    };
+      scene.addComponent(entityId, new ScriptComponent(enemyScript));
 
     return entityId;
   }

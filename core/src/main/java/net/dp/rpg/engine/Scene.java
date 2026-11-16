@@ -160,7 +160,7 @@ public class Scene implements Disposable
         }
     }
 
-    public <T extends Component> Component getComponent(int entity, Class<T> componentClass)
+    public <T extends Component> T getComponent(int entity, Class<T> componentClass)
     {
         return getComponentStorage(componentClass).getByEntity(entity);
     }
