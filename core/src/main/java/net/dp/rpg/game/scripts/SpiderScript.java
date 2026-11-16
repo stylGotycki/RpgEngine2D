@@ -35,6 +35,12 @@ public class SpiderScript extends EnemyScript
     }
 
     @Override
+    public void onStart()
+    {
+        target.set(getComponent(TransformComponent.class).position);
+    }
+
+    @Override
     public void enemyUpdate(float delta)
     {
         PlayerStats playerStats = playerStats();

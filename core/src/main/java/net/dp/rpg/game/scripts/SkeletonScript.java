@@ -23,10 +23,18 @@ public class SkeletonScript extends EnemyScript
     private final Vector2 targetDirection = new Vector2();
     private final Vector2 toPlayer = new Vector2();
     private boolean walking = false;
-    private final float lookAroundChance = 0.5f;
+    private float lookAroundChance = 0.5f;
+    private float moveChance = 0.2f;
+    private final float lookAroundDefaultChance = 0.5f;
 
     public SkeletonScript(int playerEntity, EnemyDef enemy, TileFloor floor, TileRoom home, DialogueController dialogues) {
         super(playerEntity, enemy, floor, home, dialogues);
+    }
+
+    @Override
+    public void onStart()
+    {
+        target.set(getComponent(TransformComponent.class).position);
     }
 
     @Override
@@ -42,6 +50,13 @@ public class SkeletonScript extends EnemyScript
             && !getScene().rayCastCategory(position, playerPosition, WALL, OBSTACLE))
         {
             target.set(playerPosition);
+        }
+        else if(MathUtils.randomBoolean(Utils.getFrameChance(moveChance, delta)))
+        {
+            float distance = MathUtils.random(1, 3);
+            target.set(currentDirection).scl(distance).add(position);
+            if(getScene().rayCastCategory(position, target, WALL, OBSTACLE))
+                target.set(position);
         }
 
         float rotateSpeed = enemy.acceleration() * delta * 10;
@@ -63,15 +78,25 @@ public class SkeletonScript extends EnemyScript
         {
             if(walking)
             {
+                //skeleton lost sight of the player - he needs to look around
+                lookAroundChance = 5;
                 getComponent(AnimationComponent.class).animationSet.stop();
                 walking = false;
             }
-            if(MathUtils.randomBoolean(Utils.getFrameChance(lookAroundChance, delta)))
+            float chance = Utils.getFrameChance(lookAroundChance, delta);
+            if(MathUtils.isEqual(currentDirection.dot(targetDirection), 1, 0.001f)
+                && MathUtils.randomBoolean(Utils.getFrameChance(lookAroundChance, delta)))
             {
                 targetDirection.setAngleDeg(MathUtils.random(360f));
             }
             currentDirection.rotateDeg(currentDirection.crs(targetDirection) > 0 ? rotateSpeed : -rotateSpeed);
             getComponent(TransformComponent.class).setRotation(currentDirection.angleRad());
+            if(lookAroundChance > lookAroundDefaultChance)
+            {
+                lookAroundChance -= delta;
+                if(MathUtils.isEqual(lookAroundChance, lookAroundDefaultChance, 0.01f))
+                    lookAroundChance = lookAroundDefaultChance;
+            }
         }
     }
 }

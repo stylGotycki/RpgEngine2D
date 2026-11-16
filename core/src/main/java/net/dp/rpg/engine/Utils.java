@@ -10,8 +10,10 @@ public class Utils
         return vector2.set(direction.getDeltaX(), direction.getDeltaY());
     }
 
-    public static float getFrameChance(float chancePerSecond, float deltaTime)
+    public static float getFrameChance(float perSecond, float deltaTime)
     {
-        return (float)(1 - Math.pow(1 - chancePerSecond, deltaTime));
+        if(perSecond <= 0)
+            return 0;
+        return (float)(1 - Math.exp(-perSecond * deltaTime));
     }
 }

@@ -55,6 +55,7 @@ public class Engine extends ApplicationAdapter implements EngineServices
         scene.getGui().getMainTable().setDebug(guiDebug);
         inputMultiplexer.addProcessor(scene.getGui().getStage());
         activeScene = scene;
+        scene.startScripts();
     }
 
     @Override

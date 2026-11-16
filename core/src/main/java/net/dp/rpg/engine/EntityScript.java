@@ -18,6 +18,10 @@ public abstract class EntityScript extends Script
         this.entity = entity;
     }
 
+    public void onStart()
+    {
+    }
+
     public void onCollision(int otherEntity, short category, short otherCategory)
     {
     }

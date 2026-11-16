@@ -343,6 +343,15 @@ public class Scene implements Disposable
         return detected.get();
     }
 
+    public void startScripts()
+    {
+        ComponentStorage<ScriptComponent> scriptsStorage = getComponentStorage(ScriptComponent.class);
+        for (int i = 0; i < scriptsStorage.size(); i++)
+        {
+            scriptsStorage.getByIndex(i).script.onStart();
+        }
+    }
+
     public void update(float delta)
     {
         if(sceneScript != null)
