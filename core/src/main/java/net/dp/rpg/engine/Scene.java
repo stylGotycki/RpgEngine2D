@@ -8,6 +8,7 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.*;
+import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Disposable;
 import lombok.Getter;
 import net.dp.rpg.engine.components.*;
@@ -54,6 +55,7 @@ public class Scene implements Disposable
     private final ArrayList<Fixture> toDeleteFixtures = new ArrayList<>();
 
     private SceneScript sceneScript;
+    private Array<EntityScript> pendingScripts = new Array<>();
 
     private final EngineInputAdapter inputAdapter;
 
@@ -122,6 +124,10 @@ public class Scene implements Disposable
             scriptComp.script.setOwners(engine, this, entity);
             if(scriptComp.script instanceof InputListener)
                 inputAdapter.addListener((InputListener) scriptComp.script);
+            if(engine.getActiveScene() == this)
+            {
+                pendingScripts.add(scriptComp.script);
+            }
         }
         else if ((component instanceof MultiSpriteComponent
             || component instanceof SpriteComponent
@@ -359,6 +365,13 @@ public class Scene implements Disposable
         if(sceneScript != null)
         {
             sceneScript.update(delta);
+        }
+
+        if(!pendingScripts.isEmpty())
+        {
+            for(EntityScript script : pendingScripts)
+                script.onStart();
+            pendingScripts.clear();
         }
 
         ComponentStorage<ScriptComponent> scriptsStorage = getComponentStorage(ScriptComponent.class);

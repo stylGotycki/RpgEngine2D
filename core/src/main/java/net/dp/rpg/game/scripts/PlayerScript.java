@@ -25,6 +25,7 @@ import net.dp.rpg.game.item.*;
 import net.dp.rpg.game.level.DoorManager;
 import net.dp.rpg.game.level.entities.ItemPickupCreator;
 import net.dp.rpg.game.animations.PlayerAnimationId;
+import net.dp.rpg.game.level.entities.SpellCreator;
 import net.dp.rpg.game.level.events.*;
 import java.util.Optional;
 
@@ -34,6 +35,7 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
     private final Fixture sensorFixture;
     private Fixture attackFixture;
     private final FixtureDef attackFixtureDef;
+    private final SpellCreator spellCreator;
 
     private boolean isSkillWindowOpen = false;
 
@@ -60,13 +62,14 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
     private NpcScript npcReached = null;
     private float attackCooldown = 0;
 
-    public PlayerScript(Fixture playerFixture, FixtureDef attackFixtureDef, Fixture sensorFixture, PlayerStats stats, DialogueController dialogues)
+    public PlayerScript(Fixture playerFixture, FixtureDef attackFixtureDef, Fixture sensorFixture, PlayerStats stats, DialogueController dialogues, SpellCreator spellCreator)
     {
         this.dialogues = dialogues;
         this.playerFixture = playerFixture;
         this.attackFixtureDef = attackFixtureDef;
         this.sensorFixture = sensorFixture;
         this.stats = stats;
+        this.spellCreator = spellCreator;
 
         Engine.eventBus.subscribe(this, SkillPointUsedEvent.class);
         Engine.eventBus.subscribe(this, EnterRoomEvent.class);
@@ -75,6 +78,9 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
     @Override
     public void update(float delta)
     {
+        ItemRegistry registry = ItemRegistry.parse(Gdx.files.internal(ItemRegistry.PATH).readString("UTF-8"));
+        if(stats.equipped(ItemCategory.WEAPON) == null)
+            stats.equip(registry.get("staff"));
         stats.update(delta);
         if(attackCooldown > 0)
             attackCooldown -= delta;
@@ -393,26 +399,36 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
     {
         if(isAttacking || attackCooldown > 0)
             return;
+        ItemDef weapon = stats.equipped(ItemCategory.WEAPON);
         attackCooldown = stats.attackCooldown();
-        // CombatSystem reads the sword's damage from here: weapon and strength count.
-        getComponent(AttackComponent.class).damage = stats.damage();
-        attackOffset.set(direction.getDeltaX()*0.75f, direction.getDeltaY()*0.75f);
-
-        PolygonShape attackShape = (PolygonShape) attackFixtureDef.shape;
-        attackShape.setAsBox(0.6f, 0.6f, attackOffset, 0);
-        isAttacking = true;
-        remainingAttackFade = attackFadeTime;
-        attackFixture = getScene().createFixture(getEntity(), attackFixtureDef);
-        Sprite sprite = getComponent(MultiSpriteComponent.class).sprites.get(1);
-        sprite.setAlpha(1);
-        sprite.setOriginCenter();
-        sprite.setOrigin(sprite.getOriginX(), sprite.getOriginY() - 1);
-        switch(direction)
+        if(weapon != null && weapon.weapon() == WeaponClass.STAFF)
         {
-            case NORTH -> sprite.setRotation(0);
-            case EAST -> sprite.setRotation(270);
-            case SOUTH -> sprite.setRotation(180);
-            case WEST -> sprite.setRotation(90);
+            Vector2 position = getComponent(TransformComponent.class).position;
+            tempVector2.set(direction.getDeltaX(), direction.getDeltaY());
+            spellCreator.create(position.x, position.y, stats.damage(), getComponent(AttackComponent.class).knockback, 16, tempVector2);
+        }
+        else
+        {
+            // CombatSystem reads the sword's damage from here: weapon and strength count.
+            getComponent(AttackComponent.class).damage = stats.damage();
+            attackOffset.set(direction.getDeltaX()*0.75f, direction.getDeltaY()*0.75f);
+
+            PolygonShape attackShape = (PolygonShape) attackFixtureDef.shape;
+            attackShape.setAsBox(0.6f, 0.6f, attackOffset, 0);
+            isAttacking = true;
+            remainingAttackFade = attackFadeTime;
+            attackFixture = getScene().createFixture(getEntity(), attackFixtureDef);
+            Sprite sprite = getComponent(MultiSpriteComponent.class).sprites.get(1);
+            sprite.setAlpha(1);
+            sprite.setOriginCenter();
+            sprite.setOrigin(sprite.getOriginX(), sprite.getOriginY() - 1);
+            switch(direction)
+            {
+                case NORTH -> sprite.setRotation(0);
+                case EAST -> sprite.setRotation(270);
+                case SOUTH -> sprite.setRotation(180);
+                case WEST -> sprite.setRotation(90);
+            }
         }
     }
 

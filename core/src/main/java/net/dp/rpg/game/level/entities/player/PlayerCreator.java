@@ -18,6 +18,7 @@ import net.dp.rpg.game.animations.PlayerAnimationId;
 import net.dp.rpg.game.level.entities.DefaultEntityProperties;
 import net.dp.rpg.game.level.entities.EntityCreator;
 import net.dp.rpg.game.level.entities.Fraction;
+import net.dp.rpg.game.level.entities.SpellCreator;
 import net.dp.rpg.game.scripts.PlayerScript;
 
 public class PlayerCreator extends EntityCreator implements Disposable
@@ -124,7 +125,7 @@ public class PlayerCreator extends EntityCreator implements Disposable
         Filter lightContactFilter = new Filter();
         lightContactFilter.categoryBits = FixtureCategory.LIGHT;
         lightContactFilter.maskBits = (short)(FixtureCategory.OBSTACLE | FixtureCategory.WALL);
-        Light light = scene.createPointLightComponent(entityId, 128, new Color(1f, 0.6f, 0.1f, 0.8f), size * 32, false);
+        Light light = scene.createPointLightComponent(entityId, 128, new Color(1f, 0.6f, 0.1f, 0.8f), size * 16, false);
         light.setContactFilter(lightContactFilter);
 
         scene.addComponent(entityId, new HealthComponent(health,health, afterDamageInvincibility));
@@ -137,7 +138,7 @@ public class PlayerCreator extends EntityCreator implements Disposable
 
         scene.addComponent(entityId, animationComponent);
 
-        scene.addComponent(entityId, new ScriptComponent(new PlayerScript(bodyFixture, attackFixtureDef, sensorFixture, stats, dialogues)));
+        scene.addComponent(entityId, new ScriptComponent(new PlayerScript(bodyFixture, attackFixtureDef, sensorFixture, stats, dialogues, new SpellCreator(scene, atlas))));
 
         return entityId;
     }

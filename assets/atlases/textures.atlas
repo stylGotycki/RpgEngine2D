@@ -13,14 +13,14 @@ attack
   index: -1
 boss/walk
   rotate: false
-  xy: 172, 60
+  xy: 172, 94
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
   index: 1
 boss/walk
   rotate: false
-  xy: 206, 26
+  xy: 206, 60
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
@@ -279,14 +279,14 @@ level/hatch
   index: -1
 miniboss/walk
   rotate: false
-  xy: 172, 26
+  xy: 172, 60
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
   index: 1
 miniboss/walk
   rotate: false
-  xy: 274, 94
+  xy: 206, 26
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
@@ -391,7 +391,7 @@ npc/villager
   index: -1
 pixel_particle
   rotate: false
-  xy: 326, 73
+  xy: 336, 91
   size: 1, 1
   orig: 1, 1
   offset: 0, 0
@@ -559,15 +559,22 @@ puzzle/plate_start
   index: -1
 skeleton/walk
   rotate: false
-  xy: 172, 94
+  xy: 172, 26
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
   index: 1
 skeleton/walk
   rotate: false
-  xy: 206, 60
+  xy: 274, 94
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
   index: 2
+spell
+  rotate: false
+  xy: 326, 66
+  size: 8, 8
+  orig: 8, 8
+  offset: 0, 0
+  index: -1
