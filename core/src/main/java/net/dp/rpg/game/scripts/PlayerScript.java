@@ -18,21 +18,20 @@ import net.dp.rpg.engine.systems.input.InputListener;
 import net.dp.rpg.engine.tile.room.Direction;
 import static net.dp.rpg.game.FixtureCategory.*;
 import net.dp.rpg.game.TileRoom;
+import net.dp.rpg.game.appearanceEnums.PlayerSpriteId;
 import net.dp.rpg.game.dialogue.DialogueController;
 import net.dp.rpg.game.dialogue.GameDialogues;
 import net.dp.rpg.game.enemy.EnemyDef;
 import net.dp.rpg.game.item.*;
 import net.dp.rpg.game.level.DoorManager;
 import net.dp.rpg.game.level.entities.ItemPickupCreator;
-import net.dp.rpg.game.animations.PlayerAnimationId;
+import net.dp.rpg.game.appearanceEnums.PlayerAnimationId;
 import net.dp.rpg.game.level.entities.SpellCreator;
 import net.dp.rpg.game.level.events.*;
 import java.util.Optional;
 
 public class PlayerScript extends EntityScript implements InputListener, GameEventListener
 {
-    private final Fixture playerFixture;
-    private final Fixture sensorFixture;
     private Fixture attackFixture;
     private final FixtureDef attackFixtureDef;
     private final SpellCreator spellCreator;
@@ -41,6 +40,8 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
 
     private final Vector2 tempVector2 = new Vector2();
     private final Vector3 tempVector3 = new Vector3();
+    private Direction attackDirection;
+    private ItemDef currentWeapon;
 
     private final Vector2 attackOffset = new Vector2();
     private final float attackFadeTime = 0.2f;
@@ -62,12 +63,10 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
     private NpcScript npcReached = null;
     private float attackCooldown = 0;
 
-    public PlayerScript(Fixture playerFixture, FixtureDef attackFixtureDef, Fixture sensorFixture, PlayerStats stats, DialogueController dialogues, SpellCreator spellCreator)
+    public PlayerScript(FixtureDef attackFixtureDef, PlayerStats stats, DialogueController dialogues, SpellCreator spellCreator)
     {
         this.dialogues = dialogues;
-        this.playerFixture = playerFixture;
         this.attackFixtureDef = attackFixtureDef;
-        this.sensorFixture = sensorFixture;
         this.stats = stats;
         this.spellCreator = spellCreator;
 
@@ -78,22 +77,11 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
     @Override
     public void update(float delta)
     {
-        ItemRegistry registry = ItemRegistry.parse(Gdx.files.internal(ItemRegistry.PATH).readString("UTF-8"));
-        if(stats.equipped(ItemCategory.WEAPON) == null)
-            stats.equip(registry.get("staff"));
-        stats.update(delta);
+        if(!dialogues.isOpen())
+            stats.update(delta);
+
         if(attackCooldown > 0)
             attackCooldown -= delta;
-
-        if(remainingAttackFade > 0)
-        {
-            remainingAttackFade -= delta;
-            if(remainingAttackFade < 0)
-            {
-                remainingAttackFade = 0;
-            }
-            getComponent(MultiSpriteComponent.class).sprites.get(1).setAlpha(remainingAttackFade/attackFadeTime);
-        }
 
         if(isAttacking)
         {
@@ -132,7 +120,7 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
             rotateSprite(tempVector2);
             if(!isWalking)
             {
-                getComponent(MultiAnimationComponent.class).animationSets.get(0).play(PlayerAnimationId.WALK);
+                getComponent(MultiAnimationComponent.class).animationSets.get(PlayerSpriteId.BODY).play(PlayerAnimationId.WALK);
                 if(isSkillWindowOpen)
                 {
                     isSkillWindowOpen = false;
@@ -143,12 +131,24 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
         }
         else if(isWalking)
         {
-            getComponent(MultiAnimationComponent.class).animationSets.get(0).play(PlayerAnimationId.IDLE);
+            getComponent(MultiAnimationComponent.class).animationSets.get(PlayerSpriteId.BODY).play(PlayerAnimationId.IDLE);
             isWalking = false;
         }
 
         Body playerBody = getComponent(PhysicalBodyComponent.class).body;
         playerBody.applyForce(tempVector2.scl(speed), playerBody.getPosition(), true);
+
+        if(remainingAttackFade > 0)
+        {
+            remainingAttackFade -= delta;
+            if(remainingAttackFade < 0)
+            {
+                remainingAttackFade = 0;
+            }
+            if(currentWeapon == null || currentWeapon.weapon() != WeaponClass.STAFF)
+                getComponent(MultiSpriteComponent.class).sprites.get(PlayerSpriteId.ATTACK).sprite.setAlpha(remainingAttackFade/attackFadeTime);
+            rotateSprite(tempVector2.set(attackDirection.getDeltaX(), attackDirection.getDeltaY()));
+        }
 
         if(roomEntered != null)
         {
@@ -158,7 +158,7 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
         }
 
         if(!getStats().isInvisible())
-            getComponent(MultiSpriteComponent.class).sprites.get(0).setAlpha(1f);
+            getComponent(MultiSpriteComponent.class).sprites.get(PlayerSpriteId.BODY).sprite.setAlpha(1f);
 
     }
 
@@ -363,7 +363,7 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
     @Override
     public void onDeath()
     {
-        getComponent(MultiAnimationComponent.class).animationSets.get(0).play(PlayerAnimationId.DEATH);
+        getComponent(MultiAnimationComponent.class).animationSets.get(PlayerSpriteId.BODY).play(PlayerAnimationId.DEATH);
         Engine.eventBus.publish(PlayerDeathEvent.class, e -> e.playerId = getEntity());
         isDead = true;
     }
@@ -399,13 +399,15 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
     {
         if(isAttacking || attackCooldown > 0)
             return;
-        ItemDef weapon = stats.equipped(ItemCategory.WEAPON);
+        currentWeapon = stats.equipped(ItemCategory.WEAPON);
         attackCooldown = stats.attackCooldown();
-        if(weapon != null && weapon.weapon() == WeaponClass.STAFF)
+        attackDirection = direction;
+        if(currentWeapon != null && currentWeapon.weapon() == WeaponClass.STAFF)
         {
+            remainingAttackFade = attackFadeTime;
             Vector2 position = getComponent(TransformComponent.class).position;
             tempVector2.set(direction.getDeltaX(), direction.getDeltaY());
-            spellCreator.create(position.x, position.y, stats.damage(), getComponent(AttackComponent.class).knockback, 16, tempVector2);
+            spellCreator.create(position.x, position.y, stats.damage(), getComponent(AttackComponent.class).knockback/2, 16, tempVector2);
         }
         else
         {
@@ -418,7 +420,7 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
             isAttacking = true;
             remainingAttackFade = attackFadeTime;
             attackFixture = getScene().createFixture(getEntity(), attackFixtureDef);
-            Sprite sprite = getComponent(MultiSpriteComponent.class).sprites.get(1);
+            Sprite sprite = getComponent(MultiSpriteComponent.class).sprites.get(PlayerSpriteId.ATTACK).sprite;
             sprite.setAlpha(1);
             sprite.setOriginCenter();
             sprite.setOrigin(sprite.getOriginX(), sprite.getOriginY() - 1);
@@ -461,7 +463,7 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
 
     private void rotateSprite(Vector2 vector)
     {
-        Sprite playerSprite = getComponent(MultiSpriteComponent.class).sprites.get(0);
+        Sprite playerSprite = getComponent(MultiSpriteComponent.class).sprites.get(PlayerSpriteId.BODY).sprite;
         float degrees = vector.angleDeg();
         playerSprite.setRotation(degrees);
     }
@@ -561,7 +563,7 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
         });
         if(potion.potion() == PotionEffect.INVISIBILITY)
         {
-            getComponent(MultiSpriteComponent.class).sprites.get(0).setAlpha(0.65f);
+            getComponent(MultiSpriteComponent.class).sprites.get(PlayerSpriteId.BODY).sprite.setAlpha(0.65f);
         }
 
         message(potion.name());

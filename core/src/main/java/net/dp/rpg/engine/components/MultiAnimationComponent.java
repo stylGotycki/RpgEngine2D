@@ -1,15 +1,16 @@
 package net.dp.rpg.engine.components;
 
-import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.utils.OrderedMap;
 import net.dp.rpg.engine.animation.AnimationId;
 import net.dp.rpg.engine.animation.AnimationSet;
+import net.dp.rpg.engine.sprite.SpriteId;
 
 public class MultiAnimationComponent implements Component
 {
-    public Array<AnimationSet<? extends AnimationId>> animationSets = new Array<>();
+    public OrderedMap<SpriteId, AnimationSet<? extends AnimationId>> animationSets = new OrderedMap<>();
 
-    public void add(AnimationSet<? extends AnimationId> animationSet)
+    public void add(AnimationSet<? extends AnimationId> animationSet, SpriteId id)
     {
-        animationSets.add(animationSet);
+        animationSets.put(id, animationSet);
     }
 }

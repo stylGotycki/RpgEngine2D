@@ -1,4 +1,4 @@
-package net.dp.rpg.game.animations;
+package net.dp.rpg.game.appearanceEnums;
 
 import net.dp.rpg.engine.animation.AnimationId;
 

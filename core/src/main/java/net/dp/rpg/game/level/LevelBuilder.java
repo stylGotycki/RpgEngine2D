@@ -270,8 +270,7 @@ public class LevelBuilder
         Sprite boxSprite = atlas.createSprite("box");
         boxSprite.setSize(1,1);
         boxSprite.setOriginCenter();
-        MultiSpriteComponent boxSpriteComponent = new MultiSpriteComponent();
-        boxSpriteComponent.add(boxSprite, false);
+        SpriteComponent boxSpriteComponent = new SpriteComponent(boxSprite, false);
         scene.addComponent(box1, boxSpriteComponent);
 
         //enemies

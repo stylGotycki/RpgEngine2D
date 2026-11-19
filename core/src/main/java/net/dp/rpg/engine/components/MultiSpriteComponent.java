@@ -1,16 +1,14 @@
 package net.dp.rpg.engine.components;
 
-import com.badlogic.gdx.graphics.g2d.Sprite;
-import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.utils.OrderedMap;
+import net.dp.rpg.engine.sprite.SpriteId;
 
 public class MultiSpriteComponent implements Component
 {
-    public Array<Sprite> sprites = new Array<>();
-    public Array<Boolean> fixedRotation = new Array<>();
+    public OrderedMap<SpriteId, SpriteComponent> sprites = new OrderedMap<>();
 
-    public void add(Sprite sprite, boolean fixedRotation)
+    public void add(SpriteComponent sprite, SpriteId id)
     {
-        sprites.add(sprite);
-        this.fixedRotation.add(fixedRotation);
+        sprites.put(id, sprite);
     }
 }

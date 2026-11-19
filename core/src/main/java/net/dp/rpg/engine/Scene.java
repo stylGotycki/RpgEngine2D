@@ -13,6 +13,7 @@ import com.badlogic.gdx.utils.Disposable;
 import lombok.Getter;
 import net.dp.rpg.engine.components.*;
 import net.dp.rpg.engine.components.Component;
+import net.dp.rpg.engine.sprite.DefaultSpriteId;
 import net.dp.rpg.engine.systems.*;
 import net.dp.rpg.engine.systems.input.EngineInputAdapter;
 import net.dp.rpg.engine.systems.input.InputListener;
@@ -20,6 +21,7 @@ import net.dp.rpg.engine.tile.TileMapData;
 import net.dp.rpg.engine.tile.TileSystem;
 import net.dp.rpg.engine.tile.room.RoomGeometry;
 import net.dp.rpg.game.FixtureCategory;
+import net.dp.rpg.game.appearanceEnums.PlayerSpriteId;
 
 import java.util.ArrayList;
 import java.util.BitSet;
@@ -144,9 +146,9 @@ public class Scene implements Disposable
         else if(component instanceof MultiAnimationComponent animationComponent && !getComponentStorage(MultiSpriteComponent.class).hasComponent(entity))
         {
             MultiSpriteComponent spriteComponent = new MultiSpriteComponent();
-            spriteComponent.add(new Sprite(), false);
+            spriteComponent.add(new SpriteComponent(new Sprite(), false), DefaultSpriteId.DEFAULT);
             if(animationComponent.animationSets.size > 0)
-                spriteComponent.sprites.get(0).setRegion(animationComponent.animationSets.get(0).getKeyFrame(0));
+                spriteComponent.sprites.get(DefaultSpriteId.DEFAULT).sprite.setRegion(animationComponent.animationSets.get(PlayerSpriteId.BODY).getKeyFrame(0));
             addComponent(entity, spriteComponent);
         }
         else if(component instanceof AnimationComponent animationComponent && !getComponentStorage(SpriteComponent.class).hasComponent(entity))

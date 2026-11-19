@@ -6,11 +6,13 @@ import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Disposable;
+import com.badlogic.gdx.utils.OrderedMap;
 import com.badlogic.gdx.utils.ScreenUtils;
 import net.dp.rpg.engine.Scene;
 import net.dp.rpg.engine.components.ComponentStorage;
 import net.dp.rpg.engine.components.MultiSpriteComponent;
 import net.dp.rpg.engine.components.SpriteComponent;
+import net.dp.rpg.engine.sprite.SpriteId;
 import net.dp.rpg.engine.tile.TileSystem;
 import net.dp.rpg.engine.tile.render.TileMapRenderer;
 
@@ -74,9 +76,10 @@ public class RenderSystem implements Disposable
 
         for(int i = 0; i < size; i++)
         {
-            Array<Sprite> sprites = multiSpriteStorage.getByIndex(i).sprites;
-            for(Sprite sprite : sprites)
-                sprite.draw(batch);
+            OrderedMap<SpriteId, SpriteComponent> sprites = multiSpriteStorage.getByIndex(i).sprites;
+            for(SpriteComponent underlay : sprites.values())
+                if(underlay.underlay)
+                    underlay.sprite.draw(batch);
         }
 
         size = spriteStorage.size();
@@ -85,6 +88,15 @@ public class RenderSystem implements Disposable
             SpriteComponent spriteComponent = spriteStorage.getByIndex(i);
             if(!spriteComponent.underlay)
                 spriteComponent.sprite.draw(batch);
+        }
+
+        size = multiSpriteStorage.size();
+        for(int i = 0; i < size; i++)
+        {
+            OrderedMap<SpriteId, SpriteComponent> sprites = multiSpriteStorage.getByIndex(i).sprites;
+            for(SpriteComponent sprite : sprites.values())
+                if(!sprite.underlay)
+                    sprite.sprite.draw(batch);
         }
 
         batch.end();

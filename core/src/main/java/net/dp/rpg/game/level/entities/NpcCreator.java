@@ -9,7 +9,9 @@ import com.badlogic.gdx.utils.Disposable;
 import net.dp.rpg.engine.Scene;
 import net.dp.rpg.engine.components.MultiSpriteComponent;
 import net.dp.rpg.engine.components.ScriptComponent;
+import net.dp.rpg.engine.components.SpriteComponent;
 import net.dp.rpg.game.FixtureCategory;
+import net.dp.rpg.game.appearanceEnums.NpcSpriteId;
 import net.dp.rpg.game.scripts.NpcScript;
 
 public class NpcCreator implements Disposable {
@@ -57,8 +59,8 @@ public class NpcCreator implements Disposable {
     marker.setOriginBasedPosition(x, y);
 
     MultiSpriteComponent sprites = new MultiSpriteComponent();
-    sprites.add(body, true);
-    sprites.add(marker, true);
+    sprites.add(new SpriteComponent(body, true), NpcSpriteId.BODY);
+    sprites.add(new SpriteComponent(marker, true), NpcSpriteId.MARKER);
     scene.addComponent(entity, sprites);
     script.setMarker(marker);
     scene.addComponent(entity, new ScriptComponent(script));

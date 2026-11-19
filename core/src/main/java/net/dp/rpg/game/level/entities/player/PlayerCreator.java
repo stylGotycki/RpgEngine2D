@@ -12,9 +12,10 @@ import net.dp.rpg.engine.Scene;
 import net.dp.rpg.engine.animation.AnimationSet;
 import net.dp.rpg.engine.components.*;
 import net.dp.rpg.game.FixtureCategory;
+import net.dp.rpg.game.appearanceEnums.PlayerSpriteId;
 import net.dp.rpg.game.dialogue.DialogueController;
 import net.dp.rpg.game.item.PlayerStats;
-import net.dp.rpg.game.animations.PlayerAnimationId;
+import net.dp.rpg.game.appearanceEnums.PlayerAnimationId;
 import net.dp.rpg.game.level.entities.DefaultEntityProperties;
 import net.dp.rpg.game.level.entities.EntityCreator;
 import net.dp.rpg.game.level.entities.Fraction;
@@ -113,14 +114,14 @@ public class PlayerCreator extends EntityCreator implements Disposable
         animationSet.addAnimation(deathAnimation, PlayerAnimationId.DEATH);
 
         MultiSpriteComponent spriteComponent = new MultiSpriteComponent();
-        spriteComponent.add(bodySprite, true);
-        spriteComponent.add(attackSprite, true);
+        spriteComponent.add(new SpriteComponent(bodySprite, true), PlayerSpriteId.BODY);
+        spriteComponent.add(new SpriteComponent(attackSprite, true), PlayerSpriteId.ATTACK);
 
         int entityId = scene.createEntity();
 
         scene.createBodyComponent(entityId, bodyDef);
-        Fixture bodyFixture = scene.createFixture(entityId, bodyFixtureDef);
-        Fixture sensorFixture = scene.createFixture(entityId, sensorFixtureDef);
+        scene.createFixture(entityId, bodyFixtureDef);
+        scene.createFixture(entityId, sensorFixtureDef);
 
         Filter lightContactFilter = new Filter();
         lightContactFilter.categoryBits = FixtureCategory.LIGHT;
@@ -134,11 +135,11 @@ public class PlayerCreator extends EntityCreator implements Disposable
         scene.addComponent(entityId, spriteComponent);
 
         MultiAnimationComponent animationComponent = new MultiAnimationComponent();
-        animationComponent.add(animationSet);
+        animationComponent.add(animationSet, PlayerSpriteId.BODY);
 
         scene.addComponent(entityId, animationComponent);
 
-        scene.addComponent(entityId, new ScriptComponent(new PlayerScript(bodyFixture, attackFixtureDef, sensorFixture, stats, dialogues, new SpellCreator(scene, atlas))));
+        scene.addComponent(entityId, new ScriptComponent(new PlayerScript(attackFixtureDef, stats, dialogues, new SpellCreator(scene, atlas))));
 
         return entityId;
     }

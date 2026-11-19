@@ -2,9 +2,12 @@ package net.dp.rpg.engine.systems;
 
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.utils.ObjectMap;
+import com.badlogic.gdx.utils.OrderedMap;
 import net.dp.rpg.engine.animation.AnimationId;
 import net.dp.rpg.engine.animation.AnimationSet;
 import net.dp.rpg.engine.components.*;
+import net.dp.rpg.engine.sprite.SpriteId;
 
 public class AnimationSystem
 {
@@ -16,12 +19,15 @@ public class AnimationSystem
             int entity = animationComponents.getEntity(i);
             if(spriteComponents.hasComponent(entity))
             {
-                Array<AnimationSet<? extends AnimationId>> animationSets = animationComponents.getByIndex(i).animationSets;
-                Array<Sprite> spriteComponent = spriteComponents.getByEntity(entity).sprites;
+                OrderedMap<SpriteId, AnimationSet<? extends AnimationId>> animations = animationComponents.getByIndex(i).animationSets;
+                OrderedMap<SpriteId, SpriteComponent> sprites = spriteComponents.getByEntity(entity).sprites;
+                ObjectMap.Keys<SpriteId> keys = sprites.keys();
 
-                for(int j = 0; j < animationSets.size; j++)
+                for(SpriteId key : keys)
                 {
-                    spriteComponent.get(j).setRegion(animationSets.get(j).getKeyFrame(delta));
+                    AnimationSet<? extends AnimationId> animation = animations.get(key);
+                    if(animation != null)
+                        sprites.get(key).sprite.setRegion(animation.getKeyFrame(delta));
                 }
             }
         }

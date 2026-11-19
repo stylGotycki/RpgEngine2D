@@ -11,7 +11,6 @@ import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Disposable;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 
 import net.dp.rpg.engine.animation.AnimationSet;
 import net.dp.rpg.engine.Scene;
@@ -24,7 +23,7 @@ import net.dp.rpg.engine.components.SpriteComponent;
 import net.dp.rpg.game.FixtureCategory;
 import net.dp.rpg.game.TileFloor;
 import net.dp.rpg.game.TileRoom;
-import net.dp.rpg.game.animations.EnemyAnimationId;
+import net.dp.rpg.game.appearanceEnums.EnemyAnimationId;
 import net.dp.rpg.game.dialogue.DialogueController;
 import net.dp.rpg.game.enemy.EnemyDef;
 import net.dp.rpg.game.scripts.BoneKingScript;

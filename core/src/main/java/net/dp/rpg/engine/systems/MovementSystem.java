@@ -6,7 +6,11 @@ import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.utils.ArrayMap;
+import com.badlogic.gdx.utils.ObjectMap;
+import com.badlogic.gdx.utils.OrderedMap;
 import net.dp.rpg.engine.components.*;
+import net.dp.rpg.engine.sprite.SpriteId;
 
 public class MovementSystem
 {
@@ -130,14 +134,16 @@ public class MovementSystem
             int entity = multiSpriteComponents.getEntity(i);
             if(transforms.hasComponent(entity))
             {
-                MultiSpriteComponent spriteComponent = multiSpriteComponents.getByIndex(i);
-                for(int j = 0; j < spriteComponent.sprites.size; j++)
+                MultiSpriteComponent multiSpriteComponent = multiSpriteComponents.getByIndex(i);
+                OrderedMap<SpriteId, SpriteComponent> sprites = multiSpriteComponent.sprites;
+                ObjectMap.Keys<SpriteId> keys = sprites.keys();
+                for(SpriteId key : keys)
                 {
-                    Array<Sprite> sprites = spriteComponent.sprites;
                     TransformComponent transform = transforms.getByEntity(entity);
-                    sprites.get(j).setOriginBasedPosition(transform.position.x, transform.position.y);
-                    if(!(spriteComponent.fixedRotation.size > j && spriteComponent.fixedRotation.get(j)))
-                        sprites.get(j).setRotation(transform.rotation * MathUtils.radDeg);
+                    SpriteComponent spriteComponent = sprites.get(key);
+                    spriteComponent.sprite.setOriginBasedPosition(transform.position.x, transform.position.y);
+                    if(!spriteComponent.fixedRotation)
+                        spriteComponent.sprite.setRotation(transform.rotation * MathUtils.radDeg);
                 }
             }
         }

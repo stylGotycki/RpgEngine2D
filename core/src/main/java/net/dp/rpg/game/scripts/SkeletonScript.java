@@ -9,7 +9,7 @@ import net.dp.rpg.engine.components.PhysicalBodyComponent;
 import net.dp.rpg.engine.components.TransformComponent;
 import net.dp.rpg.game.TileFloor;
 import net.dp.rpg.game.TileRoom;
-import net.dp.rpg.game.animations.EnemyAnimationId;
+import net.dp.rpg.game.appearanceEnums.EnemyAnimationId;
 import net.dp.rpg.game.dialogue.DialogueController;
 import net.dp.rpg.game.enemy.EnemyDef;
 
