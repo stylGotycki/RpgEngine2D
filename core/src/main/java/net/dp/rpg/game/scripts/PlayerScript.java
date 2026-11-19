@@ -2,6 +2,7 @@ package net.dp.rpg.game.scripts;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.math.Vector2;
@@ -53,10 +54,15 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
     TileRoom currentRoom = null;
     DoorScript doorReached = null;
 
+    private final Color damageColor = new Color(1f, 0, 0, 1);
+    private final Color defaultColor = new Color(0.25f,0.25f,0.25f,1f);
+
     int availableSkillPoints = 0;
 
     private float lastDamage = 0;
     private String lastDamageSource = "enemy";
+    private final float damageFlashDuration = 0.2f;
+    private float damageFlashTimer = 0;
     private final PlayerStats stats;
     private final DialogueController dialogues;
     private ItemPickupScript itemReached = null;
@@ -75,6 +81,12 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
     }
 
     @Override
+    public void onStart()
+    {
+        getComponent(MultiSpriteComponent.class).sprites.get(PlayerSpriteId.BODY).sprite.setColor(defaultColor);
+    }
+
+    @Override
     public void update(float delta)
     {
         if(!dialogues.isOpen())
@@ -86,6 +98,15 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
         if(isAttacking)
         {
             stopAttack();
+        }
+
+        if(damageFlashTimer > 0)
+        {
+            damageFlashTimer -= delta;
+            if(damageFlashTimer <= 0)
+            {
+                getComponent(MultiSpriteComponent.class).sprites.get(PlayerSpriteId.BODY).sprite.setColor(defaultColor);
+            }
         }
 
         if(isDead)
@@ -350,8 +371,11 @@ public class PlayerScript extends EntityScript implements InputListener, GameEve
         Engine.eventBus.publish(HealthChangeEvent.class, e -> e.currentHealth = health.health);
         // For the adaptation metrics and the CHALLENGE quests.
         float amount = lastDamage;
+
         String source = lastDamageSource;
         TileRoom room = currentRoom;
+        damageFlashTimer = damageFlashDuration;
+        getComponent(MultiSpriteComponent.class).sprites.get(PlayerSpriteId.BODY).sprite.setColor(damageColor);
         Engine.eventBus.publish(PlayerDamagedEvent.class, e ->
         {
             e.amount = amount;

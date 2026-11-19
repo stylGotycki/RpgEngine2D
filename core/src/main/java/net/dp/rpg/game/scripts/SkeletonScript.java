@@ -34,6 +34,7 @@ public class SkeletonScript extends EnemyScript
     @Override
     public void onStart()
     {
+        super.onStart();
         target.set(getComponent(TransformComponent.class).position);
     }
 

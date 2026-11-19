@@ -1,5 +1,6 @@
 package net.dp.rpg.game.scripts;
 
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
@@ -37,6 +38,8 @@ public class SpiderScript extends EnemyScript
     @Override
     public void onStart()
     {
+        defaultColor.set(Color.BLACK);
+        super.onStart();
         target.set(getComponent(TransformComponent.class).position);
     }
 

@@ -13,14 +13,14 @@ attack
   index: -1
 boss/walk
   rotate: false
-  xy: 172, 94
+  xy: 138, 26
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
   index: 1
 boss/walk
   rotate: false
-  xy: 206, 60
+  xy: 240, 94
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
@@ -34,14 +34,14 @@ box
   index: -1
 enemy/walk
   rotate: false
-  xy: 138, 26
+  xy: 206, 94
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
   index: 1
 enemy/walk
   rotate: false
-  xy: 240, 94
+  xy: 240, 60
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
@@ -279,14 +279,14 @@ level/hatch
   index: -1
 miniboss/walk
   rotate: false
-  xy: 172, 60
+  xy: 172, 26
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
   index: 1
 miniboss/walk
   rotate: false
-  xy: 206, 26
+  xy: 274, 94
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
@@ -461,14 +461,14 @@ player/idle
   index: 4
 player/walk
   rotate: false
-  xy: 206, 94
+  xy: 172, 94
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
   index: 1
 player/walk
   rotate: false
-  xy: 240, 60
+  xy: 206, 60
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
@@ -559,14 +559,14 @@ puzzle/plate_start
   index: -1
 skeleton/walk
   rotate: false
-  xy: 172, 26
+  xy: 172, 60
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
   index: 1
 skeleton/walk
   rotate: false
-  xy: 274, 94
+  xy: 206, 26
   size: 32, 32
   orig: 32, 32
   offset: 0, 0

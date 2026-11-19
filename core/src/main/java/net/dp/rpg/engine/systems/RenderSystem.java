@@ -1,5 +1,6 @@
 package net.dp.rpg.engine.systems;
 
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Matrix4;
@@ -67,7 +68,7 @@ public class RenderSystem implements Disposable
         {
             SpriteComponent underlay = spriteStorage.getByIndex(i);
             if(underlay.underlay)
-                underlay.sprite.draw(batch);
+                drawSprite(underlay);
         }
 
         ComponentStorage<MultiSpriteComponent> multiSpriteStorage = scene.getComponentStorage(MultiSpriteComponent.class);
@@ -79,15 +80,15 @@ public class RenderSystem implements Disposable
             OrderedMap<SpriteId, SpriteComponent> sprites = multiSpriteStorage.getByIndex(i).sprites;
             for(SpriteComponent underlay : sprites.values())
                 if(underlay.underlay)
-                    underlay.sprite.draw(batch);
+                    drawSprite(underlay);
         }
 
         size = spriteStorage.size();
         for(int i = 0; i < size; i++)
         {
-            SpriteComponent spriteComponent = spriteStorage.getByIndex(i);
-            if(!spriteComponent.underlay)
-                spriteComponent.sprite.draw(batch);
+            SpriteComponent sprite = spriteStorage.getByIndex(i);
+            if(!sprite.underlay)
+                drawSprite(sprite);
         }
 
         size = multiSpriteStorage.size();
@@ -96,7 +97,7 @@ public class RenderSystem implements Disposable
             OrderedMap<SpriteId, SpriteComponent> sprites = multiSpriteStorage.getByIndex(i).sprites;
             for(SpriteComponent sprite : sprites.values())
                 if(!sprite.underlay)
-                    sprite.sprite.draw(batch);
+                    drawSprite(sprite);
         }
 
         batch.end();
@@ -109,6 +110,11 @@ public class RenderSystem implements Disposable
 
         if(physicsDebug)
             b2dDebugRenderer.render(scene.getPhysicalWorld(), projMatrix);
+    }
+
+    private void drawSprite(SpriteComponent spriteComponent)
+    {
+        spriteComponent.sprite.draw(batch);
     }
 
     public void dispose()

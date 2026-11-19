@@ -32,11 +32,6 @@ public class BoneKingScript extends EnemyScript
     }
 
     @Override
-    public void onStart()
-    {
-    }
-
-    @Override
     public void enemyUpdate(float delta)
     {
         currentDirection.setLength(1).setAngleRad(getComponent(TransformComponent.class).rotation);
@@ -86,6 +81,7 @@ public class BoneKingScript extends EnemyScript
     @Override
     public void onDamage()
     {
+        super.onDamage();
         spawning = false;
     }
 }
